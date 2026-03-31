@@ -1,13 +1,15 @@
 package com.bookflow.backend;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@SpringBootTest
+import com.bookflow.backend.auth.model.UserRole;
+
 class BackendApplicationTests {
 
 	@Test
-	void contextLoads() {
+	void roleParsingSupportsStaffMemberFormat() {
+		assertEquals(UserRole.STAFF_MEMBER, UserRole.fromValue("staff member"));
 	}
 
 }
