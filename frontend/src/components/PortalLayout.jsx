@@ -27,17 +27,17 @@ function PortalLayout({ title, subtitle, children, loading }) {
 
         {isAuthenticated ? (
           <div className="top-actions">
+            {role === "student" ? (
+              <Link className="top-link" to="/student/dashboard">
+                Student Dashboard
+              </Link>
+            ) : null}
             <Link className="top-link" to={profilePathByRole(role)}>
               {roleLabel(role)} Profile
             </Link>
             {isStudentLikeRole(role) ? (
               <Link className="top-link" to="/notifications">
                 Notifications
-              </Link>
-            ) : null}
-            {role === "student" ? (
-              <Link className="top-link" to="/student/dashboard">
-                Student Dashboard
               </Link>
             ) : null}
             {role === "student" ? (
@@ -68,7 +68,6 @@ function PortalLayout({ title, subtitle, children, loading }) {
 
       <main className="content-grid">
         <section className="hero-card">
-          <p className="hero-eyebrow">Library Management Platform</p>
           <h1>{title}</h1>
           {subtitle ? <p className="hero-subtitle">{subtitle}</p> : null}
         </section>

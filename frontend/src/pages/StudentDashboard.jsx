@@ -20,6 +20,8 @@ const announcements = [
   "New e-book collection added for semester projects.",
 ];
 
+const profileHighlights = ["Semester 2", "IT - Year 3", "Colombo Center"];
+
 const quickActions = [
   {
     label: "View Profile",
@@ -42,20 +44,27 @@ const quickActions = [
 function StudentDashboard() {
   return (
     <PortalLayout
-      title="Student Dashboard"
-      subtitle="Your student home for support, updates, and quick navigation."
+      title="Welcome back, Jane."
+      subtitle="Continue where you left off. Review alerts, jump into Student Support, and keep your academic tasks moving."
     >
-      <section className="student-home-banner">
-        <p className="student-home-banner-eyebrow">Welcome Back</p>
-        <h3>Ready for your next study session?</h3>
-        <p>
-          Start from here to check notifications, manage support requests, and keep track of library updates.
-        </p>
-      </section>
-
-      <section className="student-home-grid">
-        <article className="metric-card student-home-profile">
-          <h3>Profile Summary</h3>
+      <section className="student-home-shell">
+        <article className="metric-card student-home-panel student-home-panel-profile">
+          <div className="student-home-panel-head">
+            <span className="student-home-icon student-home-icon-profile">PR</span>
+            <h3>Profile Snapshot</h3>
+          </div>
+          <div className="student-home-profile-avatar-row">
+            <span className="student-home-profile-avatar">JS</span>
+            <div>
+              <p><strong>Jane Student</strong></p>
+              <p className="helper-text">jane.student@bookflow.edu</p>
+            </div>
+          </div>
+          <div className="student-home-profile-tags">
+            {profileHighlights.map((item) => (
+              <span key={item}>{item}</span>
+            ))}
+          </div>
           <p><strong>Name:</strong> Jane Student</p>
           <p><strong>Program:</strong> Information Technology</p>
           <p><strong>Campus Year:</strong> 3rd Year</p>
@@ -63,8 +72,16 @@ function StudentDashboard() {
           <Link className="top-link" to="/student/profile">View full profile</Link>
         </article>
 
-        <article className="metric-card">
-          <h3>Notifications Preview</h3>
+        <article className="metric-card student-home-panel student-home-panel-notifications">
+          <div className="student-home-panel-head">
+            <span className="student-home-icon student-home-icon-notifications">NT</span>
+            <h3>Notifications Preview</h3>
+          </div>
+          <div className="student-home-avatars" aria-hidden="true">
+            <span>AL</span>
+            <span>SU</span>
+            <span>LB</span>
+          </div>
           <ul className="list-clean student-home-list">
             {notificationPreview.map((item) => (
               <li key={item}>
@@ -75,32 +92,33 @@ function StudentDashboard() {
           <Link className="top-link" to="/notifications">Open notifications</Link>
         </article>
 
-        <article className="metric-card">
-          <h3>Student Support</h3>
+        <article className="metric-card student-home-panel student-home-panel-support">
+          <div className="student-home-panel-head">
+            <span className="student-home-icon student-home-icon-support">SP</span>
+            <h3>Student Support</h3>
+          </div>
           <p className="helper-text">
-            Need help with borrowing, account access, or technical issues? Go to Student Support and raise a
-            request quickly.
+            Need help with borrowing, account access, or technical issues? Open support and raise a request
+            quickly.
           </p>
           <div className="student-home-actions-inline">
-            <Link className="solid-btn" to="/student/support">Open Support</Link>
-            <Link className="ghost-btn" to="/student/support/raise">Raise Ticket</Link>
+            <Link className="solid-btn student-home-button" to="/student/support">Open Support</Link>
+            <Link className="ghost-btn student-home-button" to="/student/support/raise">Raise Ticket</Link>
           </div>
         </article>
-      </section>
 
-      <section className="card student-home-quick-actions">
-        <h3>Quick Actions</h3>
-        <div className="student-home-quick-grid">
-          {quickActions.map((action) => (
-            <Link key={action.label} className="solid-btn" to={action.to}>
-              {action.label}
-            </Link>
-          ))}
-        </div>
-      </section>
+        <article className="card student-home-quick-actions student-home-panel">
+          <h3>Quick Actions</h3>
+          <div className="student-home-quick-grid">
+            {quickActions.map((action) => (
+              <Link key={action.label} className="solid-btn student-home-button" to={action.to}>
+                {action.label}
+              </Link>
+            ))}
+          </div>
+        </article>
 
-      <section className="student-home-grid student-home-bottom-grid">
-        <article className="metric-card">
+        <article className="metric-card student-home-panel student-home-panel-activity">
           <h3>Recent Activity</h3>
           <ul className="list-clean student-home-list">
             {recentActivity.map((item) => (
@@ -111,7 +129,7 @@ function StudentDashboard() {
           </ul>
         </article>
 
-        <article className="metric-card">
+        <article className="metric-card student-home-panel student-home-panel-announcements">
           <h3>Announcements</h3>
           <ul className="list-clean student-home-list">
             {announcements.map((item) => (
