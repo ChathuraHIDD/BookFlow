@@ -1,7 +1,9 @@
 import PortalLayout from "../components/PortalLayout";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function StudentSupport() {
+  const navigate = useNavigate();
+
   const mockTickets = [
     {
       id: "TCK-1001",
@@ -93,20 +95,26 @@ function StudentSupport() {
                 <th>Category</th>
                 <th>Status</th>
                 <th>Last Updated</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {mockTickets.map((ticket) => (
                 <tr key={ticket.id}>
-                  <td>
-                    <Link to={`/student/support/${ticket.id}`}>{ticket.id}</Link>
-                  </td>
-                  <td>
-                    <Link to={`/student/support/${ticket.id}`}>{ticket.subject}</Link>
-                  </td>
+                  <td>{ticket.id}</td>
+                  <td>{ticket.subject}</td>
                   <td>{ticket.category}</td>
                   <td>{ticket.status}</td>
                   <td>{ticket.updatedAt}</td>
+                  <td>
+                    <button
+                      className="ghost-btn"
+                      type="button"
+                      onClick={() => navigate(`/student/support/${ticket.id}`)}
+                    >
+                      View
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
