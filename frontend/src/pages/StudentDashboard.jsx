@@ -1,6 +1,11 @@
 import { Link } from "react-router-dom";
 
 import PortalLayout from "../components/PortalLayout";
+import avatarAl from "../assets/avatar-al.svg";
+import avatarJs from "../assets/avatar-js.svg";
+import avatarLb from "../assets/avatar-lb.svg";
+import avatarSu from "../assets/avatar-su.svg";
+import supportIllustration from "../assets/support-illustration.svg";
 
 const notificationPreview = [
   "Book BK-1037 is due in 2 days.",
@@ -24,18 +29,22 @@ const profileHighlights = ["Semester 2", "IT - Year 3", "Colombo Center"];
 
 const quickActions = [
   {
+    icon: "👤",
     label: "View Profile",
     to: "/student/profile",
   },
   {
+    icon: "🔔",
     label: "Open Notifications",
     to: "/notifications",
   },
   {
+    icon: "🛟",
     label: "Go to Support",
     to: "/student/support",
   },
   {
+    icon: "➕",
     label: "Raise New Ticket",
     to: "/student/support/raise",
   },
@@ -50,11 +59,11 @@ function StudentDashboard() {
       <section className="student-home-shell">
         <article className="metric-card student-home-panel student-home-panel-profile">
           <div className="student-home-panel-head">
-            <span className="student-home-icon student-home-icon-profile">PR</span>
+            <span className="student-home-icon student-home-icon-profile" aria-hidden="true">👤</span>
             <h3>Profile Snapshot</h3>
           </div>
           <div className="student-home-profile-avatar-row">
-            <span className="student-home-profile-avatar">JS</span>
+            <img className="student-home-profile-avatar" src={avatarJs} alt="Jane Student" />
             <div>
               <p><strong>Jane Student</strong></p>
               <p className="helper-text">jane.student@bookflow.edu</p>
@@ -74,17 +83,22 @@ function StudentDashboard() {
 
         <article className="metric-card student-home-panel student-home-panel-notifications">
           <div className="student-home-panel-head">
-            <span className="student-home-icon student-home-icon-notifications">NT</span>
+            <span className="student-home-icon student-home-icon-notifications" aria-hidden="true">🔔</span>
             <h3>Notifications Preview</h3>
           </div>
           <div className="student-home-avatars" aria-hidden="true">
-            <span>AL</span>
-            <span>SU</span>
-            <span>LB</span>
+            <img src={avatarAl} alt="Alert author AL" />
+            <img src={avatarSu} alt="Alert author SU" />
+            <img src={avatarLb} alt="Alert author LB" />
           </div>
-          <ul className="list-clean student-home-list">
-            {notificationPreview.map((item) => (
-              <li key={item}>
+          <ul className="list-clean student-home-list student-home-notification-list">
+            {notificationPreview.map((item, index) => (
+              <li
+                key={item}
+                className="student-home-notification-item"
+                style={{ "--n-delay": `${index * 0.14}s` }}
+              >
+                <span className="student-home-notification-dot" aria-hidden="true" />
                 <span>{item}</span>
               </li>
             ))}
@@ -94,8 +108,11 @@ function StudentDashboard() {
 
         <article className="metric-card student-home-panel student-home-panel-support">
           <div className="student-home-panel-head">
-            <span className="student-home-icon student-home-icon-support">SP</span>
+            <span className="student-home-icon student-home-icon-support" aria-hidden="true">🛟</span>
             <h3>Student Support</h3>
+          </div>
+          <div className="student-home-support-media" aria-hidden="true">
+            <img src={supportIllustration} alt="" />
           </div>
           <p className="helper-text">
             Need help with borrowing, account access, or technical issues? Open support and raise a request
@@ -108,10 +125,11 @@ function StudentDashboard() {
         </article>
 
         <article className="card student-home-quick-actions student-home-panel">
-          <h3>Quick Actions</h3>
+          <h3><span className="student-home-title-icon" aria-hidden="true">⚡</span>Quick Actions</h3>
           <div className="student-home-quick-grid">
             {quickActions.map((action) => (
               <Link key={action.label} className="solid-btn student-home-button" to={action.to}>
+                <span className="student-home-action-icon" aria-hidden="true">{action.icon}</span>
                 {action.label}
               </Link>
             ))}
@@ -119,7 +137,7 @@ function StudentDashboard() {
         </article>
 
         <article className="metric-card student-home-panel student-home-panel-activity">
-          <h3>Recent Activity</h3>
+          <h3><span className="student-home-title-icon" aria-hidden="true">🕘</span>Recent Activity</h3>
           <ul className="list-clean student-home-list">
             {recentActivity.map((item) => (
               <li key={item}>
@@ -130,7 +148,7 @@ function StudentDashboard() {
         </article>
 
         <article className="metric-card student-home-panel student-home-panel-announcements">
-          <h3>Announcements</h3>
+          <h3><span className="student-home-title-icon" aria-hidden="true">📢</span>Announcements</h3>
           <ul className="list-clean student-home-list">
             {announcements.map((item) => (
               <li key={item}>
