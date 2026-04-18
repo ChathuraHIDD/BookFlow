@@ -11,6 +11,7 @@ import NotificationPanel from "./pages/NotificationPanel";
 import Register from "./pages/Register";
 import StudentSupport from "./pages/StudentSupport";
 import StudentSupportRaise from "./pages/StudentSupportRaise";
+import StudentSupportTicket from "./pages/StudentSupportTicket";
 import UserProfile from "./pages/UserProfile";
 import { profilePathByRole } from "./utils/role";
 
@@ -77,6 +78,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["student"]}>
             <StudentSupportRaise />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/student/support/:id"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentSupportTicket />
           </ProtectedRoute>
         }
       />

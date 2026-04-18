@@ -98,8 +98,12 @@ function StudentSupport() {
             <tbody>
               {mockTickets.map((ticket) => (
                 <tr key={ticket.id}>
-                  <td>{ticket.id}</td>
-                  <td>{ticket.subject}</td>
+                  <td>
+                    <Link to={`/student/support/${ticket.id}`}>{ticket.id}</Link>
+                  </td>
+                  <td>
+                    <Link to={`/student/support/${ticket.id}`}>{ticket.subject}</Link>
+                  </td>
                   <td>{ticket.category}</td>
                   <td>{ticket.status}</td>
                   <td>{ticket.updatedAt}</td>
