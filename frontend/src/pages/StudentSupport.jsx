@@ -1,4 +1,5 @@
 import PortalLayout from "../components/PortalLayout";
+import { Link } from "react-router-dom";
 
 function StudentSupport() {
   const mockTickets = [
@@ -76,9 +77,9 @@ function StudentSupport() {
       </section>
 
       <div className="cta-row">
-        <button className="solid-btn" type="button">
+        <Link className="solid-btn" to="/student/support/raise">
           Raise New Ticket
-        </button>
+        </Link>
       </div>
 
       <section className="card" style={{ marginTop: "14px" }}>
