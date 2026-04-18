@@ -36,6 +36,11 @@ function PortalLayout({ title, subtitle, children, loading }) {
               </Link>
             ) : null}
             {role === "student" ? (
+              <Link className="top-link" to="/student/dashboard">
+                Student Dashboard
+              </Link>
+            ) : null}
+            {role === "student" ? (
               <Link className="top-link" to="/student/support">
                 Student Support
               </Link>

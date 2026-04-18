@@ -9,6 +9,7 @@ import LibrarianProfile from "./pages/LibrarianProfile";
 import Login from "./pages/Login";
 import NotificationPanel from "./pages/NotificationPanel";
 import Register from "./pages/Register";
+import StudentDashboard from "./pages/StudentDashboard";
 import StudentSupport from "./pages/StudentSupport";
 import StudentSupportRaise from "./pages/StudentSupportRaise";
 import StudentSupportTicket from "./pages/StudentSupportTicket";
@@ -42,6 +43,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["student"]}>
             <UserProfile />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/student/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentDashboard />
           </ProtectedRoute>
         }
       />
