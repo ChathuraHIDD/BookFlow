@@ -35,6 +35,11 @@ function PortalLayout({ title, subtitle, children, loading }) {
                 Notifications
               </Link>
             ) : null}
+            {role === "student" ? (
+              <Link className="top-link" to="/student/support">
+                Student Support
+              </Link>
+            ) : null}
             {role === "admin" ? (
               <Link className="top-link" to="/admin/users">
                 User Management

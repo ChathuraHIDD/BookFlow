@@ -9,6 +9,7 @@ import LibrarianProfile from "./pages/LibrarianProfile";
 import Login from "./pages/Login";
 import NotificationPanel from "./pages/NotificationPanel";
 import Register from "./pages/Register";
+import StudentSupport from "./pages/StudentSupport";
 import UserProfile from "./pages/UserProfile";
 import { profilePathByRole } from "./utils/role";
 
@@ -57,6 +58,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["student", "staff_member"]}>
             <NotificationPanel />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/student/support"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentSupport />
           </ProtectedRoute>
         }
       />
