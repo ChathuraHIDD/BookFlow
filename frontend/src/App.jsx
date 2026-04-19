@@ -12,6 +12,8 @@ import NotificationPanel from "./pages/NotificationPanel";
 import Register from "./pages/Register";
 import StudentDashboard from "./pages/StudentDashboard";
 import StudentFacilityBookingBoard from "./pages/StudentFacilityBookingBoard";
+import StudentFacilityCatalogDetail from "./pages/StudentFacilityCatalogDetail";
+import StudentFacilityCategoryDetail from "./pages/StudentFacilityCategoryDetail";
 import StudentFacilityFloors from "./pages/StudentFacilityFloors";
 import StudentFacilities from "./pages/StudentFacilities";
 import StudentSupport from "./pages/StudentSupport";
@@ -83,6 +85,24 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["student"]}>
             <StudentFacilityBookingBoard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/student/facilities/catalog/:facilitySlug"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentFacilityCatalogDetail />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/student/facilities/categories/:categorySlug"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentFacilityCategoryDetail />
           </ProtectedRoute>
         }
       />
