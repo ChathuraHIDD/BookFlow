@@ -1358,6 +1358,231 @@ th {
   color: #4f587b;
 }
 
+.student-facilities-hero {
+  grid-template-columns: 1fr;
+}
+
+.student-facilities-hero .student-modern-hero-copy h2 {
+  max-width: 16ch;
+}
+
+.student-facilities-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.student-facilities-wide-card {
+  grid-column: span 2;
+}
+
+.student-facility-detail-grid,
+.student-facility-role-grid,
+.student-facility-extra-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.student-facility-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.student-facility-search,
+.student-facility-filter-row span {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(228, 232, 246, 0.95);
+  background: #fafbff;
+  color: #7983a6;
+}
+
+.student-facility-search {
+  min-width: 220px;
+}
+
+.student-facility-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.student-facility-detail-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.student-facility-card,
+.student-facility-role-card,
+.student-facility-extra-card {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(228, 232, 246, 0.95);
+  background: #fafbff;
+}
+
+.student-facility-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.student-facility-card h4 {
+  margin: 0;
+  color: #2f3755;
+  font-family: "Source Sans 3", "Gill Sans", "Trebuchet MS", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.student-facility-card p,
+.student-facility-role-card p {
+  margin-top: 6px;
+  color: #6e7697;
+}
+
+.student-facility-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+  color: #59627f;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.student-facility-equipment {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.student-facility-equipment span,
+.student-facility-status {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.student-facility-equipment span {
+  background: #eef3ff;
+  color: #4a58b3;
+}
+
+.student-facility-status-available {
+  background: #e6f8ee;
+  color: #1d8a4a;
+}
+
+.student-facility-status-booked {
+  background: #fff1df;
+  color: #c87518;
+}
+
+.student-facility-status-maintenance {
+  background: #f8e8ea;
+  color: #b24b61;
+}
+
+.student-facility-action-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.student-facility-booking-form {
+  display: grid;
+  gap: 12px;
+}
+
+.student-facility-field {
+  padding: 12px 14px;
+  border: 1px solid rgba(228, 232, 246, 0.95);
+  border-radius: 16px;
+  background: #fafbff;
+}
+
+.student-facility-field label {
+  display: block;
+  margin-bottom: 6px;
+  color: #95a0c6;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.student-facility-booking-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.student-facility-history {
+  margin-top: 8px;
+}
+
+.student-facility-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.student-facility-slot {
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(228, 232, 246, 0.95);
+  background: #fafbff;
+}
+
+.student-facility-slot strong,
+.student-facility-role-card strong {
+  display: block;
+  color: #35416e;
+  font-size: 1rem;
+}
+
+.student-facility-slot span {
+  display: block;
+  margin-top: 6px;
+  font-weight: 700;
+}
+
+.student-facility-slot-available span {
+  color: #1d8a4a;
+}
+
+.student-facility-slot-booked span {
+  color: #c87518;
+}
+
+.student-facility-slot-maintenance span {
+  color: #b24b61;
+}
+
+.student-facility-role-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.student-facility-extra-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-facilities-section {
+  margin-top: 18px;
+}
+
+.admin-facilities-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .student-dashboard-surface-sidebar {
   padding: 20px;
 }
@@ -1900,8 +2125,20 @@ th {
   .student-modern-hero-card,
   .student-modern-status-grid,
   .student-modern-workspace-grid,
-  .student-modern-workspace-body {
+  .student-modern-workspace-body,
+  .student-facilities-grid {
     grid-template-columns: 1fr;
+  }
+
+  .student-facility-detail-grid,
+  .student-facility-role-grid,
+  .student-facility-extra-grid,
+  .student-facility-slot-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .student-facilities-wide-card {
+    grid-column: span 1;
   }
 
   .student-modern-sidebar {
