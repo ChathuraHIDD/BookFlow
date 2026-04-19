@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import StudentPortalShell from "../components/StudentPortalShell";
 import { fetchStudentFacilitiesOverview } from "../services/facilities";
 import { readApiError } from "../services/api";
+import { facilityCategoryGrid } from "../data/facilityCatalog";
 
 function StudentFacilities() {
   const [overview, setOverview] = useState({ buildings: [], myBookings: [] });
@@ -133,6 +134,29 @@ function StudentFacilities() {
               ))}
             </div>
           )}
+
+          <div className="student-facility-catalog-divider" />
+
+          <div className="student-modern-card-head student-facility-catalog-head">
+            <div>
+              <p className="student-modern-section-label">Catalogue</p>
+              <h3>Facilities Catalogue</h3>
+            </div>
+            <p className="helper-text">Select a category to open its sub parts page.</p>
+          </div>
+
+          <div className="student-facility-catalog-grid" aria-label="Facility categories">
+            {facilityCategoryGrid.map((category) => (
+              <Link
+                key={category.slug}
+                className="student-facility-catalog-card"
+                to={`/student/facilities/categories/${category.slug}`}
+                style={{ "--facility-accent": category.accent }}
+              >
+                <strong>{category.name}</strong>
+              </Link>
+            ))}
+          </div>
         </article>
 
         <article className="student-modern-workspace-card student-facilities-wide-card">
