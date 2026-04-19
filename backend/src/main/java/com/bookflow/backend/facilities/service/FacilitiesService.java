@@ -2,6 +2,7 @@ package com.bookflow.backend.facilities.service;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -31,6 +32,7 @@ import com.bookflow.backend.facilities.model.FacilityOperationalStatus;
 import com.bookflow.backend.facilities.repository.BuildingRepository;
 import com.bookflow.backend.facilities.repository.ClassroomRepository;
 import com.bookflow.backend.facilities.repository.FacilityBookingRepository;
+import com.bookflow.backend.notifications.service.NotificationService;
 
 @Service
 public class FacilitiesService {
@@ -38,14 +40,17 @@ public class FacilitiesService {
     private final BuildingRepository buildingRepository;
     private final ClassroomRepository classroomRepository;
     private final FacilityBookingRepository bookingRepository;
+    private final NotificationService notificationService;
 
     public FacilitiesService(
             BuildingRepository buildingRepository,
             ClassroomRepository classroomRepository,
-            FacilityBookingRepository bookingRepository) {
+            FacilityBookingRepository bookingRepository,
+            NotificationService notificationService) {
         this.buildingRepository = buildingRepository;
         this.classroomRepository = classroomRepository;
         this.bookingRepository = bookingRepository;
+        this.notificationService = notificationService;
     }
 
     public StudentFacilitiesOverviewResponse studentOverview(User user) {
@@ -195,8 +200,20 @@ public class FacilitiesService {
     public BookingResponse updateBookingStatus(String bookingId, UpdateBookingStatusRequest request) {
         FacilityBooking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
-        booking.setStatus(parseBookingStatus(request.getStatus()));
-        return toBookingResponse(bookingRepository.save(booking));
+        BookingStatus previousStatus = booking.getStatus();
+        BookingStatus nextStatus = parseBookingStatus(request.getStatus());
+        booking.setStatus(nextStatus);
+        FacilityBooking saved = bookingRepository.save(booking);
+
+        if (nextStatus == BookingStatus.APPROVED && previousStatus != BookingStatus.APPROVED) {
+            notificationService.notifyBookingApproved(saved);
+        }
+
+        if (nextStatus == BookingStatus.CANCELLED && previousStatus != BookingStatus.CANCELLED) {
+            notificationService.notifyBookingCancelled(saved);
+        }
+
+        return toBookingResponse(saved);
     }
 
     public FacilityReportResponse reports() {
@@ -234,11 +251,19 @@ public class FacilitiesService {
                 booking.getBuildingName(),
                 booking.getFloorNumber(),
                 booking.getRoomNumber(),
-                booking.getBookingDate().toString(),
-                booking.getStartTime().toString(),
-                booking.getEndTime().toString(),
-                booking.getStatus().name(),
+                formatDate(booking.getBookingDate()),
+                formatTime(booking.getStartTime()),
+                formatTime(booking.getEndTime()),
+                booking.getStatus() != null ? booking.getStatus().name() : "UNKNOWN",
                 booking.getRequestedByName());
+    }
+
+    private String formatDate(LocalDate value) {
+        return value != null ? value.toString() : "";
+    }
+
+    private String formatTime(LocalTime value) {
+        return value != null ? value.toString() : "";
     }
 
     private boolean overlaps(FacilityBooking existing, CreateBookingRequest request) {

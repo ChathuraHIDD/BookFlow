@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import PortalLayout from "./PortalLayout";
 import { useAuth } from "../context/useAuth";
+import { fetchMyNotifications } from "../services/notifications";
 
 const sidebarItems = [
   { key: "home", icon: "H", label: "Home", to: "/student/dashboard" },
@@ -18,6 +19,7 @@ function StudentPortalShell({ activeKey = "home", children }) {
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [recentNotifications, setRecentNotifications] = useState([]);
   const menuRef = useRef(null);
   const notificationsRef = useRef(null);
   const fullName = user?.fullName?.trim() || "Jane Student";
@@ -68,11 +70,18 @@ function StudentPortalShell({ activeKey = "home", children }) {
     navigate("/student/profile");
   };
 
-  const recentNotifications = [
-    "Book BK-1037 is due in 2 days.",
-    "Your reservation for Software Quality Assurance is ready.",
-    "Library orientation session starts tomorrow at 10:00 AM.",
-  ];
+  useEffect(() => {
+    const loadRecentNotifications = async () => {
+      try {
+        const data = await fetchMyNotifications();
+        setRecentNotifications(data.slice(0, 3));
+      } catch {
+        setRecentNotifications([]);
+      }
+    };
+
+    loadRecentNotifications();
+  }, []);
 
   return (
     <PortalLayout
@@ -109,11 +118,11 @@ function StudentPortalShell({ activeKey = "home", children }) {
               </div>
 
               <ul className="student-modern-notification-list">
-                {recentNotifications.map((note) => (
-                  <li key={note} className="student-modern-notification-item">
-                    {note}
+                {recentNotifications.length ? recentNotifications.map((note) => (
+                  <li key={note.id} className="student-modern-notification-item">
+                    {note.message}
                   </li>
-                ))}
+                )) : <li className="student-modern-notification-item">No new notifications.</li>}
               </ul>
 
               <button
