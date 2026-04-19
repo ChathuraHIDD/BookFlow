@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/useAuth";
 import AdminProfile from "./pages/AdminProfile";
+import AdminFacilities from "./pages/AdminFacilities";
 import AdminUserManagement from "./pages/AdminUserManagement";
 import Dashboard from "./pages/Dashboard";
 import LibrarianProfile from "./pages/LibrarianProfile";
@@ -10,6 +11,9 @@ import Login from "./pages/Login";
 import NotificationPanel from "./pages/NotificationPanel";
 import Register from "./pages/Register";
 import StudentDashboard from "./pages/StudentDashboard";
+import StudentFacilityBookingBoard from "./pages/StudentFacilityBookingBoard";
+import StudentFacilityFloors from "./pages/StudentFacilityFloors";
+import StudentFacilities from "./pages/StudentFacilities";
 import StudentSupport from "./pages/StudentSupport";
 import StudentSupportRaise from "./pages/StudentSupportRaise";
 import StudentSupportTicket from "./pages/StudentSupportTicket";
@@ -52,6 +56,33 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["student"]}>
             <StudentDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/student/facilities"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentFacilities />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/student/facilities/buildings/:buildingId"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentFacilityFloors />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/student/facilities/buildings/:buildingId/floors/:floorNumber"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentFacilityBookingBoard />
           </ProtectedRoute>
         }
       />
@@ -115,6 +146,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <AdminUserManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/facilities"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminFacilities />
           </ProtectedRoute>
         }
       />
