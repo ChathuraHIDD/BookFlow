@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 
 import StudentPortalShell from "../components/StudentPortalShell";
@@ -6,6 +7,15 @@ import { facilityCatalog } from "../data/facilityCatalog";
 function StudentFacilityCatalogDetail() {
   const { facilitySlug } = useParams();
   const facility = facilityCatalog.find((item) => item.slug === facilitySlug);
+  const [requestForm, setRequestForm] = useState({
+    fullName: "",
+    studentId: "",
+    preferredDate: "",
+    preferredTime: "",
+    purpose: "",
+    notes: "",
+  });
+  const [submitted, setSubmitted] = useState(false);
 
   if (!facility) {
     return <Navigate to="/student/facilities" replace />;
@@ -14,6 +24,16 @@ function StudentFacilityCatalogDetail() {
   const relatedFacilities = facilityCatalog.filter(
     (item) => item.category === facility.category && item.slug !== facility.slug,
   );
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setRequestForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    setSubmitted(true);
+  };
 
   return (
     <StudentPortalShell activeKey="facilities">
@@ -63,6 +83,96 @@ function StudentFacilityCatalogDetail() {
               </div>
             </div>
           </div>
+
+          <div className="student-facility-catalog-divider" />
+
+          <div className="student-modern-card-head student-facility-catalog-head">
+            <div>
+              <p className="student-modern-section-label">Request Form</p>
+              <h3>Fill Details for {facility.name}</h3>
+            </div>
+          </div>
+
+          <form className="form-grid student-facility-request-form" onSubmit={handleSubmit}>
+            <label>
+              Full Name
+              <input
+                type="text"
+                name="fullName"
+                value={requestForm.fullName}
+                onChange={handleChange}
+                required
+              />
+            </label>
+
+            <label>
+              Student ID
+              <input
+                type="text"
+                name="studentId"
+                value={requestForm.studentId}
+                onChange={handleChange}
+                required
+              />
+            </label>
+
+            <label>
+              Preferred Date
+              <input
+                type="date"
+                name="preferredDate"
+                value={requestForm.preferredDate}
+                onChange={handleChange}
+                required
+              />
+            </label>
+
+            <label>
+              Preferred Time
+              <input
+                type="time"
+                name="preferredTime"
+                value={requestForm.preferredTime}
+                onChange={handleChange}
+                required
+              />
+            </label>
+
+            <label>
+              Purpose
+              <input
+                type="text"
+                name="purpose"
+                value={requestForm.purpose}
+                onChange={handleChange}
+                placeholder="Ex: Group assignment meeting"
+                required
+              />
+            </label>
+
+            <label>
+              Additional Notes
+              <textarea
+                rows="4"
+                name="notes"
+                value={requestForm.notes}
+                onChange={handleChange}
+                placeholder="Add any special requirements"
+              />
+            </label>
+
+            <div className="student-facility-request-actions">
+              <button type="submit" className="solid-btn">
+                Submit Request
+              </button>
+            </div>
+          </form>
+
+          {submitted ? (
+            <p className="student-facility-request-success">
+              Request received for {facility.name}. The facilities team will review and confirm availability.
+            </p>
+          ) : null}
 
           {relatedFacilities.length ? (
             <>

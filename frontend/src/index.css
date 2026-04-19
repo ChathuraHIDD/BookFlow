@@ -1826,6 +1826,25 @@ th {
   grid-template-columns: 1fr;
 }
 
+.student-facility-request-form {
+  margin-top: 8px;
+  max-width: 760px;
+}
+
+.student-facility-request-actions {
+  margin-top: 4px;
+}
+
+.student-facility-request-success {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(133, 201, 165, 0.6);
+  background: linear-gradient(135deg, rgba(232, 251, 239, 0.96), rgba(246, 255, 250, 0.96));
+  color: #2b6f4b;
+  font-weight: 700;
+}
+
 .student-facility-catalog-detail-copy h4 {
   margin-top: 8px;
   font-family: "Libre Baskerville", Garamond, Georgia, serif;
