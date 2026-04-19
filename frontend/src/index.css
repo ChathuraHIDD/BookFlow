@@ -291,6 +291,483 @@ th {
   margin-top: 12px;
 }
 
+.student-home-banner {
+  border: 1px solid #c8ddd4;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #f3faf7, #e7f2ed);
+  padding: 16px;
+  margin-bottom: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.student-home-banner-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: var(--green-700);
+}
+
+.student-home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.student-home-profile {
+  background: #f7fcfa;
+}
+
+.student-home-list li {
+  justify-content: flex-start;
+}
+
+.student-home-actions-inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.student-home-quick-actions {
+  margin-top: 14px;
+}
+
+.student-home-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.student-home-bottom-grid {
+  margin-top: 14px;
+}
+
+.student-home-hero {
+  border: 1px solid #bfd7cc;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 80% 8%, rgba(98, 126, 232, 0.22), transparent 30%),
+    radial-gradient(circle at 100% 78%, rgba(45, 122, 99, 0.22), transparent 33%),
+    linear-gradient(145deg, #f6fbf8, #e8f4ee);
+  padding: 26px;
+  margin-bottom: 24px;
+  box-shadow: 0 18px 34px rgba(13, 57, 45, 0.14);
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(180px, 0.8fr);
+  gap: 16px;
+  overflow: hidden;
+}
+
+.student-home-hero h3 {
+  font-size: clamp(1.35rem, 2.2vw, 2rem);
+}
+
+.student-home-hero-content {
+  display: grid;
+  gap: 12px;
+}
+
+.student-home-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.student-home-hero-visual {
+  position: relative;
+  min-height: 180px;
+  border-radius: 18px;
+  background: linear-gradient(150deg, rgba(89, 124, 232, 0.18), rgba(45, 122, 99, 0.1));
+  border: 1px solid rgba(110, 145, 196, 0.32);
+}
+
+.student-home-hero-orb {
+  position: absolute;
+  width: 108px;
+  height: 108px;
+  border-radius: 999px;
+  top: 16px;
+  right: 16px;
+  background: radial-gradient(circle at 28% 25%, #ffffff, #acc0ff 65%, #7e95ea);
+  box-shadow: 0 12px 24px rgba(88, 113, 202, 0.35);
+}
+
+.student-home-hero-note {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(176, 197, 228, 0.6);
+  display: grid;
+  gap: 4px;
+}
+
+.student-home-hero-note p {
+  font-size: 0.78rem;
+  color: #4c658f;
+}
+
+.student-home-hero-note strong {
+  color: #28427b;
+}
+
+.student-home-shell {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 6px;
+}
+
+.student-home-shell > .student-home-panel {
+  opacity: 0;
+  transform: translateY(14px);
+  animation: studentFadeUp 0.4s ease forwards;
+}
+
+.student-home-shell > .student-home-panel:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.student-home-shell > .student-home-panel:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.student-home-shell > .student-home-panel:nth-child(3) {
+  animation-delay: 0.19s;
+}
+
+.student-home-shell > .student-home-panel:nth-child(4) {
+  animation-delay: 0.26s;
+}
+
+.student-home-shell > .student-home-panel:nth-child(5) {
+  animation-delay: 0.33s;
+}
+
+.student-home-shell > .student-home-panel:nth-child(6) {
+  animation-delay: 0.24s;
+}
+
+.student-home-panel {
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(13, 57, 45, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  padding: 20px;
+}
+
+.student-home-panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 26px rgba(13, 57, 45, 0.14);
+}
+
+.student-home-title-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-right: 8px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: #e9f3ee;
+  border: 1px solid #c8ddd2;
+}
+
+.student-home-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.student-home-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  border: 1px solid #b8d6c9;
+  color: var(--green-800);
+  background: #ecf6f1;
+}
+
+.student-home-icon-profile {
+  background: #e9f5ef;
+}
+
+.student-home-icon-notifications {
+  background: #e3f1f9;
+  border-color: #b8d4e5;
+  color: #1c587d;
+}
+
+.student-home-icon-support {
+  background: #eaf8f2;
+  border-color: #9ecfb7;
+  color: #145f39;
+}
+
+.student-home-button {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.student-home-action-icon {
+  margin-right: 6px;
+  font-size: 0.9rem;
+}
+
+.student-home-button:hover {
+  transform: translateY(-1px) scale(1.01);
+  box-shadow: 0 8px 14px rgba(13, 57, 45, 0.14);
+  filter: saturate(1.02);
+}
+
+.student-home-panel-profile {
+  grid-column: span 4;
+}
+
+.student-home-panel-notifications {
+  grid-column: span 8;
+}
+
+.student-home-panel-support {
+  grid-column: span 7;
+  border: 1px solid var(--border);
+  background: #fcfefd;
+  box-shadow: 0 10px 24px rgba(13, 57, 45, 0.08);
+}
+
+.student-home-panel-support h3 {
+  color: var(--green-800);
+}
+
+.student-home-quick-actions {
+  grid-column: span 5;
+  margin-top: 0;
+  border-radius: 18px;
+  box-shadow: 0 10px 24px rgba(13, 57, 45, 0.08);
+  padding: 20px;
+}
+
+.student-home-panel-activity {
+  grid-column: span 7;
+}
+
+.student-home-panel-announcements {
+  grid-column: span 5;
+}
+
+.student-home-list li {
+  justify-content: flex-start;
+  border-radius: 11px;
+}
+
+.student-home-quick-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.student-home-actions-inline {
+  margin-top: 14px;
+  gap: 12px;
+}
+
+.student-home-profile-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.student-home-profile-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  object-fit: cover;
+  display: inline-block;
+  border: 1px solid #b8c8f8;
+}
+
+.student-home-profile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.student-home-profile-tags span {
+  font-size: 0.76rem;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #edf6f1;
+  color: var(--green-800);
+  border: 1px solid #c7ddd3;
+}
+
+.student-home-avatars {
+  display: flex;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.student-home-avatars img {
+  width: 30px;
+  height: 30px;
+  object-fit: cover;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  margin-right: -8px;
+  display: inline-block;
+  box-shadow: 0 4px 10px rgba(50, 80, 145, 0.2);
+}
+
+.student-home-support-media {
+  position: relative;
+  width: 100%;
+  height: 108px;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 4px;
+  margin-bottom: 2px;
+  border: 1px solid #b5d8c8;
+  background: linear-gradient(135deg, #ecf7f2, #d9ebf1);
+}
+
+.student-home-support-media::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -32%;
+  width: 32%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent);
+  animation: studentSupportSheen 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.student-home-support-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  transform-origin: center;
+  transition: transform 0.28s ease;
+}
+
+.student-home-panel-support:hover .student-home-support-media img {
+  transform: scale(1.02);
+}
+
+.student-home-list li {
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.student-home-list li:hover {
+  transform: translateX(2px);
+  box-shadow: 0 8px 16px rgba(16, 59, 47, 0.08);
+}
+
+.student-home-notification-list {
+  gap: 10px;
+}
+
+.student-home-notification-item {
+  align-items: center;
+  gap: 10px;
+  animation: studentNotificationFloat 3.4s ease-in-out infinite;
+  animation-delay: var(--n-delay, 0s);
+}
+
+.student-home-notification-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #2f9a68;
+  box-shadow: 0 0 0 0 rgba(47, 154, 104, 0.42);
+  animation: studentNotificationDotPulse 1.9s ease-in-out infinite;
+  animation-delay: var(--n-delay, 0s);
+  flex: 0 0 auto;
+}
+
+@keyframes studentFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes studentSupportSheen {
+  0% {
+    left: -32%;
+  }
+
+  55% {
+    left: 118%;
+  }
+
+  100% {
+    left: 118%;
+  }
+}
+
+@keyframes studentNotificationFloat {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  50% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes studentNotificationDotPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(47, 154, 104, 0.42);
+  }
+
+  50% {
+    box-shadow: 0 0 0 6px rgba(47, 154, 104, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .student-home-shell > .student-home-panel,
+  .student-home-support-media img {
+    animation: none;
+  }
+
+  .student-home-support-media::after {
+    animation: none;
+  }
+
+  .student-home-notification-item,
+  .student-home-notification-dot {
+    animation: none;
+  }
+
+  .student-home-list li,
+  .student-home-button,
+  .student-home-support-media img {
+    transition: none;
+  }
+}
+
 @media (max-width: 780px) {
   .page-wrap {
     padding: 14px 12px 24px;
@@ -303,5 +780,33 @@ th {
 
   .top-bar {
     padding: 12px;
+  }
+
+  .student-home-hero {
+    padding: 18px;
+    margin-bottom: 16px;
+    grid-template-columns: 1fr;
+  }
+
+  .student-home-hero-visual {
+    min-height: 130px;
+  }
+
+  .student-home-shell {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .student-home-panel-profile,
+  .student-home-panel-notifications,
+  .student-home-panel-support,
+  .student-home-quick-actions,
+  .student-home-panel-activity,
+  .student-home-panel-announcements {
+    grid-column: span 1;
+  }
+
+  .student-home-quick-grid {
+    grid-template-columns: 1fr;
   }
 }
