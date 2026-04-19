@@ -203,24 +203,28 @@ export const facilityCategoryGrid = [
   {
     slug: "academic-facilities",
     name: "Academic Facilities",
+    emoji: "🎓",
     accent: "linear-gradient(135deg, #3ec8c1, #1b9fd9)",
     sourceCategories: ["Learning Related"],
   },
   {
     slug: "collaboration-spaces",
     name: "Collaboration & Spaces",
+    emoji: "🤝",
     accent: "linear-gradient(135deg, #8d7bff, #5f8eff)",
     sourceCategories: ["Collaboration & Spaces"],
   },
   {
     slug: "student-services",
     name: "Student Services",
+    emoji: "🏥",
     accent: "linear-gradient(135deg, #ff8d72, #ff5678)",
     sourceCategories: ["Student Services"],
   },
   {
     slug: "sports-recreation",
     name: "Sports & Recreation",
+    emoji: "🏃",
     accent: "linear-gradient(135deg, #2fc57b, #16a87b)",
     sourceCategories: ["Sports & Recreation"],
   },

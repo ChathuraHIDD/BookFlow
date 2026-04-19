@@ -134,9 +134,9 @@ function StudentFacilities() {
               ))}
             </div>
           )}
+        </article>
 
-          <div className="student-facility-catalog-divider" />
-
+        <article className="student-modern-workspace-card student-facilities-wide-card">
           <div className="student-modern-card-head student-facility-catalog-head">
             <div>
               <p className="student-modern-section-label">Catalogue</p>
@@ -145,14 +145,15 @@ function StudentFacilities() {
             <p className="helper-text">Select a category to open its sub parts page.</p>
           </div>
 
-          <div className="student-facility-catalog-grid" aria-label="Facility categories">
+          <div className="student-facility-catalog-grid student-facility-catalog-grid-featured" aria-label="Facility categories">
             {facilityCategoryGrid.map((category) => (
               <Link
                 key={category.slug}
-                className="student-facility-catalog-card"
+                className="student-facility-catalog-card student-facility-catalog-card-featured"
                 to={`/student/facilities/categories/${category.slug}`}
                 style={{ "--facility-accent": category.accent }}
               >
+                <span className="student-facility-catalog-card-emoji" aria-hidden="true">{category.emoji}</span>
                 <strong>{category.name}</strong>
               </Link>
             ))}
