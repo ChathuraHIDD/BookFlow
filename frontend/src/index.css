@@ -1376,6 +1376,58 @@ th {
   grid-column: span 2;
 }
 
+.student-building-card-grid,
+.student-floor-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.student-building-card,
+.student-floor-card {
+  display: grid;
+  gap: 10px;
+  padding: 22px;
+  border-radius: 22px;
+  border: 1px solid rgba(213, 220, 255, 0.96);
+  background:
+    radial-gradient(circle at top right, rgba(255, 176, 103, 0.14), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 248, 255, 0.96));
+  box-shadow: 0 16px 34px rgba(87, 96, 180, 0.1);
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.student-building-card:hover,
+.student-floor-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(111, 124, 241, 0.52);
+  box-shadow: 0 24px 42px rgba(87, 96, 180, 0.14);
+}
+
+.student-building-card strong,
+.student-floor-card strong {
+  color: #253067;
+  font-size: 1.15rem;
+}
+
+.student-building-card span,
+.student-floor-card span {
+  color: #6f79a5;
+  font-weight: 600;
+}
+
+.student-facility-breadcrumb {
+  margin: 6px 0 18px;
+}
+
+.student-facility-breadcrumb a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #4a58d5;
+  font-weight: 700;
+}
+
 .student-facility-detail-grid,
 .student-facility-role-grid,
 .student-facility-extra-grid {
@@ -1573,6 +1625,300 @@ th {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.facility-booking-board {
+  display: grid;
+  gap: 24px;
+  padding: 22px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #1c1a36, #1a1932);
+  color: #f1efff;
+}
+
+.facility-booking-board-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.facility-booking-title {
+  color: #ffffff;
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+}
+
+.facility-booking-subtitle {
+  margin-top: 10px;
+  max-width: 60ch;
+  color: #c5c0e8;
+  line-height: 1.6;
+}
+
+.facility-booking-back {
+  color: #c7c2ef;
+  font-weight: 700;
+}
+
+.facility-booking-back:hover {
+  color: #ffffff;
+}
+
+.facility-booking-controls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.facility-booking-filter-field {
+  display: grid;
+  gap: 10px;
+}
+
+.facility-booking-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.facility-booking-filter-chip {
+  padding: 10px 12px;
+  border: 1px solid rgba(123, 119, 179, 0.5);
+  border-radius: 999px;
+  background: rgba(43, 40, 82, 0.9);
+  color: #d6d1f2;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.facility-booking-filter-chip-active {
+  background: linear-gradient(135deg, #5967e7, #7986f4);
+  border-color: rgba(169, 178, 255, 0.95);
+  color: #ffffff;
+}
+
+.facility-booking-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.facility-booking-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #e2def8;
+  font-weight: 600;
+}
+
+.facility-booking-legend-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.facility-booking-legend-dot-available {
+  background: #7eb8df;
+}
+
+.facility-booking-legend-dot-booked {
+  background: #5d9366;
+}
+
+.facility-booking-legend-dot-unavailable {
+  background: #be5e72;
+}
+
+.facility-booking-building-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(128, 124, 181, 0.35);
+}
+
+.facility-booking-building-tab {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(115, 111, 168, 0.55);
+  background: linear-gradient(180deg, rgba(54, 51, 97, 0.92), rgba(42, 40, 79, 0.92));
+  color: #f4f1ff;
+  cursor: pointer;
+}
+
+.facility-booking-building-tab strong,
+.facility-booking-building-tab span {
+  display: block;
+}
+
+.facility-booking-building-tab strong {
+  font-size: 1.65rem;
+  font-weight: 800;
+}
+
+.facility-booking-building-tab span {
+  margin-top: 4px;
+  color: #aaa6d4;
+}
+
+.facility-booking-building-tab-active {
+  background: linear-gradient(180deg, rgba(98, 92, 176, 0.96), rgba(78, 74, 146, 0.96));
+  box-shadow: 0 16px 28px rgba(74, 70, 132, 0.28);
+}
+
+.facility-booking-floor-sections {
+  display: grid;
+  gap: 28px;
+}
+
+.facility-booking-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) 320px;
+  gap: 20px;
+  align-items: start;
+}
+
+.facility-booking-floor {
+  display: grid;
+  gap: 18px;
+}
+
+.facility-booking-floor-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(128, 124, 181, 0.35);
+}
+
+.facility-booking-floor-head h3 {
+  color: #ece8ff;
+  font-family: "Source Sans 3", "Gill Sans", "Trebuchet MS", sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+}
+
+.facility-booking-room-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(106px, 1fr));
+  gap: 14px;
+}
+
+.facility-booking-room-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px 12px 12px;
+  border-radius: 14px;
+  border: 2px solid rgba(132, 128, 182, 0.72);
+  background: linear-gradient(180deg, rgba(40, 38, 78, 0.96), rgba(31, 30, 63, 0.98));
+  color: #f0ecff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.facility-booking-room-card-top {
+  display: grid;
+  gap: 6px;
+}
+
+.facility-booking-room-card:hover,
+.facility-booking-room-card-active {
+  transform: translateY(-2px);
+  border-color: rgba(150, 143, 236, 0.92);
+  box-shadow: 0 18px 26px rgba(20, 18, 45, 0.32);
+}
+
+.facility-booking-room-card strong {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.facility-booking-room-card span {
+  color: #bdb8dd;
+  font-size: 0.85rem;
+}
+
+.facility-booking-room-type {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(106, 117, 228, 0.22);
+  color: #eef0ff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.facility-booking-room-status {
+  display: inline-flex;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.facility-booking-room-status-available {
+  background: #557ea8;
+  color: #ecf6ff;
+}
+
+.facility-booking-room-status-booked {
+  background: #4d7d55;
+  color: #f1fff3;
+}
+
+.facility-booking-room-status-unavailable {
+  background: #a25261;
+  color: #fff1f4;
+}
+
+.facility-booking-room-equipment {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.facility-booking-room-equipment span {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ddd8fb;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.facility-booking-detail-panel {
+  display: grid;
+  gap: 16px;
+  position: sticky;
+  top: 118px;
+}
+
+.facility-booking-detail-card {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(120, 116, 176, 0.45);
+  background: linear-gradient(180deg, rgba(39, 37, 75, 0.98), rgba(31, 29, 61, 0.98));
+}
+
+.facility-booking-detail-card h3 {
+  color: #f1eeff;
+  font-family: "Source Sans 3", "Gill Sans", "Trebuchet MS", sans-serif;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.facility-booking-detail-card p {
+  color: #cdc8eb;
+  line-height: 1.55;
+}
+
 .admin-facilities-section {
   margin-top: 18px;
 }
@@ -1581,6 +1927,33 @@ th {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.admin-facilities-grid {
+  align-items: start;
+}
+
+.admin-classroom-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.admin-classroom-form-grid label {
+  display: grid;
+  gap: 8px;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.admin-facility-management-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(280px, 0.9fr);
+  gap: 18px;
+}
+
+.admin-classroom-edit-card {
+  align-self: start;
 }
 
 .student-dashboard-surface-sidebar {
@@ -2133,12 +2506,32 @@ th {
   .student-facility-detail-grid,
   .student-facility-role-grid,
   .student-facility-extra-grid,
-  .student-facility-slot-grid {
+  .student-facility-slot-grid,
+  .facility-booking-building-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .student-building-card-grid,
+  .student-floor-card-grid,
+  .facility-booking-controls,
+  .facility-booking-layout,
+  .admin-classroom-form-grid,
+  .admin-facility-management-grid {
     grid-template-columns: 1fr;
   }
 
   .student-facilities-wide-card {
     grid-column: span 1;
+  }
+
+  .facility-booking-board-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .facility-booking-detail-panel {
+    position: static;
+    top: auto;
   }
 
   .student-modern-sidebar {

@@ -5,11 +5,11 @@ import { useAuth } from "../context/useAuth";
 import avatarJs from "../assets/avatar-js.svg";
 
 const sidebarItems = [
-  { key: "home", icon: "⌂", label: "Home", to: "/student/dashboard" },
-  { key: "books", icon: "◫", label: "My Books", to: "/student/profile" },
-  { key: "facilities", icon: "▣", label: "Facilities", to: "/student/facilities" },
-  { key: "notifications", icon: "✦", label: "Notifications", to: "/notifications" },
-  { key: "support", icon: "⚙", label: "Support", to: "/student/support" },
+  { key: "home", icon: "H", label: "Home", to: "/student/dashboard" },
+  { key: "books", icon: "B", label: "My Books", to: "/student/profile" },
+  { key: "facilities", icon: "F", label: "Facilities", to: "/student/facilities" },
+  { key: "notifications", icon: "N", label: "Notifications", to: "/notifications" },
+  { key: "support", icon: "S", label: "Support", to: "/student/support" },
   { key: "ticket", icon: "+", label: "Raise Ticket", to: "/student/support/raise" },
 ];
 
@@ -25,7 +25,7 @@ function StudentPortalShell({ activeKey = "home", children }) {
       headerContent={(
         <div className="student-modern-header-right">
           <div className="student-modern-search">Search</div>
-          <span className="student-modern-header-icon" aria-hidden="true">🔔</span>
+          <span className="student-modern-header-icon" aria-hidden="true">Bell</span>
           <div className="student-modern-profile-chip">
             <span className="student-modern-profile-label">Hello</span>
             <strong>{displayName}</strong>
