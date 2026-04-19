@@ -9,6 +9,23 @@ function StudentFacilities() {
   const [overview, setOverview] = useState({ buildings: [], myBookings: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [monthFilter, setMonthFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+
+  const buildBadge = (building) => {
+    const code = building?.code?.trim();
+    if (code) {
+      return code.slice(0, 2).toUpperCase();
+    }
+
+    return (building?.name || "B")
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() || "")
+      .join("");
+  };
 
   useEffect(() => {
     const loadOverview = async () => {
@@ -24,6 +41,52 @@ function StudentFacilities() {
 
     loadOverview();
   }, []);
+
+  const allBookings = overview.myBookings || [];
+  const approvedCount = allBookings.filter((booking) => booking.status === "APPROVED").length;
+  const rejectedCount = allBookings.filter((booking) => booking.status === "REJECTED").length;
+
+  const filteredBookings = allBookings
+    .filter((booking) => {
+      const bookingDate = booking.bookingDate || "";
+      const status = (booking.status || "").toUpperCase();
+
+      if (monthFilter && !bookingDate.startsWith(monthFilter)) {
+        return false;
+      }
+
+      if (dateFilter && bookingDate !== dateFilter) {
+        return false;
+      }
+
+      if (statusFilter !== "ALL" && status !== statusFilter) {
+        return false;
+      }
+
+      return true;
+    })
+    .sort((a, b) => {
+      const left = `${b.bookingDate || ""} ${b.startTime || ""}`;
+      const right = `${a.bookingDate || ""} ${a.startTime || ""}`;
+      return left.localeCompare(right);
+    });
+
+  const statusTone = (status) => {
+    const normalized = (status || "").toLowerCase();
+    if (normalized === "approved") {
+      return "approved";
+    }
+    if (normalized === "rejected") {
+      return "rejected";
+    }
+    if (normalized === "pending") {
+      return "pending";
+    }
+    if (normalized === "cancelled") {
+      return "cancelled";
+    }
+    return "default";
+  };
 
   return (
     <StudentPortalShell activeKey="facilities">
@@ -58,9 +121,14 @@ function StudentFacilities() {
                   className="student-building-card"
                   to={`/student/facilities/buildings/${building.id}`}
                 >
+                  <div className="student-building-card-visual" aria-hidden="true">
+                    <span className="student-building-card-icon">{buildBadge(building)}</span>
+                  </div>
                   <strong>{building.name}</strong>
-                  <span>{building.floorCount} floors</span>
-                  <span>{building.classroomCount} classrooms</span>
+                  <div className="student-building-card-meta">
+                    <span>{building.floorCount} floors</span>
+                    <span>{building.classroomCount} classrooms</span>
+                  </div>
                 </Link>
               ))}
             </div>
@@ -78,17 +146,77 @@ function StudentFacilities() {
           {loading ? (
             <p className="helper-text">Loading bookings...</p>
           ) : (
-            <ul className="list-clean student-modern-mini-list">
-              {overview.myBookings.length ? (
-                overview.myBookings.map((booking) => (
-                  <li key={booking.id}>
-                    {booking.buildingName} | Floor {booking.floorNumber} | {booking.roomNumber} | {booking.bookingDate} | {booking.startTime} - {booking.endTime} | {booking.status}
-                  </li>
-                ))
-              ) : (
-                <li>No bookings yet.</li>
-              )}
-            </ul>
+            <>
+              <div className="student-booking-stat-grid">
+                <article className="student-booking-stat-card student-booking-stat-card-total">
+                  <p>Total Bookings</p>
+                  <strong>{allBookings.length}</strong>
+                  <span>All requests</span>
+                </article>
+                <article className="student-booking-stat-card student-booking-stat-card-approved">
+                  <p>Approved</p>
+                  <strong>{approvedCount}</strong>
+                  <span>Confirmed by admin</span>
+                </article>
+                <article className="student-booking-stat-card student-booking-stat-card-rejected">
+                  <p>Rejected</p>
+                  <strong>{rejectedCount}</strong>
+                  <span>Not approved</span>
+                </article>
+              </div>
+
+              <div className="student-booking-filter-bar">
+                <label>
+                  Month
+                  <input
+                    type="month"
+                    value={monthFilter}
+                    onChange={(event) => setMonthFilter(event.target.value)}
+                  />
+                </label>
+
+                <label>
+                  Date
+                  <input
+                    type="date"
+                    value={dateFilter}
+                    onChange={(event) => setDateFilter(event.target.value)}
+                  />
+                </label>
+
+                <label>
+                  Status
+                  <select
+                    value={statusFilter}
+                    onChange={(event) => setStatusFilter(event.target.value)}
+                  >
+                    <option value="ALL">All</option>
+                    <option value="APPROVED">Approved</option>
+                    <option value="REJECTED">Rejected</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="CANCELLED">Cancelled</option>
+                  </select>
+                </label>
+              </div>
+
+              <ul className="list-clean student-booking-history-list">
+                {filteredBookings.length ? (
+                  filteredBookings.map((booking) => (
+                    <li key={booking.id} className="student-booking-history-card">
+                      <div className="student-booking-history-top">
+                        <strong>{booking.buildingName} | Floor {booking.floorNumber} | {booking.roomNumber}</strong>
+                        <span className={`student-booking-status-badge student-booking-status-${statusTone(booking.status)}`}>
+                          {booking.status}
+                        </span>
+                      </div>
+                      <p>{booking.bookingDate} | {booking.startTime} - {booking.endTime}</p>
+                    </li>
+                  ))
+                ) : (
+                  <li>No bookings match the selected filters.</li>
+                )}
+              </ul>
+            </>
           )}
         </article>
       </section>

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import StudentPortalShell from "../components/StudentPortalShell";
+import { useAuth } from "../context/useAuth";
 import heroGraphic from "../assets/hero.png";
 import supportIllustration from "../assets/support-illustration.svg";
 
@@ -46,12 +47,16 @@ const recentActivity = [
 ];
 
 function StudentDashboard() {
+  const { user } = useAuth();
+  const fullName = user?.fullName?.trim() || "Student";
+  const firstName = fullName.split(/\s+/)[0] || "Student";
+
   return (
     <StudentPortalShell activeKey="home">
       <section className="student-modern-hero-card">
         <div className="student-modern-hero-copy">
           <p className="student-modern-section-label">Dashboard</p>
-          <h2>Welcome back, <span>Jane</span></h2>
+          <h2>Welcome back, <span>{firstName}</span></h2>
           <p>
             Check due books, review notifications, and move quickly to support whenever you need help.
           </p>
@@ -103,7 +108,7 @@ function StudentDashboard() {
           <div className="student-modern-workspace-body">
             <div className="student-modern-feature-card student-modern-feature-card-primary">
               <h4>Profile Snapshot</h4>
-              <p>Jane Student</p>
+              <p>{fullName}</p>
               <span>Information Technology</span>
             </div>
             <div className="student-modern-feature-card">
