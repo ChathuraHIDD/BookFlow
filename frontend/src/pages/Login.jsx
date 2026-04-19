@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import PortalLayout from "../components/PortalLayout";
 import { useAuth } from "../context/useAuth";
 import { profilePathByRole } from "../utils/role";
+import "./Login.css";
 
 function Login() {
   const navigate = useNavigate();
@@ -33,42 +33,76 @@ function Login() {
   }
 
   return (
-    <PortalLayout
-      title="Welcome Back"
-      subtitle="Sign in with your email address and password to access your role dashboard."
-    >
-      <form className="form-grid" onSubmit={onSubmit}>
-        <label>
-          Email Address
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-          />
-        </label>
+    <div className="login-view">
+      <div className="login-card-shell">
+        <section className="login-hero-panel" aria-label="Welcome message">
+          <div className="login-hero-overlay" />
+          <div className="login-hero-content">
+            <h1>Welcome Back.</h1>
+            <p>
+              Sign in to BookFlow and continue managing facility bookings, support
+              requests, and your library dashboard.
+            </p>
+          </div>
+        </section>
 
-        <label>
-          Password
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-          />
-        </label>
+        <section className="login-form-panel" aria-label="Login form">
+          <div className="login-form-wrap">
+            <h2>Log in</h2>
 
-        {error ? <p className="error-text">{error}</p> : null}
+            <button className="google-auth-btn" type="button">
+              <span aria-hidden="true">G</span>
+              Use Google Account
+            </button>
 
-        <button className="solid-btn full-width" type="submit" disabled={submitting}>
-          {submitting ? "Signing In..." : "Login"}
-        </button>
+            <div className="divider-row" aria-hidden="true">
+              <span />
+              <em>or</em>
+              <span />
+            </div>
 
-        <p className="helper-text">
-          New to BookFlow? <Link to="/register">Create account</Link>
-        </p>
-      </form>
-    </PortalLayout>
+            <form className="login-form-grid" onSubmit={onSubmit}>
+              <label>
+                Email
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="Enter your email"
+                  required
+                />
+              </label>
+
+              <label>
+                Password
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Enter your password"
+                  required
+                />
+              </label>
+
+              {error ? <p className="error-text">{error}</p> : null}
+
+              <button className="login-submit-btn" type="submit" disabled={submitting}>
+                {submitting ? "Signing In..." : "Log in"}
+              </button>
+            </form>
+
+            <div className="login-footnote-row">
+              <button className="link-look-btn" type="button">
+                Forgot password?
+              </button>
+              <p>
+                Don't have an account? <Link to="/register">Sign Up</Link>
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }
 

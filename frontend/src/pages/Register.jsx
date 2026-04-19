@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import PortalLayout from "../components/PortalLayout";
 import { useAuth } from "../context/useAuth";
 import { profilePathByRole, ROLE_OPTIONS } from "../utils/role";
+import "./Register.css";
 
 const CENTER_OPTIONS = [
   { value: "COLOMBO_CENTER", label: "Colombo Center" },
@@ -88,140 +88,160 @@ function Register() {
   }
 
   return (
-    <PortalLayout
-      title="Create Your Account"
-      subtitle="Role-based registration for students, librarians, admins, and staff members."
-    >
-      <form className="form-grid" onSubmit={onSubmit}>
-        <label>
-          Role
-          <select
-            value={form.role}
-            onChange={(event) => updateField("role", event.target.value)}
-          >
-            {ROLE_OPTIONS.map((role) => (
-              <option key={role.value} value={role.value}>
-                {role.label}
-              </option>
-            ))}
-          </select>
-        </label>
+    <div className="register-view">
+      <div className="register-card-shell">
+        <section className="register-hero-panel" aria-label="Registration intro">
+          <div className="register-hero-overlay" />
+          <div className="register-hero-content">
+            <h1>Create Account.</h1>
+            <p>
+              Join BookFlow to reserve facilities, submit support requests, and
+              manage your academic activities from one place.
+            </p>
+          </div>
+        </section>
 
-        <label>
-          Full Name
-          <input
-            type="text"
-            value={form.fullName}
-            onChange={(event) => updateField("fullName", event.target.value)}
-            required
-          />
-        </label>
+        <section className="register-form-panel" aria-label="Register form">
+          <div className="register-form-wrap">
+            <h2>Register</h2>
 
-        <label>
-          Email Address
-          <input
-            type="email"
-            value={form.email}
-            onChange={(event) => updateField("email", event.target.value)}
-            required
-          />
-        </label>
+            <form className="register-form-grid" onSubmit={onSubmit}>
+              <label>
+                Role
+                <select
+                  value={form.role}
+                  onChange={(event) => updateField("role", event.target.value)}
+                >
+                  {ROLE_OPTIONS.map((role) => (
+                    <option key={role.value} value={role.value}>
+                      {role.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-        <label>
-          Password
-          <input
-            type="password"
-            value={form.password}
-            onChange={(event) => updateField("password", event.target.value)}
-            minLength={6}
-            required
-          />
-        </label>
+              <label>
+                Full Name
+                <input
+                  type="text"
+                  value={form.fullName}
+                  onChange={(event) => updateField("fullName", event.target.value)}
+                  placeholder="Enter your full name"
+                  required
+                />
+              </label>
 
-        {needsStudentLikeFields ? (
-          <label>
-            Telephone
-            <input
-              type="tel"
-              value={form.telephone}
-              onChange={(event) => updateField("telephone", event.target.value)}
-              required
-            />
-          </label>
-        ) : null}
+              <label className="register-field-wide">
+                Email Address
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(event) => updateField("email", event.target.value)}
+                  placeholder="Enter your email"
+                  required
+                />
+              </label>
 
-        {isStudent ? (
-          <label>
-            Campus Year
-            <select
-              value={form.campusYear}
-              onChange={(event) => updateField("campusYear", event.target.value)}
-            >
-              {CAMPUS_YEAR_OPTIONS.map((year) => (
-                <option key={year.value} value={year.value}>
-                  {year.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
+              <label className="register-field-wide">
+                Password
+                <input
+                  type="password"
+                  value={form.password}
+                  onChange={(event) => updateField("password", event.target.value)}
+                  placeholder="Minimum 6 characters"
+                  minLength={6}
+                  required
+                />
+              </label>
 
-        {isStudent ? (
-          <label>
-            Semester
-            <select
-              value={form.semester}
-              onChange={(event) => updateField("semester", Number(event.target.value))}
-            >
-              <option value={1}>1</option>
-              <option value={2}>2</option>
-            </select>
-          </label>
-        ) : null}
+              {needsStudentLikeFields ? (
+                <label>
+                  Telephone
+                  <input
+                    type="tel"
+                    value={form.telephone}
+                    onChange={(event) => updateField("telephone", event.target.value)}
+                    placeholder="Enter your phone number"
+                    required
+                  />
+                </label>
+              ) : null}
 
-        {needsStudentLikeFields ? (
-          <label>
-            Center
-            <select
-              value={form.center}
-              onChange={(event) => updateField("center", event.target.value)}
-            >
-              {CENTER_OPTIONS.map((center) => (
-                <option key={center.value} value={center.value}>
-                  {center.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
+              {isStudent ? (
+                <label>
+                  Campus Year
+                  <select
+                    value={form.campusYear}
+                    onChange={(event) => updateField("campusYear", event.target.value)}
+                  >
+                    {CAMPUS_YEAR_OPTIONS.map((year) => (
+                      <option key={year.value} value={year.value}>
+                        {year.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
 
-        {needsStudentLikeFields ? (
-          <label>
-            Degree Program
-            <select
-              value={form.degreeProgram}
-              onChange={(event) => updateField("degreeProgram", event.target.value)}
-            >
-              {DEGREE_OPTIONS.map((degree) => (
-                <option key={degree} value={degree}>
-                  {degree}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
+              {isStudent ? (
+                <label>
+                  Semester
+                  <select
+                    value={form.semester}
+                    onChange={(event) => updateField("semester", Number(event.target.value))}
+                  >
+                    <option value={1}>1</option>
+                    <option value={2}>2</option>
+                  </select>
+                </label>
+              ) : null}
 
-        {error ? <p className="error-text">{error}</p> : null}
+              {needsStudentLikeFields ? (
+                <label>
+                  Center
+                  <select
+                    value={form.center}
+                    onChange={(event) => updateField("center", event.target.value)}
+                  >
+                    {CENTER_OPTIONS.map((center) => (
+                      <option key={center.value} value={center.value}>
+                        {center.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
 
-        <button className="solid-btn full-width" type="submit" disabled={submitting}>
-          {submitting ? "Creating Account..." : "Register"}
-        </button>
+              {needsStudentLikeFields ? (
+                <label>
+                  Degree Program
+                  <select
+                    value={form.degreeProgram}
+                    onChange={(event) => updateField("degreeProgram", event.target.value)}
+                  >
+                    {DEGREE_OPTIONS.map((degree) => (
+                      <option key={degree} value={degree}>
+                        {degree}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
 
-        <p className="helper-text">
-          Already have an account? <Link to="/login">Login</Link>
-        </p>
-      </form>
-    </PortalLayout>
+              {error ? <p className="error-text">{error}</p> : null}
+
+              <button className="register-submit-btn" type="submit" disabled={submitting}>
+                {submitting ? "Creating Account..." : "Register"}
+              </button>
+            </form>
+
+            <p className="register-helper-text">
+              Already have an account? <Link to="/login">Log in</Link>
+            </p>
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }
 

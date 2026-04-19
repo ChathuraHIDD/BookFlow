@@ -1,0 +1,223 @@
+.register-view {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(26, 89, 188, 0.3), transparent 35%),
+    radial-gradient(circle at 84% 90%, rgba(9, 47, 131, 0.2), transparent 38%),
+    #0a2f87;
+}
+
+.register-card-shell {
+  width: min(1220px, 100%);
+  min-height: 720px;
+  display: grid;
+  grid-template-columns: 1.08fr 1fr;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 28px 68px rgba(4, 26, 86, 0.42);
+}
+
+.register-hero-panel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 56px;
+  color: #ffffff;
+  background:
+    linear-gradient(135deg, rgba(12, 76, 194, 0.96), rgba(8, 53, 155, 0.94) 58%, rgba(6, 32, 108, 0.95)),
+    repeating-linear-gradient(
+      148deg,
+      rgba(255, 255, 255, 0.08) 0,
+      rgba(255, 255, 255, 0.08) 2px,
+      transparent 2px,
+      transparent 18px
+    );
+  clip-path: polygon(0 0, 88% 0, 62% 100%, 0% 100%);
+}
+
+.register-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 16% 80%, rgba(0, 9, 74, 0.42), transparent 52%),
+    radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.18), transparent 45%);
+  pointer-events: none;
+}
+
+.register-hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 440px;
+}
+
+.register-hero-content h1 {
+  margin: 0;
+  font-size: clamp(2.3rem, 4.1vw, 3.8rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: #f9fbff;
+}
+
+.register-hero-content p {
+  margin-top: 20px;
+  color: rgba(235, 243, 255, 0.94);
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 370px;
+}
+
+.register-form-panel {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  padding: 30px 30px;
+  background: #ffffff;
+}
+
+.register-form-wrap {
+  width: min(540px, 100%);
+}
+
+.register-form-wrap h2 {
+  margin: 0 0 14px;
+  font-size: 2rem;
+  color: #10439d;
+}
+
+.register-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.register-form-grid label {
+  display: grid;
+  gap: 7px;
+  color: #27467d;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.register-form-grid .register-field-wide {
+  grid-column: span 2;
+}
+
+.register-form-grid input,
+.register-form-grid select {
+  border: 1px solid #d8dfec;
+  background: #ffffff;
+  border-radius: 2px;
+  padding: 11px 12px;
+  font-size: 0.95rem;
+  color: #12366d;
+  min-height: 42px;
+}
+
+.register-form-grid input::placeholder {
+  color: #9caac0;
+}
+
+.register-form-grid input:focus,
+.register-form-grid select:focus {
+  outline: 2px solid rgba(39, 84, 176, 0.2);
+  border-color: #2e66c6;
+}
+
+.register-form-grid .error-text,
+.register-form-grid .register-submit-btn {
+  grid-column: span 2;
+}
+
+.error-text {
+  margin: 0;
+  color: #bc2d4c;
+  font-weight: 600;
+}
+
+.register-submit-btn {
+  margin-top: 2px;
+  width: 100%;
+  border: none;
+  border-radius: 2px;
+  padding: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(90deg, #09439f, #2b72d9);
+  cursor: pointer;
+  transition: filter 0.2s ease, transform 0.2s ease;
+}
+
+.register-submit-btn:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.register-submit-btn:disabled {
+  opacity: 0.75;
+  cursor: default;
+  transform: none;
+}
+
+.register-helper-text {
+  margin-top: 14px;
+  color: #6f82a5;
+  font-size: 0.88rem;
+}
+
+.register-helper-text a {
+  color: #0f46a2;
+  font-weight: 700;
+}
+
+.register-helper-text a:hover {
+  color: #0f46a2;
+  text-decoration: underline;
+}
+
+@media (max-width: 1040px) {
+  .register-view {
+    padding: 16px;
+  }
+
+  .register-card-shell {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .register-hero-panel {
+    min-height: 300px;
+    clip-path: polygon(0 0, 100% 0, 100% 86%, 0 100%);
+    padding: 36px 28px;
+  }
+
+  .register-hero-content p {
+    max-width: none;
+  }
+
+  .register-form-panel {
+    padding: 24px 18px 30px;
+  }
+}
+
+@media (max-width: 680px) {
+  .register-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .register-form-grid label,
+  .register-form-grid .register-field-wide,
+  .register-form-grid .error-text,
+  .register-form-grid .register-submit-btn {
+    grid-column: span 1;
+  }
+
+  .register-form-wrap h2 {
+    font-size: 1.7rem;
+  }
+
+  .register-hero-content h1 {
+    font-size: 2.1rem;
+  }
+}
