@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
-import { profilePathByRole, ROLE_OPTIONS } from "../utils/role";
+import { homePathByRole, ROLE_OPTIONS } from "../utils/role";
 import "./Register.css";
 
 const CENTER_OPTIONS = [
@@ -75,7 +75,7 @@ function Register() {
 
     try {
       const user = await register(payload);
-      navigate(profilePathByRole(user.role));
+      navigate(homePathByRole(user.role));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -84,7 +84,7 @@ function Register() {
   };
 
   if (ready && isAuthenticated) {
-    return <Navigate to={profilePathByRole(user.role)} replace />;
+    return <Navigate to={homePathByRole(user.role)} replace />;
   }
 
   return (

@@ -18,7 +18,7 @@ import StudentSupport from "./pages/StudentSupport";
 import StudentSupportRaise from "./pages/StudentSupportRaise";
 import StudentSupportTicket from "./pages/StudentSupportTicket";
 import UserProfile from "./pages/UserProfile";
-import { profilePathByRole } from "./utils/role";
+import { homePathByRole } from "./utils/role";
 
 function RoleHomeRedirect() {
   const { ready, isAuthenticated, user } = useAuth();
@@ -31,7 +31,7 @@ function RoleHomeRedirect() {
     return <Navigate to="/login" replace />;
   }
 
-  return <Navigate to={profilePathByRole(user.role)} replace />;
+  return <Navigate to={homePathByRole(user.role)} replace />;
 }
 
 function App() {

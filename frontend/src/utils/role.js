@@ -37,6 +37,21 @@ export const profilePathByRole = (role) => {
   }
 };
 
+export const homePathByRole = (role) => {
+  switch (normalizeRole(role)) {
+    case "student":
+      return "/student/dashboard";
+    case "staff_member":
+      return "/staff/profile";
+    case "admin":
+      return "/admin/users";
+    case "librarian":
+      return "/librarian/profile";
+    default:
+      return "/login";
+  }
+};
+
 export const isStudentLikeRole = (role) => {
   const normalized = normalizeRole(role);
   return normalized === "student" || normalized === "staff_member";

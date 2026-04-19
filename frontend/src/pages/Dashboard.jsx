@@ -1,6 +1,6 @@
 import { Navigate, Link } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
-import { profilePathByRole } from "../utils/role";
+import { homePathByRole } from "../utils/role";
 
 const services = [
   {
@@ -39,7 +39,7 @@ function Dashboard() {
   const { user, ready, isAuthenticated } = useAuth();
 
   if (ready && isAuthenticated) {
-    return <Navigate to={profilePathByRole(user.role)} replace />;
+    return <Navigate to={homePathByRole(user.role)} replace />;
   }
 
   return (

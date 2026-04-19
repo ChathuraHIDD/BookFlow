@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
-import { profilePathByRole } from "../utils/role";
+import { homePathByRole } from "../utils/role";
 import "./Login.css";
 
 function Login() {
@@ -20,7 +20,7 @@ function Login() {
 
     try {
       const user = await login(email, password);
-      navigate(profilePathByRole(user.role));
+      navigate(homePathByRole(user.role));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -29,7 +29,7 @@ function Login() {
   };
 
   if (ready && isAuthenticated) {
-    return <Navigate to={profilePathByRole(user.role)} replace />;
+    return <Navigate to={homePathByRole(user.role)} replace />;
   }
 
   return (
