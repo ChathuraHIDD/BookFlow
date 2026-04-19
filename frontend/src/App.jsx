@@ -9,6 +9,10 @@ import LibrarianProfile from "./pages/LibrarianProfile";
 import Login from "./pages/Login";
 import NotificationPanel from "./pages/NotificationPanel";
 import Register from "./pages/Register";
+import StudentDashboard from "./pages/StudentDashboard";
+import StudentSupport from "./pages/StudentSupport";
+import StudentSupportRaise from "./pages/StudentSupportRaise";
+import StudentSupportTicket from "./pages/StudentSupportTicket";
 import UserProfile from "./pages/UserProfile";
 import { profilePathByRole } from "./utils/role";
 
@@ -44,6 +48,15 @@ function App() {
       />
 
       <Route
+        path="/student/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/staff/profile"
         element={
           <ProtectedRoute allowedRoles={["staff_member"]}>
@@ -57,6 +70,33 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["student", "staff_member"]}>
             <NotificationPanel />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/student/support"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentSupport />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/student/support/raise"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentSupportRaise />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/student/support/:id"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentSupportTicket />
           </ProtectedRoute>
         }
       />
