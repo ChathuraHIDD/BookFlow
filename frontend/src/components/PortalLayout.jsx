@@ -33,7 +33,7 @@ function PortalLayout({
     <div className={`page-wrap app-shell-page ${pageClassName}`.trim()}>
       <header className="top-bar">
         <Link className="brand" to="/">
-          NNIC Smart Resource Platform
+          <img src="/nnic-logo-icon.png" alt="NNIC logo" className="brand-logo" />
         </Link>
 
         {headerContent ? (

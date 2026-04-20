@@ -287,9 +287,7 @@ function StudentPortalShell({ activeKey = "home", children }) {
       <section className="student-modern-dashboard">
         <aside className="student-modern-sidebar">
           <div className="student-modern-brand-mark">
-            <span className="student-modern-brand-dot student-modern-brand-dot-pink" />
-            <span className="student-modern-brand-dot student-modern-brand-dot-blue" />
-            <span className="student-modern-brand-text">Student Hub</span>
+            <img src="/nnic-logo-icon.png" alt="NNIC logo" className="student-modern-brand-logo" />
           </div>
 
           <nav className="student-modern-sidebar-nav" aria-label="Student navigation">

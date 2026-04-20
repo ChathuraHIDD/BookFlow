@@ -57,7 +57,9 @@ function AdminProfile() {
 
       <section className="admin-vision-layout">
         <aside className="admin-vision-sidebar">
-          <div className="admin-vision-brand">NNIC Admin</div>
+          <div className="admin-vision-brand">
+            <img src="/nnic-logo-icon.png" alt="NNIC logo" className="admin-vision-brand-logo" />
+          </div>
           <nav className="admin-vision-nav" aria-label="Admin quick menu">
             <NavLink to="/admin/profile" className="admin-vision-link">
               Dashboard
