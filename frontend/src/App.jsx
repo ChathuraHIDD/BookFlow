@@ -4,6 +4,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/useAuth";
 import AdminProfile from "./pages/AdminProfile";
 import AdminFacilities from "./pages/AdminFacilities";
+import AdminNotifications from "./pages/AdminNotifications";
+import AdminBookingManagement from "./pages/AdminBookingManagement";
+import AdminTicketManagement from "./pages/AdminTicketManagement";
 import AdminUserManagement from "./pages/AdminUserManagement";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
@@ -174,6 +177,33 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <AdminFacilities />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/tickets"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminTicketManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/bookings"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminBookingManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/notifications"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminNotifications />
           </ProtectedRoute>
         }
       />

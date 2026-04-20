@@ -68,6 +68,21 @@ function PortalLayout({
                 Facilities
               </NavLink>
             ) : null}
+            {role === "admin" ? (
+              <NavLink className={topLinkClassName} to="/admin/tickets" end>
+                Ticket Management
+              </NavLink>
+            ) : null}
+            {role === "admin" ? (
+              <NavLink className={topLinkClassName} to="/admin/bookings" end>
+                Booking Management
+              </NavLink>
+            ) : null}
+            {role === "admin" ? (
+              <NavLink className={topLinkClassName} to="/admin/notifications" end>
+                Notifications
+              </NavLink>
+            ) : null}
             <button className="ghost-btn" type="button" onClick={onLogout}>
               Logout
             </button>

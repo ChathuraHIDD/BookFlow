@@ -20,6 +20,11 @@ import com.bookflow.backend.profile.model.ProfileUpdateRequest;
 @Service
 public class NotificationService {
 
+    private static final String USER_MANAGEMENT = "USER_MANAGEMENT";
+    private static final String RESOURCE_MANAGEMENT = "RESOURCE_MANAGEMENT";
+    private static final String TICKET_MANAGEMENT = "TICKET_MANAGEMENT";
+    private static final String BOOKING_MANAGEMENT = "BOOKING_MANAGEMENT";
+
     private final UserNotificationRepository notificationRepository;
     private final UserRepository userRepository;
 
@@ -73,6 +78,7 @@ public class NotificationService {
                 booking.getBookingDate() != null ? booking.getBookingDate().toString() : "the selected date",
                 booking.getStartTime() != null ? booking.getStartTime().toString() : "start",
                 booking.getEndTime() != null ? booking.getEndTime().toString() : "end"));
+        notification.setCategory(BOOKING_MANAGEMENT);
         notification.setCreatedAt(Instant.now());
         notificationRepository.save(notification);
     }
@@ -91,6 +97,7 @@ public class NotificationService {
                 booking.getBookingDate() != null ? booking.getBookingDate().toString() : "the selected date",
                 booking.getStartTime() != null ? booking.getStartTime().toString() : "start",
                 booking.getEndTime() != null ? booking.getEndTime().toString() : "end"));
+        notification.setCategory(BOOKING_MANAGEMENT);
         notification.setCreatedAt(Instant.now());
         notificationRepository.save(notification);
     }
@@ -120,6 +127,10 @@ public class NotificationService {
     }
 
     public void notifyUser(String userId, String title, String message) {
+        notifyUser(userId, title, message, inferCategory(title, message));
+    }
+
+    public void notifyUser(String userId, String title, String message, String category) {
         if (userId == null || userId.isBlank()) {
             return;
         }
@@ -128,6 +139,7 @@ public class NotificationService {
         notification.setUserId(userId);
         notification.setTitle(title);
         notification.setMessage(message);
+        notification.setCategory(normalizeCategory(category));
         notification.setRead(false);
         notification.setReadAt(null);
         notification.setCreatedAt(Instant.now());
@@ -135,7 +147,13 @@ public class NotificationService {
     }
 
     public void notifyAdmins(String title, String message) {
-        userRepository.findAllByRole(UserRole.ADMIN).forEach(admin -> notifyUser(admin.getId(), title, message));
+        notifyAdmins(title, message, inferCategory(title, message));
+    }
+
+    public void notifyAdmins(String title, String message, String category) {
+        String normalizedCategory = normalizeCategory(category);
+        userRepository.findAllByRole(UserRole.ADMIN)
+                .forEach(admin -> notifyUser(admin.getId(), title, message, normalizedCategory));
     }
 
     private NotificationResponse toResponse(UserNotification notification) {
@@ -144,6 +162,7 @@ public class NotificationService {
                 notification.getTitle(),
                 notification.getMessage(),
                 notification.getCreatedAt() != null ? notification.getCreatedAt().toString() : "",
+                normalizeCategory(notification.getCategory(), notification.getTitle(), notification.getMessage()),
                 notification.isRead());
     }
 
@@ -159,5 +178,44 @@ public class NotificationService {
 
     private String defaultText(String value, String fallback) {
         return value != null && !value.isBlank() ? value : fallback;
+    }
+
+    private String normalizeCategory(String category) {
+        if (category == null || category.isBlank()) {
+            return RESOURCE_MANAGEMENT;
+        }
+
+        return switch (category.trim().toUpperCase()) {
+            case USER_MANAGEMENT -> USER_MANAGEMENT;
+            case RESOURCE_MANAGEMENT -> RESOURCE_MANAGEMENT;
+            case TICKET_MANAGEMENT -> TICKET_MANAGEMENT;
+            case BOOKING_MANAGEMENT -> BOOKING_MANAGEMENT;
+            default -> RESOURCE_MANAGEMENT;
+        };
+    }
+
+    private String normalizeCategory(String category, String title, String message) {
+        if (category == null || category.isBlank()) {
+            return inferCategory(title, message);
+        }
+        return normalizeCategory(category);
+    }
+
+    private String inferCategory(String title, String message) {
+        String text = (defaultText(title, "") + " " + defaultText(message, "")).toLowerCase();
+
+        if (text.contains("profile") || text.contains("user") || text.contains("account")) {
+            return USER_MANAGEMENT;
+        }
+
+        if (text.contains("ticket") || text.contains("support") || text.contains("issue")) {
+            return TICKET_MANAGEMENT;
+        }
+
+        if (text.contains("booking") || text.contains("reservation") || text.contains("slot")) {
+            return BOOKING_MANAGEMENT;
+        }
+
+        return RESOURCE_MANAGEMENT;
     }
 }

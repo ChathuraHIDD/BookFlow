@@ -68,7 +68,13 @@ function AdminProfile() {
             <NavLink to="/admin/facilities" className="admin-vision-link">
               Facilities
             </NavLink>
-            <NavLink to="/notifications" className="admin-vision-link">
+            <NavLink to="/admin/tickets" className="admin-vision-link">
+              Ticket Management
+            </NavLink>
+            <NavLink to="/admin/bookings" className="admin-vision-link">
+              Booking Management
+            </NavLink>
+            <NavLink to="/admin/notifications" className="admin-vision-link">
               Notifications
             </NavLink>
           </nav>

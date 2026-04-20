@@ -19,6 +19,8 @@ public class UserNotification {
 
     private String message;
 
+    private String category;
+
     private boolean read;
 
     private Instant readAt;
@@ -55,6 +57,14 @@ public class UserNotification {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 
     public boolean isRead() {

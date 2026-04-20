@@ -972,6 +972,14 @@ th {
   .admin-user-list-row-actions {
     justify-content: flex-start;
   }
+
+  .admin-notification-category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-notification-item {
+    flex-direction: column;
+  }
 }
 
 .student-home-banner {
@@ -1850,6 +1858,101 @@ th {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.admin-notification-toolbar-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-notification-category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-notification-category-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  text-align: left;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 250, 255, 0.96));
+  display: grid;
+  gap: 6px;
+  color: var(--ink);
+}
+
+.admin-notification-category-card strong {
+  color: var(--navy-900);
+}
+
+.admin-notification-category-card span {
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+}
+
+.admin-notification-category-card em {
+  color: var(--navy-700);
+  font-style: normal;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.admin-notification-category-card-active {
+  border-color: #9bb9ea;
+  background: linear-gradient(180deg, #dfeafe, #cfe1fc);
+}
+
+.admin-notification-list-clean {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.admin-notification-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  background: #fbfcff;
+}
+
+.admin-notification-item-unread {
+  border-left: 4px solid #2f63b0;
+  background: #f4f8ff;
+}
+
+.admin-notification-copy {
+  display: grid;
+  gap: 5px;
+}
+
+.admin-notification-copy strong {
+  color: var(--navy-900);
+}
+
+.admin-notification-copy span,
+.admin-notification-copy small {
+  color: var(--ink-soft);
+}
+
+.admin-notification-item-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-notification-empty {
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  color: var(--ink-soft);
 }
 
 .student-modern-header-avatar {
