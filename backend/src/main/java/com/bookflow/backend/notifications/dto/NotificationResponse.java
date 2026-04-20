@@ -4,5 +4,6 @@ public record NotificationResponse(
         String id,
         String title,
         String message,
-        String createdAt) {
+        String createdAt,
+        boolean read) {
 }

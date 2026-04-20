@@ -3,7 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 
 import PortalLayout from "./PortalLayout";
 import { useAuth } from "../context/useAuth";
-import { fetchMyNotifications } from "../services/notifications";
+import {
+  clearAllNotifications,
+  deleteNotification,
+  fetchMyNotifications,
+  fetchMyUnreadCount,
+  markNotificationAsRead,
+} from "../services/notifications";
 
 const sidebarItems = [
   { key: "home", icon: "H", label: "Home", to: "/student/dashboard" },
@@ -20,6 +26,7 @@ function StudentPortalShell({ activeKey = "home", children }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [recentNotifications, setRecentNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const menuRef = useRef(null);
   const notificationsRef = useRef(null);
   const fullName = user?.fullName?.trim() || "Jane Student";
@@ -76,17 +83,70 @@ function StudentPortalShell({ activeKey = "home", children }) {
   };
 
   useEffect(() => {
+    let active = true;
+
     const loadRecentNotifications = async () => {
       try {
-        const data = await fetchMyNotifications();
-        setRecentNotifications(data.slice(0, 3));
+        const [data, count] = await Promise.all([
+          fetchMyNotifications(),
+          fetchMyUnreadCount(),
+        ]);
+        if (active) {
+          setRecentNotifications(data.slice(0, 5));
+          setUnreadCount(count);
+        }
       } catch {
-        setRecentNotifications([]);
+        if (active) {
+          setRecentNotifications([]);
+          setUnreadCount(0);
+        }
       }
     };
 
     loadRecentNotifications();
+
+    const intervalId = window.setInterval(loadRecentNotifications, 15000);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+    };
   }, []);
+
+  const onMarkRead = async (notificationId) => {
+    try {
+      await markNotificationAsRead(notificationId);
+      setRecentNotifications((prev) =>
+        prev.map((item) => (item.id === notificationId ? { ...item, read: true } : item))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch {
+      // Keep UI stable even if action fails; next poll will re-sync.
+    }
+  };
+
+  const onDeleteNotification = async (notificationId) => {
+    const target = recentNotifications.find((item) => item.id === notificationId);
+    try {
+      await deleteNotification(notificationId);
+      setRecentNotifications((prev) => prev.filter((item) => item.id !== notificationId));
+      if (target && !target.read) {
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
+    } catch {
+      // Keep UI stable even if action fails; next poll will re-sync.
+    }
+  };
+
+  const onClearAllNotifications = async () => {
+    try {
+      await clearAllNotifications();
+      setRecentNotifications([]);
+      setUnreadCount(0);
+    } catch {
+      // Keep UI stable even if action fails; next poll will re-sync.
+    }
+  };
 
   return (
     <PortalLayout
@@ -112,21 +172,57 @@ function StudentPortalShell({ activeKey = "home", children }) {
                 <path d="M12 3a5 5 0 0 0-5 5v2.43c0 .85-.34 1.67-.94 2.27L4.3 14.46A1 1 0 0 0 5 16h14a1 1 0 0 0 .7-1.71l-1.76-1.76a3.2 3.2 0 0 1-.94-2.27V8a5 5 0 0 0-5-5Z" />
                 <path d="M9.5 18a2.5 2.5 0 0 0 5 0" />
               </svg>
+              {unreadCount > 0 ? (
+                <span className="student-modern-notification-badge" aria-label={`${unreadCount} unread notifications`}>
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              ) : null}
             </button>
 
             <div className="student-modern-notification-dropdown" role="menu" aria-label="Recent notifications">
               <div className="student-modern-notification-head">
                 <strong>Notifications</strong>
-                <span>Latest updates</span>
+                <span>{unreadCount} unread</span>
               </div>
 
               <ul className="student-modern-notification-list">
                 {recentNotifications.length ? recentNotifications.map((note) => (
-                  <li key={note.id} className="student-modern-notification-item">
-                    {note.message}
+                  <li key={note.id} className={`student-modern-notification-item${note.read ? "" : " student-modern-notification-item-unread"}`}>
+                    <div className="student-modern-notification-content">
+                      <strong>{note.title}</strong>
+                      <span>{note.message}</span>
+                    </div>
+                    <div className="student-modern-notification-item-actions">
+                      {!note.read ? (
+                        <button
+                          className="student-modern-notification-action"
+                          type="button"
+                          onClick={() => onMarkRead(note.id)}
+                        >
+                          Mark as read
+                        </button>
+                      ) : null}
+                      <button
+                        className="student-modern-notification-action student-modern-notification-action-delete"
+                        type="button"
+                        onClick={() => onDeleteNotification(note.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </li>
                 )) : <li className="student-modern-notification-item">No new notifications.</li>}
               </ul>
+
+              {recentNotifications.length ? (
+                <button
+                  className="student-modern-notification-clear-btn"
+                  type="button"
+                  onClick={onClearAllNotifications}
+                >
+                  Clear all
+                </button>
+              ) : null}
 
               <button
                 className="student-modern-notification-link"

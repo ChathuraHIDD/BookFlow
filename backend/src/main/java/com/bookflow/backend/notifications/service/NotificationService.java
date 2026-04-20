@@ -3,9 +3,12 @@ package com.bookflow.backend.notifications.service;
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.bookflow.backend.auth.model.User;
+import com.bookflow.backend.auth.dto.MessageResponse;
 import com.bookflow.backend.auth.model.UserRole;
 import com.bookflow.backend.auth.repository.UserRepository;
 import com.bookflow.backend.facilities.model.FacilityBooking;
@@ -29,6 +32,31 @@ public class NotificationService {
         return notificationRepository.findByUserIdOrderByCreatedAtDesc(user.getId()).stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    public long myUnreadCount(User user) {
+        return notificationRepository.countByUserIdAndReadIsFalse(user.getId());
+    }
+
+    public NotificationResponse markAsRead(User user, String notificationId) {
+        UserNotification notification = getOwnedNotification(user, notificationId);
+        if (!notification.isRead()) {
+            notification.setRead(true);
+            notification.setReadAt(Instant.now());
+            notification = notificationRepository.save(notification);
+        }
+        return toResponse(notification);
+    }
+
+    public MessageResponse deleteNotification(User user, String notificationId) {
+        UserNotification notification = getOwnedNotification(user, notificationId);
+        notificationRepository.delete(notification);
+        return new MessageResponse("Notification deleted");
+    }
+
+    public MessageResponse clearAll(User user) {
+        long deletedCount = notificationRepository.deleteByUserId(user.getId());
+        return new MessageResponse("Cleared " + deletedCount + " notifications");
     }
 
     public void notifyBookingApproved(FacilityBooking booking) {
@@ -100,6 +128,8 @@ public class NotificationService {
         notification.setUserId(userId);
         notification.setTitle(title);
         notification.setMessage(message);
+        notification.setRead(false);
+        notification.setReadAt(null);
         notification.setCreatedAt(Instant.now());
         notificationRepository.save(notification);
     }
@@ -113,7 +143,18 @@ public class NotificationService {
                 notification.getId(),
                 notification.getTitle(),
                 notification.getMessage(),
-                notification.getCreatedAt() != null ? notification.getCreatedAt().toString() : "");
+                notification.getCreatedAt() != null ? notification.getCreatedAt().toString() : "",
+                notification.isRead());
+    }
+
+    private UserNotification getOwnedNotification(User user, String notificationId) {
+        UserNotification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Notification not found"));
+
+        if (notification.getUserId() == null || !notification.getUserId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot modify this notification");
+        }
+        return notification;
     }
 
     private String defaultText(String value, String fallback) {
