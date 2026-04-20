@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.bookflow.backend.auth.dto.AuthResponse;
+import com.bookflow.backend.auth.dto.GoogleAuthRequest;
+import com.bookflow.backend.auth.dto.GoogleRegisterRequest;
 import com.bookflow.backend.auth.dto.LoginRequest;
 import com.bookflow.backend.auth.dto.RegisterRequest;
 import com.bookflow.backend.auth.dto.UserResponse;
@@ -25,11 +27,17 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
+    private final GoogleIdTokenVerifierService googleIdTokenVerifierService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, TokenService tokenService) {
+    public AuthService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            TokenService tokenService,
+            GoogleIdTokenVerifierService googleIdTokenVerifierService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
+        this.googleIdTokenVerifierService = googleIdTokenVerifierService;
     }
 
     public AuthResponse register(RegisterRequest request) {
@@ -65,12 +73,69 @@ public class AuthService {
         User user = userRepository.findByEmailIgnoreCase(request.email().trim())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password"));
 
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        if (isBlank(user.getPasswordHash()) || !passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
 
         String token = tokenService.generateToken(user.getId(), user.getRole());
         return new AuthResponse(token, UserResponse.from(user));
+    }
+
+    public AuthResponse loginWithGoogle(GoogleAuthRequest request) {
+        if (request == null || isBlank(request.idToken())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Google ID token is required");
+        }
+
+        GoogleIdTokenVerifierService.GoogleIdentity googleIdentity =
+                googleIdTokenVerifierService.verifyIdToken(request.idToken());
+
+        User user = userRepository.findByEmailIgnoreCase(googleIdentity.email())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                        "No account found for this Google email. Please register first."));
+
+        if (!isBlank(user.getGoogleSubject()) && !user.getGoogleSubject().equals(googleIdentity.subject())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Google account does not match this user");
+        }
+
+        if (isBlank(user.getGoogleSubject())) {
+            user.setGoogleSubject(googleIdentity.subject());
+            user = userRepository.save(user);
+        }
+
+        String token = tokenService.generateToken(user.getId(), user.getRole());
+        return new AuthResponse(token, UserResponse.from(user));
+    }
+
+    public AuthResponse registerWithGoogle(GoogleRegisterRequest request) {
+        if (request == null || isBlank(request.idToken())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Google ID token is required");
+        }
+        if (isBlank(request.role())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role is required");
+        }
+
+        GoogleIdTokenVerifierService.GoogleIdentity googleIdentity =
+                googleIdTokenVerifierService.verifyIdToken(request.idToken());
+
+        String normalizedEmail = googleIdentity.email().trim().toLowerCase();
+        if (userRepository.existsByEmailIgnoreCase(normalizedEmail)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered");
+        }
+
+        UserRole role = parseRole(request.role());
+        User user = new User();
+        user.setFullName(resolveName(googleIdentity.name(), normalizedEmail));
+        user.setEmail(normalizedEmail);
+        user.setPasswordHash(null);
+        user.setGoogleSubject(googleIdentity.subject());
+        user.setRole(role);
+        user.setCreatedAt(Instant.now());
+
+        applyRoleSpecificFieldsForGoogle(user, request, role);
+
+        User saved = userRepository.save(user);
+        String token = tokenService.generateToken(saved.getId(), saved.getRole());
+        return new AuthResponse(token, UserResponse.from(saved));
     }
 
     public Optional<User> resolveUserFromToken(String token) {
@@ -126,12 +191,38 @@ public class AuthService {
         }
     }
 
+    private void applyRoleSpecificFieldsForGoogle(User user, GoogleRegisterRequest request, UserRole role) {
+        switch (role) {
+            case STUDENT -> {
+                user.setTelephone(requireNonBlank(request.telephone(), "Telephone is required for students"));
+                user.setCampusYear(parseCampusYear(request.campusYear()));
+                user.setSemester(parseSemester(request.semester()));
+                user.setCenter(parseCenter(request.center()));
+                user.setDegreeProgram(parseDegreeProgram(request.degreeProgram()));
+            }
+            case STAFF_MEMBER -> {
+                user.setTelephone(requireNonBlank(request.telephone(), "Telephone is required for staff members"));
+                user.setCenter(parseCenter(request.center()));
+                user.setDegreeProgram(parseDegreeProgram(request.degreeProgram()));
+                user.setCampusYear(null);
+                user.setSemester(null);
+            }
+            case LIBRARIAN, ADMIN -> {
+                user.setTelephone(null);
+                user.setCampusYear(null);
+                user.setSemester(null);
+                user.setCenter(null);
+                user.setDegreeProgram(null);
+            }
+        }
+    }
+
     private UserRole parseRole(String rawRole) {
         try {
             return UserRole.fromValue(rawRole);
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Invalid role. Allowed: student, librarian, admin, staff member");
+                    "Invalid role. Allowed: student, admin, staff member");
         }
     }
 
@@ -174,6 +265,18 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
         }
         return value.trim();
+    }
+
+    private String resolveName(String googleName, String email) {
+        if (!isBlank(googleName)) {
+            return googleName.trim();
+        }
+
+        int index = email.indexOf('@');
+        if (index <= 0) {
+            return "Google User";
+        }
+        return email.substring(0, index);
     }
 
     private boolean isBlank(String value) {

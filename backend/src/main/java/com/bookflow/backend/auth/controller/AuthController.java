@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.bookflow.backend.auth.dto.AuthResponse;
+import com.bookflow.backend.auth.dto.GoogleAuthRequest;
+import com.bookflow.backend.auth.dto.GoogleRegisterRequest;
 import com.bookflow.backend.auth.dto.LoginRequest;
 import com.bookflow.backend.auth.dto.MessageResponse;
 import com.bookflow.backend.auth.dto.RegisterRequest;
@@ -37,6 +39,17 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponse login(@RequestBody LoginRequest request) {
         return authService.login(request);
+    }
+
+    @PostMapping("/google/login")
+    public AuthResponse googleLogin(@RequestBody GoogleAuthRequest request) {
+        return authService.loginWithGoogle(request);
+    }
+
+    @PostMapping("/google/register")
+    @ResponseStatus(HttpStatus.CREATED)
+    public AuthResponse googleRegister(@RequestBody GoogleRegisterRequest request) {
+        return authService.registerWithGoogle(request);
     }
 
     @GetMapping("/me")

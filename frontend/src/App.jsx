@@ -4,9 +4,11 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/useAuth";
 import AdminProfile from "./pages/AdminProfile";
 import AdminFacilities from "./pages/AdminFacilities";
+import AdminNotifications from "./pages/AdminNotifications";
+import AdminBookingManagement from "./pages/AdminBookingManagement";
+import AdminTicketManagement from "./pages/AdminTicketManagement";
 import AdminUserManagement from "./pages/AdminUserManagement";
 import Dashboard from "./pages/Dashboard";
-import LibrarianProfile from "./pages/LibrarianProfile";
 import Login from "./pages/Login";
 import NotificationPanel from "./pages/NotificationPanel";
 import Register from "./pages/Register";
@@ -180,10 +182,28 @@ function App() {
       />
 
       <Route
-        path="/librarian/profile"
+        path="/admin/tickets"
         element={
-          <ProtectedRoute allowedRoles={["librarian"]}>
-            <LibrarianProfile />
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminTicketManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/bookings"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminBookingManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/notifications"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminNotifications />
           </ProtectedRoute>
         }
       />

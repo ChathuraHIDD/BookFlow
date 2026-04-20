@@ -33,7 +33,7 @@ function PortalLayout({
     <div className={`page-wrap app-shell-page ${pageClassName}`.trim()}>
       <header className="top-bar">
         <Link className="brand" to="/">
-          BookFlow Library
+          NNIC Smart Resource Platform
         </Link>
 
         {headerContent ? (
@@ -66,6 +66,21 @@ function PortalLayout({
             {role === "admin" ? (
               <NavLink className={topLinkClassName} to="/admin/facilities" end>
                 Facilities
+              </NavLink>
+            ) : null}
+            {role === "admin" ? (
+              <NavLink className={topLinkClassName} to="/admin/tickets" end>
+                Ticket Management
+              </NavLink>
+            ) : null}
+            {role === "admin" ? (
+              <NavLink className={topLinkClassName} to="/admin/bookings" end>
+                Booking Management
+              </NavLink>
+            ) : null}
+            {role === "admin" ? (
+              <NavLink className={topLinkClassName} to="/admin/notifications" end>
+                Notifications
               </NavLink>
             ) : null}
             <button className="ghost-btn" type="button" onClick={onLogout}>

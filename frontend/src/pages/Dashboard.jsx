@@ -4,34 +4,34 @@ import { homePathByRole } from "../utils/role";
 
 const services = [
   {
-    title: "Smart Catalog Search",
+    title: "Smart Resource Discovery",
     description:
-      "Find books, journals, and learning resources in seconds with a clean search and filter experience.",
+      "Find classrooms, labs, learning spaces, and student resources in seconds with a clean search and filter experience.",
   },
   {
-    title: "Borrowing Made Easy",
+    title: "Smart Booking Workflow",
     description:
-      "Track active loans, due dates, and renewals from one central space built for students and staff.",
+      "Track active reservations, approvals, and schedules from one central space built for students and staff.",
   },
   {
-    title: "Library Support",
+    title: "Campus Support Center",
     description:
-      "Raise support requests, get status updates, and stay connected with the library team without delays.",
+      "Raise support requests, get status updates, and stay connected with campus operations teams without delays.",
   },
 ];
 
 const testimonials = [
   {
     quote:
-      "BookFlow gave our students one clear place to manage borrowing, notifications, and support without confusion.",
+      "NNIC Smart Resource and Management Platform gives our students one clear place to manage facilities, notifications, and support without confusion.",
     author: "A. Fernando",
     role: "Student Services Coordinator",
   },
   {
     quote:
-      "The platform feels simple for users, but it still gives staff the structure needed to keep the library running smoothly.",
+      "The platform feels simple for users, but it still gives staff the structure needed to keep the campus running smoothly.",
     author: "M. Perera",
-    role: "Campus Librarian",
+    role: "Campus Operations Lead",
   },
 ];
 
@@ -46,7 +46,7 @@ function Dashboard() {
     <div className="landing-page">
       <header className="landing-header">
         <Link className="landing-logo" to="/">
-          BookFlow
+          NNIC Smart Campus
         </Link>
 
         <nav className="landing-nav" aria-label="Primary navigation">
@@ -68,12 +68,12 @@ function Dashboard() {
       <main className="landing-main">
         <section className="landing-hero" id="about">
           <div className="landing-hero-copy">
-            <span className="landing-eyebrow">Modern Library Experience</span>
-            <h1>Make every library visit smoother, faster, and easier to manage.</h1>
+            <span className="landing-eyebrow">NNIC Smart Campus Experience</span>
+            <h1>Make every campus resource request smoother, faster, and easier to manage.</h1>
             <p>
-              BookFlow helps students, staff, librarians, and administrators stay
-              connected with borrowing, notifications, support, and facility access
-              in one polished digital portal.
+              NNIC Smart Resource and Management Platform helps students, staff,
+              and administrators stay connected with facilities, notifications,
+              support, and academic operations in one polished digital portal.
             </p>
 
             <div className="landing-hero-actions">
@@ -104,7 +104,7 @@ function Dashboard() {
         <section className="landing-services" id="services">
           <div className="landing-section-heading">
             <span className="landing-section-kicker">Our Services</span>
-            <h2>Everything your library community needs in one place</h2>
+            <h2>Everything your campus community needs in one place</h2>
           </div>
 
           <div className="landing-service-grid">
@@ -145,10 +145,10 @@ function Dashboard() {
 
         <section className="landing-cta">
           <span className="landing-section-kicker">Get Started</span>
-          <h2>Build a more connected library workflow with BookFlow.</h2>
+          <h2>Build a more connected smart campus workflow with NNIC.</h2>
           <p>
-            Create an account to access library tools, facility features, updates,
-            and support services designed around your campus.
+            Create an account to access campus tools, facility features, updates,
+            and support services designed around your smart campus environment.
           </p>
           <Link className="landing-btn landing-btn-primary" to="/register">
             Launch Now
@@ -159,11 +159,11 @@ function Dashboard() {
       <footer className="landing-footer" id="contact">
         <div className="landing-footer-info">
           <Link className="landing-logo landing-logo-footer" to="/">
-            BookFlow
+            NNIC Smart Campus
           </Link>
           <p>
-            A cleaner digital front desk for borrowing, member support, and
-            day-to-day library operations.
+            A cleaner digital front desk for smart resource booking, support, and
+            day-to-day campus operations.
           </p>
 
           <ul className="landing-footer-links">
