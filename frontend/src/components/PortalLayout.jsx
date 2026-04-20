@@ -33,7 +33,7 @@ function PortalLayout({
     <div className={`page-wrap app-shell-page ${pageClassName}`.trim()}>
       <header className="top-bar">
         <Link className="brand" to="/">
-          BookFlow Library
+          NNIC Smart Resource Platform
         </Link>
 
         {headerContent ? (

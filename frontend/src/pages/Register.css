@@ -110,6 +110,27 @@
   font-size: 0.84rem;
 }
 
+.google-use-another-btn {
+  margin-top: 8px;
+  border: 1px solid #b8cae8;
+  background: #e9f0fb;
+  color: #244b87;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.google-use-another-btn:hover {
+  background: #dbe7f7;
+}
+
+.google-use-another-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
 .google-register-note {
   margin: 10px 0 0;
   color: #5f759f;

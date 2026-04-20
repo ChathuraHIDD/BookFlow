@@ -6,11 +6,14 @@
   --navy-800: #1d3968;
   --navy-700: #244b87;
   --navy-600: #3565b0;
+  --navy-500: #4b79c0;
+  --navy-300: #b8cae8;
+  --navy-200: #dbe7f7;
   --navy-100: #edf3fb;
-  --orange-600: #ef7417;
-  --orange-500: #f17f21;
-  --orange-400: #ff9e42;
-  --orange-100: #fff1e4;
+  --orange-600: #2b5ba8;
+  --orange-500: #3565b0;
+  --orange-400: #4b79c0;
+  --orange-100: #e9f0fb;
   --green-900: var(--navy-900);
   --green-800: var(--navy-700);
   --green-700: var(--navy-600);
@@ -37,7 +40,7 @@ body {
   font-family: "Roboto", "Segoe UI", sans-serif;
   background:
     radial-gradient(circle at 12% 10%, rgba(36, 75, 135, 0.12), transparent 26%),
-    radial-gradient(circle at 90% 16%, rgba(241, 127, 33, 0.13), transparent 22%),
+    radial-gradient(circle at 90% 16%, rgba(75, 121, 192, 0.14), transparent 22%),
     radial-gradient(circle at 50% 100%, rgba(29, 57, 104, 0.08), transparent 30%),
     var(--cream);
 }
@@ -122,7 +125,7 @@ p {
 
 .top-link:hover {
   background: rgba(36, 75, 135, 0.08);
-  color: var(--orange-500);
+  color: var(--navy-600);
   transform: translateY(-1px);
 }
 
@@ -182,7 +185,7 @@ p {
   height: 420px;
   right: -180px;
   bottom: -250px;
-  background: radial-gradient(circle, rgba(241, 127, 33, 0.34), transparent 66%);
+  background: radial-gradient(circle, rgba(75, 121, 192, 0.28), transparent 66%);
 }
 
 .hero-card h1 {
@@ -282,18 +285,18 @@ textarea:focus {
 }
 
 .solid-btn:hover {
-  background: linear-gradient(135deg, var(--orange-500), var(--orange-600));
+  background: linear-gradient(135deg, var(--navy-700), var(--navy-500));
   transform: translateY(-1px);
 }
 
 .ghost-btn {
-  background: var(--orange-100);
-  color: var(--orange-600);
-  border-color: #ffd0a7;
+  background: var(--navy-100);
+  color: var(--navy-700);
+  border-color: var(--navy-300);
 }
 
 .ghost-btn:hover {
-  background: #ffe6ca;
+  background: var(--navy-200);
   transform: translateY(-1px);
 }
 
@@ -353,6 +356,70 @@ textarea:focus {
 
 .table-wrap {
   overflow-x: auto;
+}
+
+.admin-user-toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.admin-user-toolbar label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--navy-900);
+}
+
+.admin-user-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+}
+
+.admin-user-edit-card {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(247, 250, 255, 0.95));
+  display: grid;
+  gap: 12px;
+}
+
+.admin-user-edit-card h3 {
+  margin: 0;
+  color: var(--navy-900);
+}
+
+.admin-user-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.admin-user-edit-grid label {
+  display: grid;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--navy-900);
+}
+
+.admin-user-row-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.danger-btn {
+  background: #ffe5e8;
+  color: #b4233a;
+  border-color: #ffc2cb;
+}
+
+.danger-btn:hover {
+  background: #ffd6dd;
 }
 
 table {

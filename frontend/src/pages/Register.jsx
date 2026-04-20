@@ -133,8 +133,9 @@ function Register() {
           <div className="register-hero-content">
             <h1>Create Account.</h1>
             <p>
-              Join BookFlow to reserve facilities, submit support requests, and
-              manage your academic activities from one place.
+              Join the NNIC Smart Resource and Management Platform to reserve
+              facilities, submit support requests, and manage smart campus
+              activities from one place.
             </p>
           </div>
         </section>

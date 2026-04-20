@@ -59,8 +59,9 @@ function Login() {
           <div className="login-hero-content">
             <h1>Welcome Back.</h1>
             <p>
-              Sign in to BookFlow and continue managing facility bookings, support
-              requests, and your library dashboard.
+              Sign in to the NNIC Smart Resource and Management Platform and
+              continue handling campus facilities, support requests, and resource
+              coordination in one place.
             </p>
           </div>
         </section>

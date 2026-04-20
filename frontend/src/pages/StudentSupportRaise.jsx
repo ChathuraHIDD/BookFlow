@@ -72,7 +72,7 @@ function StudentSupportRaise() {
             type="text"
             value={form.locationResource}
             onChange={handleChange}
-            placeholder="Example: Main library computer lab / BookFlow app"
+            placeholder="Example: Main campus computer lab / NNIC Smart Campus app"
             required
           />
         </label>

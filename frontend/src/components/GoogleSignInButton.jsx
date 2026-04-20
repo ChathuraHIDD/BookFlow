@@ -58,8 +58,11 @@ function GoogleSignInButton({ onCredential, onError, text = "continue_with", dis
           return;
         }
 
+        window.google.accounts.id.disableAutoSelect();
+
         window.google.accounts.id.initialize({
           client_id: clientId,
+          auto_select: false,
           callback: (response) => {
             if (response?.credential) {
               onCredentialRef.current(response.credential);
@@ -92,6 +95,18 @@ function GoogleSignInButton({ onCredential, onError, text = "continue_with", dis
     };
   }, [clientId, onError, text]);
 
+  const onUseAnotherAccount = () => {
+    if (!window.google?.accounts?.id) {
+      if (onError) {
+        onError(new Error("Google sign in is not ready yet"));
+      }
+      return;
+    }
+
+    window.google.accounts.id.disableAutoSelect();
+    window.google.accounts.id.prompt();
+  };
+
   if (!clientId) {
     return <p className="google-auth-error">Google login is not configured for this app.</p>;
   }
@@ -100,6 +115,14 @@ function GoogleSignInButton({ onCredential, onError, text = "continue_with", dis
     <div className="google-auth-slot" aria-disabled={disabled}>
       <div ref={containerRef} className={disabled ? "google-auth-disabled" : ""} />
       {!isReady ? <p className="google-auth-loading">Loading Google Sign-In...</p> : null}
+      <button
+        className="google-use-another-btn"
+        type="button"
+        onClick={onUseAnotherAccount}
+        disabled={disabled || !isReady}
+      >
+        Use another Google account
+      </button>
     </div>
   );
 }
