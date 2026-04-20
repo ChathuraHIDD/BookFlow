@@ -7,7 +7,7 @@ import { fetchMyNotifications } from "../services/notifications";
 
 const sidebarItems = [
   { key: "home", icon: "H", label: "Home", to: "/student/dashboard" },
-  { key: "books", icon: "B", label: "My Books", to: "/student/profile" },
+  { key: "profile", icon: "P", label: "Edit My Profile", to: "/student/profile#update-profile" },
   { key: "facilities", icon: "F", label: "Facilities", to: "/student/facilities" },
   { key: "notifications", icon: "N", label: "Notifications", to: "/notifications" },
   { key: "support", icon: "S", label: "Support", to: "/student/support" },
@@ -70,6 +70,11 @@ function StudentPortalShell({ activeKey = "home", children }) {
     navigate("/student/profile");
   };
 
+  const onOpenUpdateProfile = () => {
+    setMenuOpen(false);
+    navigate("/student/profile#update-profile");
+  };
+
   useEffect(() => {
     const loadRecentNotifications = async () => {
       try {
@@ -94,8 +99,6 @@ function StudentPortalShell({ activeKey = "home", children }) {
           <div
             ref={notificationsRef}
             className={`student-modern-notification-menu${notificationsOpen ? " student-modern-notification-menu-open" : ""}`}
-            onMouseEnter={() => setNotificationsOpen(true)}
-            onMouseLeave={() => setNotificationsOpen(false)}
           >
             <button
               className="student-modern-header-icon student-modern-notification-trigger"
@@ -144,8 +147,6 @@ function StudentPortalShell({ activeKey = "home", children }) {
           <div
             ref={menuRef}
             className={`student-modern-avatar-menu${menuOpen ? " student-modern-avatar-menu-open" : ""}`}
-            onMouseEnter={() => setMenuOpen(true)}
-            onMouseLeave={() => setMenuOpen(false)}
           >
             <button
               className="student-modern-header-avatar student-modern-avatar-trigger"
@@ -165,6 +166,13 @@ function StudentPortalShell({ activeKey = "home", children }) {
                 onClick={onOpenProfile}
               >
                 Profile
+              </button>
+              <button
+                className="student-modern-avatar-action"
+                type="button"
+                onClick={onOpenUpdateProfile}
+              >
+                Update Profile
               </button>
               <button
                 className="student-modern-avatar-action student-modern-avatar-logout"

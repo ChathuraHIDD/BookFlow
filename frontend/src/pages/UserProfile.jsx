@@ -153,7 +153,7 @@ function UserProfile() {
           </p>
         </article>
 
-        <article className="metric-card">
+        <article className="metric-card" id="update-profile">
           <h3>Request Profile Update</h3>
           <form className="student-profile-form" onSubmit={onSubmit}>
             <label>
