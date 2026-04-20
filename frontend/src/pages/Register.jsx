@@ -131,17 +131,29 @@ function Register() {
         <section className="register-hero-panel" aria-label="Registration intro">
           <div className="register-hero-overlay" />
           <div className="register-hero-content">
+            <div className="register-brand-lockup">
+              <img src="/auth-campus-logo.png" alt="Campus logo" className="register-brand-logo" />
+            </div>
             <h1>Create Account.</h1>
             <p>
               Join the NNIC Smart Resource and Management Platform to reserve
               facilities, submit support requests, and manage smart campus
               activities from one place.
             </p>
+            <ul className="register-hero-highlights">
+              <li>Student, staff, and admin role onboarding</li>
+              <li>Campus-center aligned profile setup</li>
+              <li>Ready for bookings, updates, and support</li>
+            </ul>
           </div>
         </section>
 
         <section className="register-form-panel" aria-label="Register form">
           <div className="register-form-wrap">
+            <div className="register-form-brand">
+              <img src="/auth-campus-logo.png" alt="" aria-hidden="true" />
+              <span>Create Your Campus Account</span>
+            </div>
             <h2>Register</h2>
 
             <GoogleSignInButton

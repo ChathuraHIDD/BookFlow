@@ -102,10 +102,14 @@ p {
 }
 
 .brand {
-  font-family: "Roboto", "Segoe UI", sans-serif;
-  font-size: 1.45rem;
-  letter-spacing: 0.2px;
-  color: var(--navy-900);
+  display: inline-flex;
+  align-items: center;
+}
+
+.brand-logo {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
 }
 
 .top-actions {
@@ -766,9 +770,14 @@ th {
 }
 
 .admin-vision-brand {
-  font-weight: 800;
-  color: var(--navy-900);
-  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+}
+
+.admin-vision-brand-logo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
 }
 
 .admin-vision-nav {
@@ -2064,30 +2073,14 @@ th {
 }
 
 .student-modern-brand-mark {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 800;
-  color: #2f3755;
 }
 
-.student-modern-brand-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 999px;
-}
-
-.student-modern-brand-dot-pink {
-  background: #f4a6df;
-}
-
-.student-modern-brand-dot-blue {
-  background: #9fd3ff;
-  margin-left: -6px;
-}
-
-.student-modern-brand-text {
-  margin-left: 4px;
+.student-modern-brand-logo {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
 }
 
 .student-modern-sidebar-nav {

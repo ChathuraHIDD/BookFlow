@@ -57,17 +57,29 @@ function Login() {
         <section className="login-hero-panel" aria-label="Welcome message">
           <div className="login-hero-overlay" />
           <div className="login-hero-content">
+            <div className="login-brand-lockup">
+              <img src="/auth-campus-logo.png" alt="Campus logo" className="login-brand-logo" />
+            </div>
             <h1>Welcome Back.</h1>
             <p>
               Sign in to the NNIC Smart Resource and Management Platform and
               continue handling campus facilities, support requests, and resource
               coordination in one place.
             </p>
+            <ul className="login-hero-highlights">
+              <li>Unified facility booking and approvals</li>
+              <li>Fast support-ticket tracking</li>
+              <li>Role-based student and admin workspaces</li>
+            </ul>
           </div>
         </section>
 
         <section className="login-form-panel" aria-label="Login form">
           <div className="login-form-wrap">
+            <div className="login-form-brand">
+              <img src="/auth-campus-logo.png" alt="" aria-hidden="true" />
+              <span>Secure Access Portal</span>
+            </div>
             <h2>Log in</h2>
 
             <GoogleSignInButton
