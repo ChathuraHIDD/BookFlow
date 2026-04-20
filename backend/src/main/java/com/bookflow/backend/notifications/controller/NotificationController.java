@@ -23,7 +23,7 @@ public class NotificationController {
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasAnyRole('STUDENT','STAFF_MEMBER','ADMIN','LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('STUDENT','STAFF_MEMBER','ADMIN')")
     public List<NotificationResponse> myNotifications(@AuthenticationPrincipal User user) {
         return notificationService.myNotifications(user);
     }

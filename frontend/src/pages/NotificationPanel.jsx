@@ -10,20 +10,39 @@ function NotificationPanel() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    let active = true;
+    let firstLoad = true;
+
     const loadNotifications = async () => {
       try {
         setError("");
-        setLoading(true);
+        if (firstLoad) {
+          setLoading(true);
+        }
         const data = await fetchMyNotifications();
-        setNotifications(data);
+        if (active) {
+          setNotifications(data);
+        }
+        firstLoad = false;
       } catch (err) {
-        setError(readApiError(err));
+        if (active) {
+          setError(readApiError(err));
+        }
       } finally {
-        setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     };
 
     loadNotifications();
+
+    const intervalId = window.setInterval(loadNotifications, 15000);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+    };
   }, []);
 
   return (

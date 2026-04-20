@@ -6,7 +6,6 @@ import AdminProfile from "./pages/AdminProfile";
 import AdminFacilities from "./pages/AdminFacilities";
 import AdminUserManagement from "./pages/AdminUserManagement";
 import Dashboard from "./pages/Dashboard";
-import LibrarianProfile from "./pages/LibrarianProfile";
 import Login from "./pages/Login";
 import NotificationPanel from "./pages/NotificationPanel";
 import Register from "./pages/Register";
@@ -175,15 +174,6 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <AdminFacilities />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/librarian/profile"
-        element={
-          <ProtectedRoute allowedRoles={["librarian"]}>
-            <LibrarianProfile />
           </ProtectedRoute>
         }
       />

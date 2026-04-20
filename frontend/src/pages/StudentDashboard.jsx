@@ -40,6 +40,11 @@ const supportItems = [
   "Check replies from the library support team.",
 ];
 
+const campusActions = [
+  "Update your profile and submit changes for approval.",
+  "Review notifications for profile approvals, declines, and support updates.",
+];
+
 const recentActivity = [
   "You submitted a support request about login access.",
   "You borrowed Digital Library Architecture.",
@@ -121,6 +126,11 @@ function StudentDashboard() {
               <p>Due books and e-resources</p>
               <span>Keep up with borrowing and reading.</span>
             </div>
+            <div className="student-modern-feature-card">
+              <h4>Profile Update</h4>
+              <p>Review and submit changes</p>
+              <span>Submit profile changes for admin approval.</span>
+            </div>
           </div>
 
           <div className="student-modern-illustration-panel">
@@ -160,6 +170,22 @@ function StudentDashboard() {
                 <li key={item}>{item}</li>
               ))}
             </ul>
+          </section>
+
+          <section className="student-modern-side-card">
+            <div className="student-modern-card-head">
+              <h3>Campus Actions</h3>
+            </div>
+            <ul className="list-clean student-modern-mini-list">
+              {campusActions.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <div className="cta-row">
+              <Link className="solid-btn full-width" to="/student/profile">
+                Update Profile
+              </Link>
+            </div>
           </section>
         </aside>
       </section>

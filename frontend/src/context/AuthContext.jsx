@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api, { readApiError, setAuthorizationToken } from "../services/api";
 import { normalizeRole } from "../utils/role";
 import AuthContext from "./auth-context";
@@ -54,6 +54,16 @@ export function AuthProvider({ children }) {
     return normalizedUser;
   };
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const { data } = await api.get("/auth/me");
+      setUser(normalizeUser(data));
+      return normalizeUser(data);
+    } catch (error) {
+      throw new Error(readApiError(error));
+    }
+  }, []);
+
   const login = async (email, password) => {
     try {
       const { data } = await api.post("/auth/login", { email, password });
@@ -106,6 +116,7 @@ export function AuthProvider({ children }) {
     register,
     loginWithGoogle,
     registerWithGoogle,
+    refreshUser,
     logout,
   };
 

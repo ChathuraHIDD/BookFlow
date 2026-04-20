@@ -45,7 +45,6 @@ public class AdminController {
                 userRepository.count(),
                 userRepository.countByRole(UserRole.STUDENT),
                 userRepository.countByRole(UserRole.STAFF_MEMBER),
-                userRepository.countByRole(UserRole.LIBRARIAN),
                 userRepository.countByRole(UserRole.ADMIN));
     }
 
@@ -161,7 +160,7 @@ public class AdminController {
             return UserRole.fromValue(rawRole);
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Invalid role. Allowed: student, librarian, admin, staff member");
+                    "Invalid role. Allowed: student, admin, staff member");
         }
     }
 

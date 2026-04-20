@@ -26,7 +26,7 @@ function AdminProfile() {
   return (
     <PortalLayout
       title="Admin Dashboard"
-      subtitle="Live statistics from the user database with role-based management controls."
+      subtitle="Live statistics from the NNIC smart campus user database with role-based management controls."
       loading={loading}
     >
       {error ? <p className="error-text">{error}</p> : null}
@@ -44,10 +44,6 @@ function AdminProfile() {
           <article className="metric-card">
             <h3>Staff Members</h3>
             <p className="metric-number">{summary.totalStaffMembers}</p>
-          </article>
-          <article className="metric-card">
-            <h3>Librarians</h3>
-            <p className="metric-number">{summary.totalLibrarians}</p>
           </article>
           <article className="metric-card">
             <h3>Admins</h3>

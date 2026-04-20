@@ -222,7 +222,7 @@ public class AuthService {
             return UserRole.fromValue(rawRole);
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Invalid role. Allowed: student, librarian, admin, staff member");
+                    "Invalid role. Allowed: student, admin, staff member");
         }
     }
 

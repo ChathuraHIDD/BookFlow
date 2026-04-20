@@ -3,6 +3,11 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import PortalLayout from "../components/PortalLayout";
 import api, { readApiError } from "../services/api";
+import {
+  approveProfileRequest,
+  declineProfileRequest,
+  fetchPendingProfileRequests,
+} from "../services/profile";
 import { formatEnumText, normalizeRole, ROLE_OPTIONS } from "../utils/role";
 
 const CENTER_OPTIONS = ["COLOMBO_CENTER", "MATHARA_CENTER", "JAFFNA_CENTER"];
@@ -23,6 +28,8 @@ function AdminUserManagement() {
   const [filters, setFilters] = useState(emptyFilter);
   const [editingUserId, setEditingUserId] = useState("");
   const [editForm, setEditForm] = useState(null);
+  const [profileRequests, setProfileRequests] = useState([]);
+  const [reviewNotes, setReviewNotes] = useState({});
 
   const loadUsers = async (activeFilters = filters) => {
     setError("");
@@ -42,8 +49,21 @@ function AdminUserManagement() {
     }
   };
 
+  const loadRequests = async () => {
+    try {
+      const data = await fetchPendingProfileRequests();
+      setProfileRequests(data);
+    } catch (err) {
+      setError(readApiError(err));
+    }
+  };
+
   useEffect(() => {
-    loadUsers();
+    const load = async () => {
+      await Promise.all([loadUsers(), loadRequests()]);
+    };
+
+    load();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isStudent = editForm?.role === "student";
@@ -108,6 +128,35 @@ function AdminUserManagement() {
   const onCancelEdit = () => {
     setEditingUserId("");
     setEditForm(null);
+  };
+
+  const updateReviewNote = (requestId, value) => {
+    setReviewNotes((prev) => ({ ...prev, [requestId]: value }));
+  };
+
+  const reviewRequest = async (requestId, decision) => {
+    setSaving(true);
+    setError("");
+
+    try {
+      const note = reviewNotes[requestId] || "";
+      if (decision === "approve") {
+        await approveProfileRequest(requestId, note);
+      } else {
+        await declineProfileRequest(requestId, note);
+      }
+
+      await Promise.all([loadUsers(filters), loadRequests()]);
+      setReviewNotes((prev) => {
+        const next = { ...prev };
+        delete next[requestId];
+        return next;
+      });
+    } catch (err) {
+      setError(readApiError(err));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const onSaveEdit = async (event) => {
@@ -176,10 +225,67 @@ function AdminUserManagement() {
   return (
     <PortalLayout
       title="Admin User Management"
-      subtitle="Search, edit, remove, and export user records from the NNIC smart campus platform."
+      subtitle="Search, edit, remove, export user records, and review student profile update requests."
       loading={loading}
     >
       {error ? <p className="error-text">{error}</p> : null}
+
+      <section className="admin-profile-requests-panel">
+        <div className="student-modern-card-head">
+          <div>
+            <p className="student-modern-section-label">Approvals</p>
+            <h3>Pending Profile Requests</h3>
+          </div>
+        </div>
+
+        {profileRequests.length === 0 ? (
+          <p className="helper-text">No pending profile update requests.</p>
+        ) : (
+          <div className="admin-profile-request-list">
+            {profileRequests.map((request) => (
+              <article key={request.id} className="admin-profile-request-card">
+                <div className="admin-profile-request-summary">
+                  <div>
+                    <strong>{request.userFullName}</strong>
+                    <p className="helper-text">{request.userEmail}</p>
+                  </div>
+                  <span className="request-status-pill">{request.status}</span>
+                </div>
+
+                <div className="admin-profile-request-grid">
+                  <p><strong>Requested Name:</strong> {request.fullName}</p>
+                  <p><strong>Requested Email:</strong> {request.email}</p>
+                  <p><strong>Telephone:</strong> {request.telephone}</p>
+                  <p><strong>Campus Year:</strong> {formatEnumText(request.campusYear)}</p>
+                  <p><strong>Semester:</strong> {request.semester}</p>
+                  <p><strong>Center:</strong> {formatEnumText(request.center)}</p>
+                  <p><strong>Degree:</strong> {formatEnumText(request.degreeProgram)}</p>
+                  <p className="helper-text">Requested at: {request.requestedAt}</p>
+                </div>
+
+                <label className="admin-profile-note-field">
+                  Admin Note
+                  <textarea
+                    rows="2"
+                    value={reviewNotes[request.id] || ""}
+                    onChange={(event) => updateReviewNote(request.id, event.target.value)}
+                    placeholder="Optional note for the student"
+                  />
+                </label>
+
+                <div className="admin-user-toolbar-actions">
+                  <button className="solid-btn" type="button" onClick={() => reviewRequest(request.id, "approve")} disabled={saving}>
+                    Approve
+                  </button>
+                  <button className="ghost-btn danger-btn" type="button" onClick={() => reviewRequest(request.id, "decline")} disabled={saving}>
+                    Decline
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
 
       <form className="admin-user-toolbar" onSubmit={onSearch}>
         <label>
