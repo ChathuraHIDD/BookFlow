@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import {
   isStudentLikeRole,
@@ -7,7 +7,16 @@ import {
   roleLabel,
 } from "../utils/role";
 
-function PortalLayout({ title, subtitle, children, loading }) {
+function PortalLayout({
+  title,
+  subtitle,
+  children,
+  loading,
+  pageClassName = "",
+  heroClassName = "",
+  contentCardClassName = "",
+  headerContent = null,
+}) {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
 
@@ -18,27 +27,46 @@ function PortalLayout({ title, subtitle, children, loading }) {
     navigate("/login");
   };
 
+  const topLinkClassName = ({ isActive }) => `top-link${isActive ? " top-link-active" : ""}`;
+
   return (
-    <div className="page-wrap">
+    <div className={`page-wrap app-shell-page ${pageClassName}`.trim()}>
       <header className="top-bar">
         <Link className="brand" to="/">
           BookFlow Library
         </Link>
 
-        {isAuthenticated ? (
+        {headerContent ? (
+          headerContent
+        ) : isAuthenticated ? (
           <div className="top-actions">
-            <Link className="top-link" to={profilePathByRole(role)}>
+            {role === "student" ? (
+              <NavLink className={topLinkClassName} to="/student/dashboard" end>
+                Student Dashboard
+              </NavLink>
+            ) : null}
+            <NavLink className={topLinkClassName} to={profilePathByRole(role)} end>
               {roleLabel(role)} Profile
-            </Link>
+            </NavLink>
             {isStudentLikeRole(role) ? (
-              <Link className="top-link" to="/notifications">
+              <NavLink className={topLinkClassName} to="/notifications" end>
                 Notifications
-              </Link>
+              </NavLink>
+            ) : null}
+            {role === "student" ? (
+              <NavLink className={topLinkClassName} to="/student/support">
+                Student Support
+              </NavLink>
             ) : null}
             {role === "admin" ? (
-              <Link className="top-link" to="/admin/users">
+              <NavLink className={topLinkClassName} to="/admin/users" end>
                 User Management
-              </Link>
+              </NavLink>
+            ) : null}
+            {role === "admin" ? (
+              <NavLink className={topLinkClassName} to="/admin/facilities" end>
+                Facilities
+              </NavLink>
             ) : null}
             <button className="ghost-btn" type="button" onClick={onLogout}>
               Logout
@@ -46,9 +74,9 @@ function PortalLayout({ title, subtitle, children, loading }) {
           </div>
         ) : (
           <div className="top-actions">
-            <Link className="top-link" to="/login">
+            <NavLink className={topLinkClassName} to="/login" end>
               Login
-            </Link>
+            </NavLink>
             <Link className="solid-btn" to="/register">
               Register
             </Link>
@@ -57,13 +85,14 @@ function PortalLayout({ title, subtitle, children, loading }) {
       </header>
 
       <main className="content-grid">
-        <section className="hero-card">
-          <p className="hero-eyebrow">Library Management Platform</p>
+        <section className={`hero-card app-hero-card ${heroClassName}`.trim()}>
           <h1>{title}</h1>
           {subtitle ? <p className="hero-subtitle">{subtitle}</p> : null}
         </section>
 
-        <section className="card">{loading ? <p>Loading data...</p> : children}</section>
+        <section className={`card app-surface-card ${contentCardClassName}`.trim()}>
+          {loading ? <p>Loading data...</p> : children}
+        </section>
       </main>
     </div>
   );

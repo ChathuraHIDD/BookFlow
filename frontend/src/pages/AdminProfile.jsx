@@ -60,6 +60,9 @@ function AdminProfile() {
         <Link className="solid-btn" to="/admin/users">
           Open User Management
         </Link>
+        <Link className="ghost-btn" to="/admin/facilities">
+          Open Facilities Management
+        </Link>
       </div>
     </PortalLayout>
   );
