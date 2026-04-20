@@ -19,6 +19,9 @@ public class User {
 
     private String passwordHash;
 
+    @Indexed(unique = true, sparse = true)
+    private String googleSubject;
+
     private UserRole role;
 
     private String telephone;
@@ -66,6 +69,14 @@ public class User {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public String getGoogleSubject() {
+        return googleSubject;
+    }
+
+    public void setGoogleSubject(String googleSubject) {
+        this.googleSubject = googleSubject;
     }
 
     public UserRole getRole() {

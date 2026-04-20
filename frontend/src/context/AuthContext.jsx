@@ -72,6 +72,24 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const loginWithGoogle = async (idToken) => {
+    try {
+      const { data } = await api.post("/auth/google/login", { idToken });
+      return persistAuth(data.token, data.user);
+    } catch (error) {
+      throw new Error(readApiError(error));
+    }
+  };
+
+  const registerWithGoogle = async (payload) => {
+    try {
+      const { data } = await api.post("/auth/google/register", payload);
+      return persistAuth(data.token, data.user);
+    } catch (error) {
+      throw new Error(readApiError(error));
+    }
+  };
+
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -86,6 +104,8 @@ export function AuthProvider({ children }) {
     isAuthenticated: Boolean(user && token),
     login,
     register,
+    loginWithGoogle,
+    registerWithGoogle,
     logout,
   };
 

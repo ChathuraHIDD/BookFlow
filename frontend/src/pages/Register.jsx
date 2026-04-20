@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import GoogleSignInButton from "../components/GoogleSignInButton";
 import { useAuth } from "../context/useAuth";
 import { homePathByRole, ROLE_OPTIONS } from "../utils/role";
 import "./Register.css";
@@ -21,7 +22,7 @@ const CAMPUS_YEAR_OPTIONS = [
 
 function Register() {
   const navigate = useNavigate();
-  const { register, ready, isAuthenticated, user } = useAuth();
+  const { register, registerWithGoogle, ready, isAuthenticated, user } = useAuth();
 
   const [form, setForm] = useState({
     role: "student",
@@ -64,6 +65,25 @@ function Register() {
     return base;
   }, [form, isStudent, needsStudentLikeFields]);
 
+  const googlePayload = useMemo(() => {
+    const base = {
+      role: form.role,
+    };
+
+    if (needsStudentLikeFields) {
+      base.telephone = form.telephone;
+      base.center = form.center;
+      base.degreeProgram = form.degreeProgram;
+    }
+
+    if (isStudent) {
+      base.campusYear = form.campusYear;
+      base.semester = Number(form.semester);
+    }
+
+    return base;
+  }, [form, isStudent, needsStudentLikeFields]);
+
   const updateField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -76,6 +96,24 @@ function Register() {
     try {
       const user = await register(payload);
       navigate(homePathByRole(user.role));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const onGoogleCredential = async (idToken) => {
+    if (submitting) {
+      return;
+    }
+
+    setError("");
+    setSubmitting(true);
+
+    try {
+      const signedInUser = await registerWithGoogle({ ...googlePayload, idToken });
+      navigate(homePathByRole(signedInUser.role));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -104,6 +142,23 @@ function Register() {
         <section className="register-form-panel" aria-label="Register form">
           <div className="register-form-wrap">
             <h2>Register</h2>
+
+            <GoogleSignInButton
+              text="signup_with"
+              onCredential={onGoogleCredential}
+              onError={(err) => setError(err.message)}
+              disabled={submitting}
+            />
+
+            <p className="google-register-note">
+              Google registration uses your Google name and email. Choose your role and details below before clicking Google Sign Up.
+            </p>
+
+            <div className="divider-row" aria-hidden="true">
+              <span />
+              <em>or</em>
+              <span />
+            </div>
 
             <form className="register-form-grid" onSubmit={onSubmit}>
               <label>

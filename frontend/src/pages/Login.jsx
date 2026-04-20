@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import GoogleSignInButton from "../components/GoogleSignInButton";
 import { useAuth } from "../context/useAuth";
 import { homePathByRole } from "../utils/role";
 import "./Login.css";
 
 function Login() {
   const navigate = useNavigate();
-  const { login, ready, isAuthenticated, user } = useAuth();
+  const { login, loginWithGoogle, ready, isAuthenticated, user } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,6 +22,24 @@ function Login() {
     try {
       const user = await login(email, password);
       navigate(homePathByRole(user.role));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const onGoogleCredential = async (idToken) => {
+    if (submitting) {
+      return;
+    }
+
+    setError("");
+    setSubmitting(true);
+
+    try {
+      const signedInUser = await loginWithGoogle(idToken);
+      navigate(homePathByRole(signedInUser.role));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -50,10 +69,12 @@ function Login() {
           <div className="login-form-wrap">
             <h2>Log in</h2>
 
-            <button className="google-auth-btn" type="button">
-              <span aria-hidden="true">G</span>
-              Use Google Account
-            </button>
+            <GoogleSignInButton
+              text="signin_with"
+              onCredential={onGoogleCredential}
+              onError={(err) => setError(err.message)}
+              disabled={submitting}
+            />
 
             <div className="divider-row" aria-hidden="true">
               <span />
