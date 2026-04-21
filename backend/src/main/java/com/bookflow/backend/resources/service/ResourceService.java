@@ -1,9 +1,19 @@
 package com.bookflow.backend.resources.service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+
+import com.bookflow.backend.auth.model.User;
+import com.bookflow.backend.resources.dto.CreateResourceBookingRequest;
+import com.bookflow.backend.resources.dto.ResourceBookingResponse;
+import com.bookflow.backend.resources.dto.ResourceResponse;
+import com.bookflow.backend.resources.model.Resource;
+import com.bookflow.backend.resources.model.ResourceBooking;
+import com.bookflow.backend.resources.model.ResourceBookingStatus;
+import com.bookflow.backend.resources.model.ResourceOperationalStatus;
 
 import com.bookflow.backend.resources.dto.ResourceResponse;
 import com.bookflow.backend.resources.model.Resource;
@@ -45,6 +55,54 @@ public class ResourceService {
         return toResourceResponse(resource);
     }
 
+    public ResourceBookingResponse createBooking(User user, CreateResourceBookingRequest request) {
+        Resource resource = resourceRepository.findById(request.getResourceId())
+                .orElseThrow(() -> new IllegalArgumentException("Resource not found"));
+
+        if (resource.getOperationalStatus() == ResourceOperationalStatus.UNAVAILABLE) {
+            throw new IllegalArgumentException("Resource is unavailable");
+        }
+
+        if (request.getStartTime().isAfter(request.getEndTime()) || request.getStartTime().equals(request.getEndTime())) {
+            throw new IllegalArgumentException("Invalid time range");
+        }
+
+        boolean conflict = resourceBookingRepository.findByResourceIdAndBookingDate(resource.getId(), request.getBookingDate()).stream()
+                .filter(existing -> existing.getStatus() == ResourceBookingStatus.PENDING || existing.getStatus() == ResourceBookingStatus.APPROVED)
+                .anyMatch(existing -> request.getStartTime().isBefore(existing.getEndTime()) && request.getEndTime().isAfter(existing.getStartTime()));
+
+        if (conflict) {
+            throw new IllegalArgumentException("Selected time slot is already booked");
+        }
+
+        ResourceBooking booking = new ResourceBooking();
+        booking.setResourceId(resource.getId());
+        booking.setResourceName(resource.getName());
+        booking.setResourceCategory(resource.getCategory());
+        booking.setUserId(user.getId());
+        booking.setRequestedByName(user.getFullName());
+        booking.setBookingDate(request.getBookingDate());
+        booking.setStartTime(request.getStartTime());
+        booking.setEndTime(request.getEndTime());
+        booking.setStatus(ResourceBookingStatus.PENDING);
+        booking.setCreatedAt(Instant.now());
+
+        return toBookingResponse(resourceBookingRepository.save(booking));
+    }
+
+    public List<ResourceBookingResponse> getUserBookings(String userId) {
+        return resourceBookingRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(this::toBookingResponse)
+                .collect(Collectors.toList());
+    }
+
+    public ResourceBookingResponse updateBookingStatus(String bookingId, ResourceBookingStatus status) {
+        ResourceBooking booking = resourceBookingRepository.findById(bookingId)
+                .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
+        booking.setStatus(status);
+        return toBookingResponse(resourceBookingRepository.save(booking));
+    }
+
     private ResourceResponse toResourceResponse(Resource resource) {
         return new ResourceResponse(
                 resource.getId(),
@@ -55,6 +113,20 @@ public class ResourceService {
                 resource.getLocations(),
                 resource.getEquipment(),
                 resource.getOperationalStatus() != null ? resource.getOperationalStatus().name() : "UNKNOWN"
+        );
+    }
+
+    private ResourceBookingResponse toBookingResponse(ResourceBooking booking) {
+        return new ResourceBookingResponse(
+                booking.getId(),
+                booking.getResourceId(),
+                booking.getResourceName(),
+                booking.getResourceCategory(),
+                booking.getBookingDate() != null ? booking.getBookingDate().toString() : "",
+                booking.getStartTime() != null ? booking.getStartTime().toString() : "",
+                booking.getEndTime() != null ? booking.getEndTime().toString() : "",
+                booking.getStatus() != null ? booking.getStatus().name() : "UNKNOWN",
+                booking.getRequestedByName()
         );
     }
 }
