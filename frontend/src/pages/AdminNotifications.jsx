@@ -277,7 +277,11 @@ function AdminNotifications() {
               {filteredNotifications.map((note) => (
                 <li key={note.id} className={`admin-notification-item${note.read ? "" : " admin-notification-item-unread"}`}>
                   <div className="admin-notification-copy">
-                    <strong>{note.title}</strong>
+                    {note.actionUrl ? (
+                      <strong><Link to={note.actionUrl} className="notification-link">{note.title}</Link></strong>
+                    ) : (
+                      <strong>{note.title}</strong>
+                    )}
                     <span>{note.message}</span>
                     <small>{note.createdAt ? new Date(note.createdAt).toLocaleString() : ""}</small>
                   </div>

@@ -79,6 +79,7 @@ public class NotificationService {
                 booking.getStartTime() != null ? booking.getStartTime().toString() : "start",
                 booking.getEndTime() != null ? booking.getEndTime().toString() : "end"));
         notification.setCategory(BOOKING_MANAGEMENT);
+        notification.setActionUrl("/student/dashboard");
         notification.setCreatedAt(Instant.now());
         notificationRepository.save(notification);
     }
@@ -98,6 +99,7 @@ public class NotificationService {
                 booking.getStartTime() != null ? booking.getStartTime().toString() : "start",
                 booking.getEndTime() != null ? booking.getEndTime().toString() : "end"));
         notification.setCategory(BOOKING_MANAGEMENT);
+        notification.setActionUrl("/student/dashboard");
         notification.setCreatedAt(Instant.now());
         notificationRepository.save(notification);
     }
@@ -111,14 +113,14 @@ public class NotificationService {
                 String.format("Your booking request for %s on %s is pending admin approval.",
                         defaultText(booking.getResourceName(), "resource"),
                         booking.getBookingDate() != null ? booking.getBookingDate().toString() : "the selected date"),
-                BOOKING_MANAGEMENT);
+                BOOKING_MANAGEMENT, "/student/dashboard");
         
         notifyAdmins("New Resource Booking Request",
                 String.format("User %s requested to book %s on %s.",
                         defaultText(booking.getRequestedByName(), "Unknown user"),
                         defaultText(booking.getResourceName(), "resource"),
                         booking.getBookingDate() != null ? booking.getBookingDate().toString() : "the selected date"),
-                BOOKING_MANAGEMENT);
+                BOOKING_MANAGEMENT, "/admin/bookings");
     }
 
     public void notifyResourceBookingApproved(com.bookflow.backend.resources.model.ResourceBooking booking) {
@@ -132,7 +134,7 @@ public class NotificationService {
                         booking.getBookingDate() != null ? booking.getBookingDate().toString() : "the selected date",
                         booking.getStartTime() != null ? booking.getStartTime().toString() : "start",
                         booking.getEndTime() != null ? booking.getEndTime().toString() : "end"),
-                BOOKING_MANAGEMENT);
+                BOOKING_MANAGEMENT, "/student/dashboard");
     }
 
     public void notifyResourceBookingRejected(com.bookflow.backend.resources.model.ResourceBooking booking) {
@@ -144,21 +146,21 @@ public class NotificationService {
                 String.format("Your booking request for %s on %s has been rejected by admin.",
                         defaultText(booking.getResourceName(), "resource"),
                         booking.getBookingDate() != null ? booking.getBookingDate().toString() : "the selected date"),
-                BOOKING_MANAGEMENT);
+                BOOKING_MANAGEMENT, "/student/dashboard");
     }
 
     public void notifyProfileUpdateSubmitted(User user, ProfileUpdateRequest request) {
         notifyUser(user.getId(), "Profile Update Request Submitted",
-                "Your profile update request is now pending admin review.");
+                "Your profile update request is now pending admin review.", USER_MANAGEMENT, "/student/profile");
         notifyAdmins("New Profile Update Request",
-                String.format("%s (%s) submitted a profile update request.", user.getFullName(), user.getEmail()));
+                String.format("%s (%s) submitted a profile update request.", user.getFullName(), user.getEmail()), USER_MANAGEMENT, "/admin/users");
     }
 
     public void notifyProfileUpdateApproved(User user, ProfileUpdateRequest request) {
         notifyUser(user.getId(), "Profile Update Approved",
-                "Your profile changes were approved and your account details were updated.");
+                "Your profile changes were approved and your account details were updated.", USER_MANAGEMENT, "/student/profile");
         notifyAdmins("Profile Update Approved",
-                String.format("Profile update for %s (%s) was approved.", user.getFullName(), user.getEmail()));
+                String.format("Profile update for %s (%s) was approved.", user.getFullName(), user.getEmail()), USER_MANAGEMENT, "/admin/users");
     }
 
     public void notifyProfileUpdateDeclined(User user, ProfileUpdateRequest request) {
@@ -166,16 +168,20 @@ public class NotificationService {
                 ? " Note: " + request.getAdminNote()
                 : "";
         notifyUser(user.getId(), "Profile Update Declined",
-                "Your profile update request was declined." + note);
+                "Your profile update request was declined." + note, USER_MANAGEMENT, "/student/profile");
         notifyAdmins("Profile Update Declined",
-                String.format("Profile update for %s (%s) was declined.", user.getFullName(), user.getEmail()));
+                String.format("Profile update for %s (%s) was declined.", user.getFullName(), user.getEmail()), USER_MANAGEMENT, "/admin/users");
     }
 
     public void notifyUser(String userId, String title, String message) {
-        notifyUser(userId, title, message, inferCategory(title, message));
+        notifyUser(userId, title, message, inferCategory(title, message), null);
     }
 
     public void notifyUser(String userId, String title, String message, String category) {
+        notifyUser(userId, title, message, category, null);
+    }
+
+    public void notifyUser(String userId, String title, String message, String category, String actionUrl) {
         if (userId == null || userId.isBlank()) {
             return;
         }
@@ -185,6 +191,7 @@ public class NotificationService {
         notification.setTitle(title);
         notification.setMessage(message);
         notification.setCategory(normalizeCategory(category));
+        notification.setActionUrl(actionUrl);
         notification.setRead(false);
         notification.setReadAt(null);
         notification.setCreatedAt(Instant.now());
@@ -192,13 +199,17 @@ public class NotificationService {
     }
 
     public void notifyAdmins(String title, String message) {
-        notifyAdmins(title, message, inferCategory(title, message));
+        notifyAdmins(title, message, inferCategory(title, message), null);
     }
 
     public void notifyAdmins(String title, String message, String category) {
+        notifyAdmins(title, message, category, null);
+    }
+
+    public void notifyAdmins(String title, String message, String category, String actionUrl) {
         String normalizedCategory = normalizeCategory(category);
         userRepository.findAllByRole(UserRole.ADMIN)
-                .forEach(admin -> notifyUser(admin.getId(), title, message, normalizedCategory));
+                .forEach(admin -> notifyUser(admin.getId(), title, message, normalizedCategory, actionUrl));
     }
 
     private NotificationResponse toResponse(UserNotification notification) {
@@ -208,6 +219,7 @@ public class NotificationService {
                 notification.getMessage(),
                 notification.getCreatedAt() != null ? notification.getCreatedAt().toString() : "",
                 normalizeCategory(notification.getCategory(), notification.getTitle(), notification.getMessage()),
+                notification.getActionUrl(),
                 notification.isRead());
     }
 
