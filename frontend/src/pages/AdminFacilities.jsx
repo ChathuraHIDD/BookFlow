@@ -13,7 +13,9 @@ import {
   updateAdminBuildingFloors,
   updateAdminClassroom,
   updateAdminClassroomStatus,
+  updateAdminClassroomStatus,
 } from "../services/facilities";
+import { fetchAllResources } from "../services/resources";
 import { readApiError } from "../services/api";
 
 function AdminFacilities() {
@@ -21,6 +23,7 @@ function AdminFacilities() {
   const [buildings, setBuildings] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [classrooms, setClassrooms] = useState([]);
+  const [genericResources, setGenericResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [classroomLoading, setClassroomLoading] = useState(false);
   const [error, setError] = useState("");
@@ -59,14 +62,16 @@ function AdminFacilities() {
     try {
       setError("");
       setLoading(true);
-      const [reportData, buildingData, bookingData] = await Promise.all([
+      const [reportData, buildingData, bookingData, resourceData] = await Promise.all([
         fetchAdminFacilityReports(),
         fetchAdminFacilitiesBuildings(),
         fetchAdminFacilityBookings(),
+        fetchAllResources(),
       ]);
       setReports(reportData);
       setBuildings(buildingData);
       setBookings(bookingData);
+      setGenericResources(resourceData);
 
       const firstBuildingId = selectedBuildingId || buildingData[0]?.id || "";
       const firstFloorCount = buildingData.find((item) => item.id === firstBuildingId)?.floorCount || 1;
@@ -457,6 +462,39 @@ function AdminFacilities() {
                 </>
               ) : (
                 <p className="helper-text">Choose a classroom from the list to edit its details.</p>
+              )}
+            </div>
+          </div>
+        </article>
+
+        <article className="student-modern-workspace-card student-facilities-wide-card">
+          <div className="student-modern-card-head">
+            <div>
+              <p className="student-modern-section-label">Generic Resources</p>
+              <h3>Catalog Overview</h3>
+            </div>
+          </div>
+          <div className="admin-facility-management-grid" style={{ gridTemplateColumns: "1fr" }}>
+            <div className="student-facility-detail-grid">
+              {genericResources.length ? (
+                genericResources.map((res) => (
+                  <article key={res.id} className="student-facility-card">
+                    <div className="student-facility-card-top">
+                      <div>
+                        <h4>{res.name}</h4>
+                        <p>{res.category}</p>
+                      </div>
+                      <span className={`student-facility-status student-facility-status-${res.operationalStatus.toLowerCase()}`}>
+                        {res.operationalStatus}
+                      </span>
+                    </div>
+                    <div className="student-facility-meta" style={{ marginTop: "0.5rem" }}>
+                      <span>{res.locations?.length || 0} locations</span>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <p className="helper-text">No generic resources available.</p>
               )}
             </div>
           </div>
