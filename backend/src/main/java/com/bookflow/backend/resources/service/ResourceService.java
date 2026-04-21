@@ -96,6 +96,12 @@ public class ResourceService {
                 .collect(Collectors.toList());
     }
 
+    public List<ResourceBookingResponse> getAllBookings() {
+        return resourceBookingRepository.findAll().stream()
+                .map(this::toBookingResponse)
+                .collect(Collectors.toList());
+    }
+
     public ResourceBookingResponse updateBookingStatus(String bookingId, ResourceBookingStatus status) {
         ResourceBooking booking = resourceBookingRepository.findById(bookingId)
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found"));

@@ -29,3 +29,8 @@ export async function updateAdminResourceBookingStatus(bookingId, status) {
   const { data } = await api.patch(`/admin/resources/bookings/${bookingId}/status`, { status });
   return data;
 }
+
+export async function fetchAdminResourceBookings() {
+  const { data } = await api.get("/admin/resources/bookings");
+  return data;
+}
