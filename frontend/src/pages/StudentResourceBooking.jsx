@@ -1,14 +1,20 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 
 import StudentPortalShell from "../components/StudentPortalShell";
-import { fetchResourceBySlug } from "../services/resources";
+import { createResourceBooking, fetchResourceBySlug } from "../services/resources";
 
 function StudentResourceBooking() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const [resource, setResource] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("10:00");
 
   useEffect(() => {
     const loadResource = async () => {
@@ -25,6 +31,29 @@ function StudentResourceBooking() {
     };
     loadResource();
   }, [slug]);
+
+  const handleBook = async () => {
+    if (!resource) return;
+
+    try {
+      setSubmitting(true);
+      setError("");
+      await createResourceBooking({
+        resourceId: resource.id,
+        bookingDate: date,
+        startTime,
+        endTime,
+      });
+      // Redirect to facilities page (My Bookings tab)
+      navigate("/student/facilities");
+    } catch (err) {
+      console.error("Booking failed:", err);
+      const msg = err.response?.data?.message || err.message || "Failed to create booking.";
+      setError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -88,10 +117,30 @@ function StudentResourceBooking() {
                 {resource.operationalStatus}
               </strong>
             </p>
-            {/* The booking form will be added in Step 12 */}
-            <p style={{ marginTop: "1rem" }}>
-              Booking form integration pending (Step 12).
-            </p>
+            {error && <p className="error-text" style={{ marginBottom: "1rem" }}>{error}</p>}
+
+            <div className="student-facility-field">
+              <label>Date</label>
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </div>
+            <div className="student-facility-field">
+              <label>Start Time</label>
+              <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+            </div>
+            <div className="student-facility-field">
+              <label>End Time</label>
+              <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+            </div>
+
+            <button
+              className="solid-btn full-width"
+              type="button"
+              disabled={resource.operationalStatus !== "AVAILABLE" || submitting}
+              onClick={handleBook}
+              style={{ marginTop: "1rem" }}
+            >
+              {submitting ? "Booking..." : "Book Resource"}
+            </button>
           </div>
         </aside>
       </div>
