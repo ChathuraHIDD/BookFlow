@@ -102,6 +102,51 @@ public class NotificationService {
         notificationRepository.save(notification);
     }
 
+    public void notifyResourceBookingSubmitted(com.bookflow.backend.resources.model.ResourceBooking booking) {
+        if (booking.getUserId() == null || booking.getUserId().isBlank()) {
+            return;
+        }
+
+        notifyUser(booking.getUserId(), "Resource Booking Submitted",
+                String.format("Your booking request for %s on %s is pending admin approval.",
+                        defaultText(booking.getResourceName(), "resource"),
+                        booking.getBookingDate() != null ? booking.getBookingDate().toString() : "the selected date"),
+                BOOKING_MANAGEMENT);
+        
+        notifyAdmins("New Resource Booking Request",
+                String.format("User %s requested to book %s on %s.",
+                        defaultText(booking.getRequestedByName(), "Unknown user"),
+                        defaultText(booking.getResourceName(), "resource"),
+                        booking.getBookingDate() != null ? booking.getBookingDate().toString() : "the selected date"),
+                BOOKING_MANAGEMENT);
+    }
+
+    public void notifyResourceBookingApproved(com.bookflow.backend.resources.model.ResourceBooking booking) {
+        if (booking.getUserId() == null || booking.getUserId().isBlank()) {
+            return;
+        }
+
+        notifyUser(booking.getUserId(), "Resource Booking Approved",
+                String.format("Your booking for %s on %s (%s - %s) has been approved.",
+                        defaultText(booking.getResourceName(), "resource"),
+                        booking.getBookingDate() != null ? booking.getBookingDate().toString() : "the selected date",
+                        booking.getStartTime() != null ? booking.getStartTime().toString() : "start",
+                        booking.getEndTime() != null ? booking.getEndTime().toString() : "end"),
+                BOOKING_MANAGEMENT);
+    }
+
+    public void notifyResourceBookingRejected(com.bookflow.backend.resources.model.ResourceBooking booking) {
+        if (booking.getUserId() == null || booking.getUserId().isBlank()) {
+            return;
+        }
+
+        notifyUser(booking.getUserId(), "Resource Booking Rejected",
+                String.format("Your booking request for %s on %s has been rejected by admin.",
+                        defaultText(booking.getResourceName(), "resource"),
+                        booking.getBookingDate() != null ? booking.getBookingDate().toString() : "the selected date"),
+                BOOKING_MANAGEMENT);
+    }
+
     public void notifyProfileUpdateSubmitted(User user, ProfileUpdateRequest request) {
         notifyUser(user.getId(), "Profile Update Request Submitted",
                 "Your profile update request is now pending admin review.");

@@ -13,7 +13,6 @@ import {
   updateAdminBuildingFloors,
   updateAdminClassroom,
   updateAdminClassroomStatus,
-  updateAdminClassroomStatus,
 } from "../services/facilities";
 import { fetchAllResources } from "../services/resources";
 import { readApiError } from "../services/api";

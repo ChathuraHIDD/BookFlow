@@ -25,10 +25,12 @@ public class ResourceService {
 
     private final ResourceRepository resourceRepository;
     private final ResourceBookingRepository resourceBookingRepository;
+    private final com.bookflow.backend.notifications.service.NotificationService notificationService;
 
-    public ResourceService(ResourceRepository resourceRepository, ResourceBookingRepository resourceBookingRepository) {
+    public ResourceService(ResourceRepository resourceRepository, ResourceBookingRepository resourceBookingRepository, com.bookflow.backend.notifications.service.NotificationService notificationService) {
         this.resourceRepository = resourceRepository;
         this.resourceBookingRepository = resourceBookingRepository;
+        this.notificationService = notificationService;
     }
 
     public List<ResourceResponse> getAllResources() {
@@ -87,7 +89,10 @@ public class ResourceService {
         booking.setStatus(ResourceBookingStatus.PENDING);
         booking.setCreatedAt(Instant.now());
 
-        return toBookingResponse(resourceBookingRepository.save(booking));
+        ResourceBooking savedBooking = resourceBookingRepository.save(booking);
+        notificationService.notifyResourceBookingSubmitted(savedBooking);
+
+        return toBookingResponse(savedBooking);
     }
 
     public List<ResourceBookingResponse> getUserBookings(String userId) {
@@ -106,7 +111,15 @@ public class ResourceService {
         ResourceBooking booking = resourceBookingRepository.findById(bookingId)
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
         booking.setStatus(status);
-        return toBookingResponse(resourceBookingRepository.save(booking));
+        ResourceBooking savedBooking = resourceBookingRepository.save(booking);
+        
+        if (status == ResourceBookingStatus.APPROVED) {
+            notificationService.notifyResourceBookingApproved(savedBooking);
+        } else if (status == ResourceBookingStatus.REJECTED || status == ResourceBookingStatus.CANCELLED) {
+            notificationService.notifyResourceBookingRejected(savedBooking);
+        }
+        
+        return toBookingResponse(savedBooking);
     }
 
     private ResourceResponse toResourceResponse(Resource resource) {
