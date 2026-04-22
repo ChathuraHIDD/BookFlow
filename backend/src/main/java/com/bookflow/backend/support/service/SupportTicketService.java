@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -538,6 +539,7 @@ public class SupportTicketService {
         ensureCollections(ticket);
 
         List<SupportTicketCommentResponse> commentResponses = ticket.getComments().stream()
+                .filter(Objects::nonNull)
                 .map(comment -> new SupportTicketCommentResponse(
                         comment.getId(),
                         comment.getMessage(),
@@ -548,6 +550,7 @@ public class SupportTicketService {
                 .toList();
 
         List<SupportTicketAttachmentResponse> attachmentResponses = ticket.getAttachments().stream()
+                .filter(Objects::nonNull)
                 .map(attachment -> new SupportTicketAttachmentResponse(
                         attachment.getId(),
                         attachment.getOriginalFileName(),

@@ -115,6 +115,12 @@ function GoogleSignInButton({ onCredential, onError, text = "continue_with", dis
 
     return () => {
       mounted = false;
+      if (window.google?.accounts?.id) {
+        window.google.accounts.id.cancel();
+      }
+      if (containerRef.current) {
+        containerRef.current.innerHTML = "";
+      }
     };
   }, [clientId, onError, text]);
 
