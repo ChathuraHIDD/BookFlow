@@ -15,8 +15,32 @@ export async function createSupportTicket(payload) {
   return data;
 }
 
+export async function addSupportTicketComment(ticketId, payload) {
+  const { data } = await api.post(`/support/me/${ticketId}/comments`, payload);
+  return data;
+}
+
+export async function addSupportTicketAttachment(ticketId, file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  const { data } = await api.post(`/support/me/${ticketId}/attachments`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+}
+
 export async function fetchAllSupportTickets() {
   const { data } = await api.get("/support/admin");
+  return data;
+}
+
+export async function fetchTechnicians() {
+  const { data } = await api.get("/admin/users", { params: { role: "technician" } });
+  return data;
+}
+
+export async function assignSupportTechnician(ticketId, payload) {
+  const { data } = await api.patch(`/support/admin/${ticketId}/assign`, payload);
   return data;
 }
 
@@ -27,5 +51,20 @@ export async function fetchAdminSupportTicket(ticketId) {
 
 export async function updateSupportTicketStatus(ticketId, payload) {
   const { data } = await api.patch(`/support/admin/${ticketId}`, payload);
+  return data;
+}
+
+export async function fetchTechnicianSupportTickets() {
+  const { data } = await api.get("/support/technician/me");
+  return data;
+}
+
+export async function fetchTechnicianSupportTicket(ticketId) {
+  const { data } = await api.get(`/support/technician/me/${ticketId}`);
+  return data;
+}
+
+export async function updateTechnicianSupportTicket(ticketId, payload) {
+  const { data } = await api.patch(`/support/technician/me/${ticketId}`, payload);
   return data;
 }

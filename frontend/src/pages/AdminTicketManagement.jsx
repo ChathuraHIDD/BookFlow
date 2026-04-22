@@ -3,11 +3,17 @@ import { NavLink } from "react-router-dom";
 
 import PortalLayout from "../components/PortalLayout";
 import { readApiError } from "../services/api";
-import { fetchAllSupportTickets, updateSupportTicketStatus } from "../services/support";
+import {
+  assignSupportTechnician,
+  fetchAllSupportTickets,
+  fetchTechnicians,
+  updateSupportTicketStatus,
+} from "../services/support";
 
 function AdminTicketManagement() {
   const [tickets, setTickets] = useState([]);
   const [drafts, setDrafts] = useState({});
+  const [technicians, setTechnicians] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busyTicketId, setBusyTicketId] = useState("");
   const [error, setError] = useState("");
@@ -19,17 +25,22 @@ function AdminTicketManagement() {
       try {
         setLoading(true);
         setError("");
-        const data = await fetchAllSupportTickets();
+        const [ticketsData, techniciansData] = await Promise.all([
+          fetchAllSupportTickets(),
+          fetchTechnicians(),
+        ]);
         if (!active) {
           return;
         }
 
-        setTickets(data);
+        setTickets(ticketsData);
+        setTechnicians(techniciansData);
         const nextDrafts = {};
-        data.forEach((ticket) => {
+        ticketsData.forEach((ticket) => {
           nextDrafts[ticket.id] = {
             status: ticket.status,
             adminNote: ticket.adminNote || "",
+            assignedTechnicianId: ticket.assignedTechnicianId || "",
           };
         });
         setDrafts(nextDrafts);
@@ -38,6 +49,7 @@ function AdminTicketManagement() {
           setError(readApiError(err));
           setTickets([]);
           setDrafts({});
+          setTechnicians([]);
         }
       } finally {
         if (active) {
@@ -54,7 +66,7 @@ function AdminTicketManagement() {
   }, []);
 
   const counts = useMemo(() => {
-    const summary = { total: tickets.length, open: 0, inProgress: 0, resolved: 0 };
+    const summary = { total: tickets.length, open: 0, inProgress: 0, resolved: 0, closed: 0, rejected: 0 };
     tickets.forEach((ticket) => {
       if (ticket.status === "Open") {
         summary.open += 1;
@@ -64,6 +76,12 @@ function AdminTicketManagement() {
       }
       if (ticket.status === "Resolved") {
         summary.resolved += 1;
+      }
+      if (ticket.status === "Closed") {
+        summary.closed += 1;
+      }
+      if (ticket.status === "Rejected") {
+        summary.rejected += 1;
       }
     });
     return summary;
@@ -84,6 +102,9 @@ function AdminTicketManagement() {
       setBusyTicketId(ticketId);
       setError("");
       const draft = drafts[ticketId] || {};
+      if (draft.assignedTechnicianId) {
+        await assignSupportTechnician(ticketId, { technicianId: draft.assignedTechnicianId });
+      }
       const updated = await updateSupportTicketStatus(ticketId, {
         status: draft.status,
         adminNote: draft.adminNote,
@@ -95,6 +116,7 @@ function AdminTicketManagement() {
         [ticketId]: {
           status: updated.status,
           adminNote: updated.adminNote || "",
+            assignedTechnicianId: updated.assignedTechnicianId || "",
         },
       }));
     } catch (err) {
@@ -168,6 +190,16 @@ function AdminTicketManagement() {
                 <p className="metric-number">{loading ? "--" : counts.resolved}</p>
                 <p className="helper-text">Closed by the team</p>
               </article>
+              <article className="metric-card">
+                <h3>Closed</h3>
+                <p className="metric-number">{loading ? "--" : counts.closed}</p>
+                <p className="helper-text">Finalized by admin</p>
+              </article>
+              <article className="metric-card">
+                <h3>Rejected</h3>
+                <p className="metric-number">{loading ? "--" : counts.rejected}</p>
+                <p className="helper-text">Rejected by admin</p>
+              </article>
             </section>
 
             {loading ? <p className="helper-text" style={{ marginTop: "12px" }}>Loading tickets...</p> : null}
@@ -208,12 +240,25 @@ function AdminTicketManagement() {
                         <td>
                           <div className="admin-ticket-actions">
                             <select
+                              value={draft.assignedTechnicianId || ticket.assignedTechnicianId || ""}
+                              onChange={(event) => handleChange(ticket.id, "assignedTechnicianId", event.target.value)}
+                            >
+                              <option value="">Unassigned</option>
+                              {technicians.map((technician) => (
+                                <option key={technician.id} value={technician.id}>
+                                  {technician.fullName || technician.email}
+                                </option>
+                              ))}
+                            </select>
+                            <select
                               value={draft.status || ticket.status}
                               onChange={(event) => handleChange(ticket.id, "status", event.target.value)}
                             >
                               <option>Open</option>
                               <option>In Progress</option>
                               <option>Resolved</option>
+                              <option>Closed</option>
+                              <option>Rejected</option>
                             </select>
                             <input
                               type="text"

@@ -3,13 +3,21 @@ import { Link, useParams } from "react-router-dom";
 
 import PortalLayout from "../components/PortalLayout";
 import { readApiError } from "../services/api";
-import { fetchMySupportTicket } from "../services/support";
+import {
+  addSupportTicketAttachment,
+  addSupportTicketComment,
+  fetchMySupportTicket,
+} from "../services/support";
 
 function StudentSupportTicket() {
   const { id } = useParams();
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [commentMessage, setCommentMessage] = useState("");
+  const [commentBusy, setCommentBusy] = useState(false);
+  const [attachmentFile, setAttachmentFile] = useState(null);
+  const [attachmentBusy, setAttachmentBusy] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -42,6 +50,49 @@ function StudentSupportTicket() {
   }, [id]);
 
   const statusKey = (ticket?.status || "").toLowerCase().replace(/\s+/g, "-");
+
+  const refreshTicket = async () => {
+    const data = await fetchMySupportTicket(id);
+    setTicket(data);
+  };
+
+  const onAddComment = async (event) => {
+    event.preventDefault();
+    if (!commentMessage.trim()) {
+      return;
+    }
+
+    try {
+      setCommentBusy(true);
+      setError("");
+      await addSupportTicketComment(id, { message: commentMessage });
+      setCommentMessage("");
+      await refreshTicket();
+    } catch (err) {
+      setError(readApiError(err));
+    } finally {
+      setCommentBusy(false);
+    }
+  };
+
+  const onAddAttachment = async (event) => {
+    event.preventDefault();
+    if (!attachmentFile) {
+      return;
+    }
+
+    try {
+      setAttachmentBusy(true);
+      setError("");
+      await addSupportTicketAttachment(id, attachmentFile);
+      setAttachmentFile(null);
+      await refreshTicket();
+    } catch (err) {
+      setError(readApiError(err));
+    } finally {
+      setAttachmentBusy(false);
+    }
+  };
 
   return (
     <PortalLayout
@@ -82,6 +133,67 @@ function StudentSupportTicket() {
             <h4>Description</h4>
             <p>{ticket.description}</p>
           </div>
+
+          <div className="support-ticket-detail-section">
+            <h4>Add Comment</h4>
+            <form className="admin-ticket-actions" onSubmit={onAddComment}>
+              <textarea
+                value={commentMessage}
+                onChange={(event) => setCommentMessage(event.target.value)}
+                rows="3"
+                placeholder="Add a follow-up comment"
+              />
+              <button className="solid-btn" type="submit" disabled={commentBusy || !commentMessage.trim()}>
+                {commentBusy ? "Posting..." : "Post Comment"}
+              </button>
+            </form>
+          </div>
+
+          <div className="support-ticket-detail-section">
+            <h4>Attach File</h4>
+            <form className="admin-ticket-actions" onSubmit={onAddAttachment}>
+              <input
+                type="file"
+                onChange={(event) => setAttachmentFile(event.target.files?.[0] || null)}
+              />
+              <button className="solid-btn" type="submit" disabled={attachmentBusy || !attachmentFile}>
+                {attachmentBusy ? "Uploading..." : "Upload Attachment"}
+              </button>
+            </form>
+          </div>
+
+          {ticket.comments?.length ? (
+            <div className="support-ticket-detail-section">
+              <h4>Comments</h4>
+              <div className="support-ticket-comment-list">
+                {ticket.comments.map((comment) => (
+                  <article key={comment.id} className="support-ticket-comment-item">
+                    <strong>{comment.authorName}</strong>
+                    <p className="helper-text">{comment.authorRole} · {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ""}</p>
+                    <p>{comment.message}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {ticket.attachments?.length ? (
+            <div className="support-ticket-detail-section">
+              <h4>Attachments</h4>
+              <ul className="support-ticket-attachment-list">
+                {ticket.attachments.map((attachment) => (
+                  <li key={attachment.id}>
+                    <a href={attachment.downloadUrl} target="_blank" rel="noreferrer">
+                      {attachment.originalFileName}
+                    </a>
+                    <span className="helper-text">
+                      {attachment.uploadedByName} · {attachment.createdAt ? new Date(attachment.createdAt).toLocaleString() : ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           {ticket.adminNote ? (
             <div className="support-ticket-detail-section">

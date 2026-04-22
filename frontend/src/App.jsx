@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import NotificationPanel from "./pages/NotificationPanel";
 import Register from "./pages/Register";
+import TechnicianTicketManagement from "./pages/TechnicianTicketManagement";
 import StudentDashboard from "./pages/StudentDashboard";
 import StudentFacilityBookingBoard from "./pages/StudentFacilityBookingBoard";
 import StudentFacilityCatalogDetail from "./pages/StudentFacilityCatalogDetail";
@@ -131,7 +132,7 @@ function App() {
       <Route
         path="/notifications"
         element={
-          <ProtectedRoute allowedRoles={["student", "staff_member"]}>
+          <ProtectedRoute allowedRoles={["student", "staff_member", "technician"]}>
             <NotificationPanel />
           </ProtectedRoute>
         }
@@ -214,6 +215,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <AdminNotifications />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/technician/tickets"
+        element={
+          <ProtectedRoute allowedRoles={["technician"]}>
+            <TechnicianTicketManagement />
           </ProtectedRoute>
         }
       />
