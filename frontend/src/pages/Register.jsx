@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import PortalLayout from "../components/PortalLayout";
+import GoogleSignInButton from "../components/GoogleSignInButton";
 import { useAuth } from "../context/useAuth";
-import { profilePathByRole, ROLE_OPTIONS } from "../utils/role";
+import { homePathByRole, ROLE_OPTIONS } from "../utils/role";
+import "./Register.css";
 
 const CENTER_OPTIONS = [
   { value: "COLOMBO_CENTER", label: "Colombo Center" },
@@ -21,7 +22,7 @@ const CAMPUS_YEAR_OPTIONS = [
 
 function Register() {
   const navigate = useNavigate();
-  const { register, ready, isAuthenticated, user } = useAuth();
+  const { register, registerWithGoogle, ready, isAuthenticated, user } = useAuth();
 
   const [form, setForm] = useState({
     role: "student",
@@ -64,6 +65,25 @@ function Register() {
     return base;
   }, [form, isStudent, needsStudentLikeFields]);
 
+  const googlePayload = useMemo(() => {
+    const base = {
+      role: form.role,
+    };
+
+    if (needsStudentLikeFields) {
+      base.telephone = form.telephone;
+      base.center = form.center;
+      base.degreeProgram = form.degreeProgram;
+    }
+
+    if (isStudent) {
+      base.campusYear = form.campusYear;
+      base.semester = Number(form.semester);
+    }
+
+    return base;
+  }, [form, isStudent, needsStudentLikeFields]);
+
   const updateField = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -75,7 +95,25 @@ function Register() {
 
     try {
       const user = await register(payload);
-      navigate(profilePathByRole(user.role));
+      navigate(homePathByRole(user.role));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const onGoogleCredential = async (idToken) => {
+    if (submitting) {
+      return;
+    }
+
+    setError("");
+    setSubmitting(true);
+
+    try {
+      const signedInUser = await registerWithGoogle({ ...googlePayload, idToken });
+      navigate(homePathByRole(signedInUser.role));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -84,144 +122,194 @@ function Register() {
   };
 
   if (ready && isAuthenticated) {
-    return <Navigate to={profilePathByRole(user.role)} replace />;
+    return <Navigate to={homePathByRole(user.role)} replace />;
   }
 
   return (
-    <PortalLayout
-      title="Create Your Account"
-      subtitle="Role-based registration for students, librarians, admins, and staff members."
-    >
-      <form className="form-grid" onSubmit={onSubmit}>
-        <label>
-          Role
-          <select
-            value={form.role}
-            onChange={(event) => updateField("role", event.target.value)}
-          >
-            {ROLE_OPTIONS.map((role) => (
-              <option key={role.value} value={role.value}>
-                {role.label}
-              </option>
-            ))}
-          </select>
-        </label>
+    <div className="register-view">
+      <div className="register-card-shell">
+        <section className="register-hero-panel" aria-label="Registration intro">
+          <div className="register-hero-overlay" />
+          <div className="register-hero-content">
+            <div className="register-brand-lockup">
+              <img src="/auth-campus-logo.png" alt="Campus logo" className="register-brand-logo" />
+            </div>
+            <h1>Create Account.</h1>
+            <p>
+              Join the NNIC Smart Resource and Management Platform to reserve
+              facilities, submit support requests, and manage smart campus
+              activities from one place.
+            </p>
+            <ul className="register-hero-highlights">
+              <li>Student, staff, and admin role onboarding</li>
+              <li>Campus-center aligned profile setup</li>
+              <li>Ready for bookings, updates, and support</li>
+            </ul>
+          </div>
+        </section>
 
-        <label>
-          Full Name
-          <input
-            type="text"
-            value={form.fullName}
-            onChange={(event) => updateField("fullName", event.target.value)}
-            required
-          />
-        </label>
+        <section className="register-form-panel" aria-label="Register form">
+          <div className="register-form-wrap">
+            <div className="register-form-brand">
+              <img src="/auth-campus-logo.png" alt="" aria-hidden="true" />
+              <span>Create Your Campus Account</span>
+            </div>
+            <h2>Register</h2>
 
-        <label>
-          Email Address
-          <input
-            type="email"
-            value={form.email}
-            onChange={(event) => updateField("email", event.target.value)}
-            required
-          />
-        </label>
-
-        <label>
-          Password
-          <input
-            type="password"
-            value={form.password}
-            onChange={(event) => updateField("password", event.target.value)}
-            minLength={6}
-            required
-          />
-        </label>
-
-        {needsStudentLikeFields ? (
-          <label>
-            Telephone
-            <input
-              type="tel"
-              value={form.telephone}
-              onChange={(event) => updateField("telephone", event.target.value)}
-              required
+            <GoogleSignInButton
+              text="signup_with"
+              onCredential={onGoogleCredential}
+              onError={(err) => setError(err.message)}
+              disabled={submitting}
             />
-          </label>
-        ) : null}
 
-        {isStudent ? (
-          <label>
-            Campus Year
-            <select
-              value={form.campusYear}
-              onChange={(event) => updateField("campusYear", event.target.value)}
-            >
-              {CAMPUS_YEAR_OPTIONS.map((year) => (
-                <option key={year.value} value={year.value}>
-                  {year.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
+            <p className="google-register-note">
+              Google registration uses your Google name and email. Choose your role and details below before clicking Google Sign Up.
+            </p>
 
-        {isStudent ? (
-          <label>
-            Semester
-            <select
-              value={form.semester}
-              onChange={(event) => updateField("semester", Number(event.target.value))}
-            >
-              <option value={1}>1</option>
-              <option value={2}>2</option>
-            </select>
-          </label>
-        ) : null}
+            <div className="divider-row" aria-hidden="true">
+              <span />
+              <em>or</em>
+              <span />
+            </div>
 
-        {needsStudentLikeFields ? (
-          <label>
-            Center
-            <select
-              value={form.center}
-              onChange={(event) => updateField("center", event.target.value)}
-            >
-              {CENTER_OPTIONS.map((center) => (
-                <option key={center.value} value={center.value}>
-                  {center.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
+            <form className="register-form-grid" onSubmit={onSubmit}>
+              <label>
+                Role
+                <select
+                  value={form.role}
+                  onChange={(event) => updateField("role", event.target.value)}
+                >
+                  {ROLE_OPTIONS.map((role) => (
+                    <option key={role.value} value={role.value}>
+                      {role.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-        {needsStudentLikeFields ? (
-          <label>
-            Degree Program
-            <select
-              value={form.degreeProgram}
-              onChange={(event) => updateField("degreeProgram", event.target.value)}
-            >
-              {DEGREE_OPTIONS.map((degree) => (
-                <option key={degree} value={degree}>
-                  {degree}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
+              <label>
+                Full Name
+                <input
+                  type="text"
+                  value={form.fullName}
+                  onChange={(event) => updateField("fullName", event.target.value)}
+                  placeholder="Enter your full name"
+                  required
+                />
+              </label>
 
-        {error ? <p className="error-text">{error}</p> : null}
+              <label className="register-field-wide">
+                Email Address
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(event) => updateField("email", event.target.value)}
+                  placeholder="Enter your email"
+                  required
+                />
+              </label>
 
-        <button className="solid-btn full-width" type="submit" disabled={submitting}>
-          {submitting ? "Creating Account..." : "Register"}
-        </button>
+              <label className="register-field-wide">
+                Password
+                <input
+                  type="password"
+                  value={form.password}
+                  onChange={(event) => updateField("password", event.target.value)}
+                  placeholder="Minimum 6 characters"
+                  minLength={6}
+                  required
+                />
+              </label>
 
-        <p className="helper-text">
-          Already have an account? <Link to="/login">Login</Link>
-        </p>
-      </form>
-    </PortalLayout>
+              {needsStudentLikeFields ? (
+                <label>
+                  Telephone
+                  <input
+                    type="tel"
+                    value={form.telephone}
+                    onChange={(event) => updateField("telephone", event.target.value)}
+                    placeholder="Enter your phone number"
+                    required
+                  />
+                </label>
+              ) : null}
+
+              {isStudent ? (
+                <label>
+                  Campus Year
+                  <select
+                    value={form.campusYear}
+                    onChange={(event) => updateField("campusYear", event.target.value)}
+                  >
+                    {CAMPUS_YEAR_OPTIONS.map((year) => (
+                      <option key={year.value} value={year.value}>
+                        {year.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              {isStudent ? (
+                <label>
+                  Semester
+                  <select
+                    value={form.semester}
+                    onChange={(event) => updateField("semester", Number(event.target.value))}
+                  >
+                    <option value={1}>1</option>
+                    <option value={2}>2</option>
+                  </select>
+                </label>
+              ) : null}
+
+              {needsStudentLikeFields ? (
+                <label>
+                  Center
+                  <select
+                    value={form.center}
+                    onChange={(event) => updateField("center", event.target.value)}
+                  >
+                    {CENTER_OPTIONS.map((center) => (
+                      <option key={center.value} value={center.value}>
+                        {center.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              {needsStudentLikeFields ? (
+                <label>
+                  Degree Program
+                  <select
+                    value={form.degreeProgram}
+                    onChange={(event) => updateField("degreeProgram", event.target.value)}
+                  >
+                    {DEGREE_OPTIONS.map((degree) => (
+                      <option key={degree} value={degree}>
+                        {degree}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              {error ? <p className="error-text">{error}</p> : null}
+
+              <button className="register-submit-btn" type="submit" disabled={submitting}>
+                {submitting ? "Creating Account..." : "Register"}
+              </button>
+            </form>
+
+            <p className="register-helper-text">
+              Already have an account? <Link to="/login">Log in</Link>
+            </p>
+          </div>
+        </section>
+      </div>
+    </div>
   );
 }
 

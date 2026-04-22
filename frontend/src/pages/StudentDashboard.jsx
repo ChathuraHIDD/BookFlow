@@ -1,164 +1,104 @@
 import { Link } from "react-router-dom";
 
-import PortalLayout from "../components/PortalLayout";
-import avatarAl from "../assets/avatar-al.svg";
-import avatarJs from "../assets/avatar-js.svg";
-import avatarLb from "../assets/avatar-lb.svg";
-import avatarSu from "../assets/avatar-su.svg";
-import supportIllustration from "../assets/support-illustration.svg";
+import StudentPortalShell from "../components/StudentPortalShell";
+import { useAuth } from "../context/useAuth";
+import heroGraphic from "../assets/hero.png";
 
-const notificationPreview = [
-  "Book BK-1037 is due in 2 days.",
-  "Your reservation for Software Quality Assurance is ready.",
-  "Library orientation session starts tomorrow at 10:00 AM.",
+const statusCards = [
+  {
+    title: "Pending Profile Updates",
+    value: "01",
+    subtitle: "Awaiting admin review",
+  },
+  {
+    title: "Open Support Requests",
+    value: "01",
+    subtitle: "Currently in progress",
+  },
+  {
+    title: "Unread Notifications",
+    value: "03",
+    subtitle: "Check top-bar bell menu",
+  },
 ];
 
 const recentActivity = [
-  "You submitted a support request about login access.",
-  "You borrowed Digital Library Architecture.",
-  "A technician replied to your previous support request.",
-];
-
-const announcements = [
-  "Quiet study zone extended hours this week.",
-  "Citation workshop registration is now open.",
-  "New e-book collection added for semester projects.",
-];
-
-const profileHighlights = ["Semester 2", "IT - Year 3", "Colombo Center"];
-
-const quickActions = [
-  {
-    icon: "👤",
-    label: "View Profile",
-    to: "/student/profile",
-  },
-  {
-    icon: "🔔",
-    label: "Open Notifications",
-    to: "/notifications",
-  },
-  {
-    icon: "🛟",
-    label: "Go to Support",
-    to: "/student/support",
-  },
-  {
-    icon: "➕",
-    label: "Raise New Ticket",
-    to: "/student/support/raise",
-  },
+  "Profile update request submitted and waiting for admin approval.",
+  "Support ticket #SUP-1032 updated by the operations team.",
+  "New notification received for facility booking status.",
 ];
 
 function StudentDashboard() {
+  const { user } = useAuth();
+  const fullName = user?.fullName?.trim() || "Student";
+  const firstName = fullName.split(/\s+/)[0] || "Student";
+
   return (
-    <PortalLayout
-      title="Welcome back, Jane."
-      subtitle="Continue where you left off. Review alerts, jump into Student Support, and keep your academic tasks moving."
-    >
-      <section className="student-home-shell">
-        <article className="metric-card student-home-panel student-home-panel-profile">
-          <div className="student-home-panel-head">
-            <span className="student-home-icon student-home-icon-profile" aria-hidden="true">👤</span>
-            <h3>Profile Snapshot</h3>
-          </div>
-          <div className="student-home-profile-avatar-row">
-            <img className="student-home-profile-avatar" src={avatarJs} alt="Jane Student" />
-            <div>
-              <p><strong>Jane Student</strong></p>
-              <p className="helper-text">jane.student@bookflow.edu</p>
-            </div>
-          </div>
-          <div className="student-home-profile-tags">
-            {profileHighlights.map((item) => (
-              <span key={item}>{item}</span>
-            ))}
-          </div>
-          <p><strong>Name:</strong> Jane Student</p>
-          <p><strong>Program:</strong> Information Technology</p>
-          <p><strong>Campus Year:</strong> 3rd Year</p>
-          <p><strong>Center:</strong> Colombo Center</p>
-          <Link className="top-link" to="/student/profile">View full profile</Link>
-        </article>
-
-        <article className="metric-card student-home-panel student-home-panel-notifications">
-          <div className="student-home-panel-head">
-            <span className="student-home-icon student-home-icon-notifications" aria-hidden="true">🔔</span>
-            <h3>Notifications Preview</h3>
-          </div>
-          <div className="student-home-avatars" aria-hidden="true">
-            <img src={avatarAl} alt="Alert author AL" />
-            <img src={avatarSu} alt="Alert author SU" />
-            <img src={avatarLb} alt="Alert author LB" />
-          </div>
-          <ul className="list-clean student-home-list student-home-notification-list">
-            {notificationPreview.map((item, index) => (
-              <li
-                key={item}
-                className="student-home-notification-item"
-                style={{ "--n-delay": `${index * 0.14}s` }}
-              >
-                <span className="student-home-notification-dot" aria-hidden="true" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-          <Link className="top-link" to="/notifications">Open notifications</Link>
-        </article>
-
-        <article className="metric-card student-home-panel student-home-panel-support">
-          <div className="student-home-panel-head">
-            <span className="student-home-icon student-home-icon-support" aria-hidden="true">🛟</span>
-            <h3>Student Support</h3>
-          </div>
-          <div className="student-home-support-media" aria-hidden="true">
-            <img src={supportIllustration} alt="" />
-          </div>
-          <p className="helper-text">
-            Need help with borrowing, account access, or technical issues? Open support and raise a request
-            quickly.
+    <StudentPortalShell activeKey="home">
+      <section className="student-modern-hero-card">
+        <div className="student-modern-hero-copy">
+          <p className="student-modern-section-label">Dashboard</p>
+          <h2>Welcome back, <span>{firstName}</span></h2>
+          <p>
+            Manage your smart-campus profile, services, and requests from one clean dashboard.
           </p>
-          <div className="student-home-actions-inline">
-            <Link className="solid-btn student-home-button" to="/student/support">Open Support</Link>
-            <Link className="ghost-btn student-home-button" to="/student/support/raise">Raise Ticket</Link>
+          <div className="student-modern-hero-actions">
+            <Link className="solid-btn" to="/student/profile#update-profile">Edit My Profile</Link>
+            <Link className="ghost-btn" to="/student/support">Go to Support</Link>
+          </div>
+        </div>
+
+        <div className="student-modern-hero-visual" aria-hidden="true">
+          <img src={heroGraphic} alt="" />
+        </div>
+      </section>
+
+      <section className="student-modern-status-grid">
+        {statusCards.map((card) => (
+          <article key={card.title} className="student-modern-status-card">
+            <h3>{card.title}</h3>
+            <p className="helper-text">{card.subtitle}</p>
+            <strong className="student-modern-status-value">{card.value}</strong>
+          </article>
+        ))}
+      </section>
+
+      <section className="student-dashboard-clean-grid">
+        <article className="student-dashboard-clean-card">
+          <div className="student-modern-card-head">
+            <h3>Profile Summary</h3>
+          </div>
+          <p><strong>Name:</strong> {fullName}</p>
+          <p><strong>Role:</strong> Student</p>
+          <p><strong>Center:</strong> Colombo Center</p>
+          <div className="student-dashboard-clean-actions">
+            <Link className="solid-btn" to="/student/profile#update-profile">Update Profile</Link>
           </div>
         </article>
 
-        <article className="card student-home-quick-actions student-home-panel">
-          <h3><span className="student-home-title-icon" aria-hidden="true">⚡</span>Quick Actions</h3>
-          <div className="student-home-quick-grid">
-            {quickActions.map((action) => (
-              <Link key={action.label} className="solid-btn student-home-button" to={action.to}>
-                <span className="student-home-action-icon" aria-hidden="true">{action.icon}</span>
-                {action.label}
-              </Link>
-            ))}
+        <article className="student-dashboard-clean-card">
+          <div className="student-modern-card-head">
+            <h3>Quick Actions</h3>
+          </div>
+          <div className="student-dashboard-clean-actions student-dashboard-clean-actions-stack">
+            <Link className="ghost-btn" to="/student/facilities">Open Facilities</Link>
+            <Link className="ghost-btn" to="/student/support">Open Support</Link>
+            <Link className="ghost-btn" to="/student/support/raise">Raise Ticket</Link>
           </div>
         </article>
 
-        <article className="metric-card student-home-panel student-home-panel-activity">
-          <h3><span className="student-home-title-icon" aria-hidden="true">🕘</span>Recent Activity</h3>
-          <ul className="list-clean student-home-list">
+        <article className="student-dashboard-clean-card student-dashboard-clean-card-wide">
+          <div className="student-modern-card-head">
+            <h3>Recent Activity</h3>
+          </div>
+          <ul className="list-clean student-modern-mini-list">
             {recentActivity.map((item) => (
-              <li key={item}>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </article>
-
-        <article className="metric-card student-home-panel student-home-panel-announcements">
-          <h3><span className="student-home-title-icon" aria-hidden="true">📢</span>Announcements</h3>
-          <ul className="list-clean student-home-list">
-            {announcements.map((item) => (
-              <li key={item}>
-                <span>{item}</span>
-              </li>
+              <li key={item}>{item}</li>
             ))}
           </ul>
         </article>
       </section>
-    </PortalLayout>
+    </StudentPortalShell>
   );
 }
 
