@@ -6,10 +6,8 @@ import {
   createAdminClassroom,
   deleteAdminClassroom,
   fetchAdminFacilitiesBuildings,
-  fetchAdminFacilityBookings,
   fetchAdminFacilityReports,
   fetchAdminFloorClassrooms,
-  updateAdminBookingStatus,
   updateAdminBuildingFloors,
   updateAdminClassroom,
   updateAdminClassroomStatus,
@@ -20,7 +18,6 @@ import { readApiError } from "../services/api";
 function AdminFacilities() {
   const [reports, setReports] = useState(null);
   const [buildings, setBuildings] = useState([]);
-  const [bookings, setBookings] = useState([]);
   const [classrooms, setClassrooms] = useState([]);
   const [genericResources, setGenericResources] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,15 +58,13 @@ function AdminFacilities() {
     try {
       setError("");
       setLoading(true);
-      const [reportData, buildingData, bookingData, resourceData] = await Promise.all([
+      const [reportData, buildingData, resourceData] = await Promise.all([
         fetchAdminFacilityReports(),
         fetchAdminFacilitiesBuildings(),
-        fetchAdminFacilityBookings(),
         fetchAllResources(),
       ]);
       setReports(reportData);
       setBuildings(buildingData);
-      setBookings(bookingData);
       setGenericResources(resourceData);
 
       const firstBuildingId = selectedBuildingId || buildingData[0]?.id || "";
@@ -217,15 +212,6 @@ function AdminFacilities() {
         setEditingClassroomId("");
       }
       await loadClassrooms(selectedBuildingId, selectedFloor);
-      await loadAdminData();
-    } catch (err) {
-      setError(readApiError(err));
-    }
-  };
-
-  const handleBookingStatus = async (bookingId, status) => {
-    try {
-      await updateAdminBookingStatus(bookingId, status);
       await loadAdminData();
     } catch (err) {
       setError(readApiError(err));
@@ -499,46 +485,6 @@ function AdminFacilities() {
           </div>
         </article>
 
-        <article className="student-modern-workspace-card student-facilities-wide-card">
-          <div className="student-modern-card-head">
-            <div>
-              <p className="student-modern-section-label">Bookings</p>
-              <h3>Approve, Reject, or Cancel Requests</h3>
-            </div>
-          </div>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Requester</th>
-                  <th>Building</th>
-                  <th>Room</th>
-                  <th>Date</th>
-                  <th>Slot</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bookings.map((booking) => (
-                  <tr key={booking.id}>
-                    <td>{booking.requestedByName}</td>
-                    <td>{booking.buildingName}</td>
-                    <td>{booking.roomNumber}</td>
-                    <td>{booking.bookingDate}</td>
-                    <td>{booking.startTime} - {booking.endTime}</td>
-                    <td>{booking.status}</td>
-                    <td className="admin-facilities-actions">
-                      <button className="solid-btn" type="button" onClick={() => handleBookingStatus(booking.id, "APPROVED")}>Approve</button>
-                      <button className="ghost-btn" type="button" onClick={() => handleBookingStatus(booking.id, "REJECTED")}>Reject</button>
-                      <button className="ghost-btn" type="button" onClick={() => handleBookingStatus(booking.id, "CANCELLED")}>Cancel</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </article>
       </section>
 
       {loading ? <p className="helper-text">Refreshing admin facilities data...</p> : null}
