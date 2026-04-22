@@ -31,3 +31,12 @@ Important:
 - The origin must match exactly (scheme + host + port).
 - `localhost` and `127.0.0.1` are different origins.
 - If Vite runs on a different port, update both Vite config and Google origins.
+
+## Default Technician Login
+
+The backend seeds a default technician account on startup if one does not already exist:
+
+- Email: `technician@test.com`
+- Password: `123456`
+
+Use the main login page.

@@ -1,126 +1,201 @@
-import PortalLayout from "../components/PortalLayout";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+
+import PortalLayout from "../components/PortalLayout";
+import { readApiError } from "../services/api";
+import { fetchMySupportTickets } from "../services/support";
+import "./SupportModule.css";
 
 function StudentSupport() {
   const navigate = useNavigate();
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const mockTickets = [
-    {
-      id: "TCK-1001",
-      subject: "Cannot borrow e-book",
-      category: "Borrowing",
-      status: "Open",
-      updatedAt: "2026-04-17",
-    },
-    {
-      id: "TCK-1002",
-      subject: "Login error on mobile",
-      category: "Technical",
-      status: "In Progress",
-      updatedAt: "2026-04-16",
-    },
-    {
-      id: "TCK-1003",
-      subject: "Need profile email correction",
-      category: "Account",
-      status: "Resolved",
-      updatedAt: "2026-04-14",
-    },
-    {
-      id: "TCK-1004",
-      subject: "Reservation not showing",
-      category: "Technical",
-      status: "Open",
-      updatedAt: "2026-04-13",
-    },
-    {
-      id: "TCK-1005",
-      subject: "Fine amount clarification",
-      category: "Other",
-      status: "Resolved",
-      updatedAt: "2026-04-12",
-    },
-  ];
+  useEffect(() => {
+    let active = true;
 
-  const totalCount = mockTickets.length;
-  const openCount = mockTickets.filter((ticket) => ticket.status === "Open").length;
-  const inProgressCount = mockTickets.filter((ticket) => ticket.status === "In Progress").length;
-  const resolvedCount = mockTickets.filter((ticket) => ticket.status === "Resolved").length;
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const data = await fetchMySupportTickets();
+        if (active) {
+          setTickets(data);
+        }
+      } catch (err) {
+        if (active) {
+          setError(readApiError(err));
+          setTickets([]);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const counts = useMemo(() => {
+    const summary = {
+      total: tickets.length,
+      open: 0,
+      inProgress: 0,
+      resolved: 0,
+    };
+
+    tickets.forEach((ticket) => {
+      if (ticket.status === "Open") {
+        summary.open += 1;
+      }
+      if (ticket.status === "In Progress") {
+        summary.inProgress += 1;
+      }
+      if (ticket.status === "Resolved") {
+        summary.resolved += 1;
+      }
+    });
+
+    return summary;
+  }, [tickets]);
 
   return (
     <PortalLayout
       title="Student Support"
       subtitle="Track your support requests and create new incident tickets from one place."
+      pageClassName="support-module-page"
+      heroClassName="support-module-hero"
+      contentCardClassName="support-module-surface"
     >
-      <section className="stats-grid">
-        <article className="metric-card">
-          <h3>Total</h3>
-          <p className="metric-number">{totalCount}</p>
-          <p className="helper-text">All support tickets</p>
-        </article>
+      <div className="support-module-stack">
+        {error ? <p className="support-inline-alert error-text">{error}</p> : null}
 
-        <article className="metric-card">
-          <h3>Open</h3>
-          <p className="metric-number">{openCount}</p>
-          <p className="helper-text">Waiting for first update</p>
-        </article>
+        <section className="support-overview-band">
+          <div className="support-overview-copy">
+            <span className="support-eyebrow">Support Center</span>
+            <h3>Keep every issue, screenshot, and follow-up in one place.</h3>
+            <p>
+              Start a new ticket, monitor status changes, and return to previous
+              requests without jumping between pages or email threads.
+            </p>
+          </div>
+          <div className="support-overview-meta">
+            <div className="support-overview-chip">
+              <strong>{loading ? "--" : counts.total}</strong>
+              <span>requests tracked</span>
+            </div>
+            <Link className="solid-btn support-raise-cta" to="/student/support/raise">
+              Raise New Ticket
+            </Link>
+          </div>
+        </section>
 
-        <article className="metric-card">
-          <h3>In Progress</h3>
-          <p className="metric-number">{inProgressCount}</p>
-          <p className="helper-text">Currently being handled</p>
-        </article>
+        <section className="stats-grid support-stats-grid">
+          <article className="metric-card support-metric-card">
+            <h3>Total</h3>
+            <p className="metric-number">{loading ? "--" : counts.total}</p>
+            <p className="helper-text">All support tickets</p>
+          </article>
 
-        <article className="metric-card">
-          <h3>Resolved</h3>
-          <p className="metric-number">{resolvedCount}</p>
-          <p className="helper-text">Completed requests</p>
-        </article>
-      </section>
+          <article className="metric-card support-metric-card">
+            <h3>Open</h3>
+            <p className="metric-number">{loading ? "--" : counts.open}</p>
+            <p className="helper-text">Waiting for first update</p>
+          </article>
 
-      <div className="cta-row">
-        <Link className="solid-btn" to="/student/support/raise">
-          Raise New Ticket
-        </Link>
+          <article className="metric-card support-metric-card">
+            <h3>In Progress</h3>
+            <p className="metric-number">{loading ? "--" : counts.inProgress}</p>
+            <p className="helper-text">Currently being handled</p>
+          </article>
+
+          <article className="metric-card support-metric-card">
+            <h3>Resolved</h3>
+            <p className="metric-number">{loading ? "--" : counts.resolved}</p>
+            <p className="helper-text">Completed requests</p>
+          </article>
+        </section>
+
+        <section className="card support-ticket-list-card">
+          <div className="support-section-heading">
+            <div>
+              <span className="support-eyebrow">My Queue</span>
+              <h3>My Support Requests</h3>
+            </div>
+            <span className="support-count-pill">
+              {loading ? "--" : counts.total} active records
+            </span>
+          </div>
+
+          {loading ? <p className="helper-text">Loading support tickets...</p> : null}
+          {!loading && !tickets.length ? (
+            <div className="support-empty-state">
+              <div className="support-empty-icon" aria-hidden="true">?</div>
+              <h4>No support tickets yet</h4>
+              <p className="helper-text">Raise your first ticket to start tracking updates here.</p>
+              <Link className="solid-btn" to="/student/support/raise">
+                Create First Ticket
+              </Link>
+            </div>
+          ) : null}
+
+          {tickets.length ? (
+            <div className="table-wrap support-ticket-table-wrap">
+              <table className="support-ticket-table">
+                <thead>
+                  <tr>
+                    <th>Ticket ID</th>
+                    <th>Subject</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Last Updated</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tickets.map((ticket) => {
+                    const statusKey = (ticket.status || "").toLowerCase().replace(/\s+/g, "-");
+
+                    return (
+                      <tr key={ticket.id}>
+                        <td className="support-ticket-table-id">{ticket.ticketNumber || ticket.id}</td>
+                        <td>
+                          <div className="support-ticket-table-subject">
+                            <strong>{ticket.title}</strong>
+                            <span className="helper-text">{ticket.locationResource || "General request"}</span>
+                          </div>
+                        </td>
+                        <td>{ticket.category}</td>
+                        <td>
+                          <span className={`status-badge support-status-badge ${statusKey}`}>
+                            {ticket.status}
+                          </span>
+                        </td>
+                        <td>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleDateString() : "-"}</td>
+                        <td>
+                          <button
+                            className="ghost-btn support-table-action"
+                            type="button"
+                            onClick={() => navigate(`/student/support/${ticket.id}`)}
+                          >
+                            View details
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </section>
       </div>
-
-      <section className="card" style={{ marginTop: "14px" }}>
-        <h3>My Support Requests</h3>
-        <div className="table-wrap" style={{ marginTop: "10px" }}>
-          <table>
-            <thead>
-              <tr>
-                <th>Ticket ID</th>
-                <th>Subject</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Last Updated</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mockTickets.map((ticket) => (
-                <tr key={ticket.id}>
-                  <td>{ticket.id}</td>
-                  <td>{ticket.subject}</td>
-                  <td>{ticket.category}</td>
-                  <td>{ticket.status}</td>
-                  <td>{ticket.updatedAt}</td>
-                  <td>
-                    <button
-                      className="ghost-btn"
-                      type="button"
-                      onClick={() => navigate(`/student/support/${ticket.id}`)}
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
     </PortalLayout>
   );
 }

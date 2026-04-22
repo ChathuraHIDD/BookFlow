@@ -64,9 +64,12 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (email, password, expectedRole = null) => {
     try {
       const { data } = await api.post("/auth/login", { email, password });
+      if (expectedRole && normalizeRole(data?.user?.role) !== normalizeRole(expectedRole)) {
+        throw new Error(`This login is only for ${normalizeRole(expectedRole).replace(/_/g, " ")} accounts.`);
+      }
       return persistAuth(data.token, data.user);
     } catch (error) {
       throw new Error(readApiError(error));
@@ -82,9 +85,12 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const loginWithGoogle = async (idToken) => {
+  const loginWithGoogle = async (idToken, expectedRole = null) => {
     try {
       const { data } = await api.post("/auth/google/login", { idToken });
+      if (expectedRole && normalizeRole(data?.user?.role) !== normalizeRole(expectedRole)) {
+        throw new Error(`This login is only for ${normalizeRole(expectedRole).replace(/_/g, " ")} accounts.`);
+      }
       return persistAuth(data.token, data.user);
     } catch (error) {
       throw new Error(readApiError(error));

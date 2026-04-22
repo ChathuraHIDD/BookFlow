@@ -94,7 +94,7 @@ function NotificationPanel() {
   return (
     <PortalLayout
       title="Notification Panel"
-      subtitle="Stay updated with lending reminders and reservation updates."
+      subtitle="Stay updated with ticket, booking, and account notifications."
     >
       {error ? <p className="error-text">{error}</p> : null}
 

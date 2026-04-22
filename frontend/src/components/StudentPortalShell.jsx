@@ -191,8 +191,8 @@ function StudentPortalShell({ activeKey = "home", children }) {
                     <div className="student-modern-notification-content">
                       {note.actionUrl ? (
                         <strong>
-                          <Link 
-                            to={note.actionUrl} 
+                          <Link
+                            to={note.actionUrl}
                             className="notification-link"
                             onClick={() => setNotificationsOpen(false)}
                           >

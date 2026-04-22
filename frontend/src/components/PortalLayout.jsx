@@ -21,6 +21,7 @@ function PortalLayout({
   const { user, isAuthenticated, logout } = useAuth();
 
   const role = normalizeRole(user?.role);
+  const roleProfileLabel = role === "technician" ? "Ticket Management" : `${roleLabel(role)} Profile`;
 
   const onLogout = () => {
     logout();
@@ -46,9 +47,9 @@ function PortalLayout({
               </NavLink>
             ) : null}
             <NavLink className={topLinkClassName} to={profilePathByRole(role)} end>
-              {roleLabel(role)} Profile
+              {roleProfileLabel}
             </NavLink>
-            {isStudentLikeRole(role) ? (
+            {isStudentLikeRole(role) || role === "technician" ? (
               <NavLink className={topLinkClassName} to="/notifications" end>
                 Notifications
               </NavLink>
