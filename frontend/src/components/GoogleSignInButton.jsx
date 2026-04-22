@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 const GOOGLE_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
 let googleScriptPromise;
+let initializedClientId = "";
+let credentialHandler = null;
+let googleInitialized = false;
 
 const loadGoogleScript = () => {
   if (window.google?.accounts?.id) {
@@ -43,6 +46,13 @@ function GoogleSignInButton({ onCredential, onError, text = "continue_with", dis
 
   useEffect(() => {
     onCredentialRef.current = onCredential;
+    credentialHandler = onCredential;
+
+    return () => {
+      if (credentialHandler === onCredential) {
+        credentialHandler = null;
+      }
+    };
   }, [onCredential]);
 
   useEffect(() => {
@@ -60,17 +70,21 @@ function GoogleSignInButton({ onCredential, onError, text = "continue_with", dis
 
         window.google.accounts.id.disableAutoSelect();
 
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          auto_select: false,
-          callback: (response) => {
-            if (response?.credential) {
-              onCredentialRef.current(response.credential);
-            } else if (onError) {
-              onError(new Error("Google did not return a credential"));
-            }
-          },
-        });
+        if (!googleInitialized || initializedClientId !== clientId) {
+          window.google.accounts.id.initialize({
+            client_id: clientId,
+            auto_select: false,
+            callback: (response) => {
+              if (response?.credential) {
+                credentialHandler?.(response.credential);
+              } else if (onError) {
+                onError(new Error("Google did not return a credential"));
+              }
+            },
+          });
+          initializedClientId = clientId;
+          googleInitialized = true;
+        }
 
         containerRef.current.innerHTML = "";
         window.google.accounts.id.renderButton(containerRef.current, {

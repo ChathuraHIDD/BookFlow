@@ -3,6 +3,8 @@ package com.bookflow.backend.facilities.model;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -37,7 +39,17 @@ public class FacilityBooking {
 
     private String requestedByName;
 
+    private String purpose;
+
+    private String priority;
+
     private BookingStatus status = BookingStatus.PENDING;
+
+    private List<Integer> selectedSeats = new ArrayList<>();
+
+    private boolean reviewRequired;
+
+    private String decisionNote;
 
     private Instant createdAt;
 
@@ -129,12 +141,52 @@ public class FacilityBooking {
         this.requestedByName = requestedByName;
     }
 
+    public String getPurpose() {
+        return purpose;
+    }
+
+    public void setPurpose(String purpose) {
+        this.purpose = purpose;
+    }
+
+    public String getPriority() {
+        return priority;
+    }
+
+    public void setPriority(String priority) {
+        this.priority = priority;
+    }
+
     public BookingStatus getStatus() {
         return status;
     }
 
     public void setStatus(BookingStatus status) {
         this.status = status;
+    }
+
+    public List<Integer> getSelectedSeats() {
+        return selectedSeats;
+    }
+
+    public void setSelectedSeats(List<Integer> selectedSeats) {
+        this.selectedSeats = selectedSeats;
+    }
+
+    public boolean isReviewRequired() {
+        return reviewRequired;
+    }
+
+    public void setReviewRequired(boolean reviewRequired) {
+        this.reviewRequired = reviewRequired;
+    }
+
+    public String getDecisionNote() {
+        return decisionNote;
+    }
+
+    public void setDecisionNote(String decisionNote) {
+        this.decisionNote = decisionNote;
     }
 
     public Instant getCreatedAt() {

@@ -6,21 +6,20 @@ import {
   createAdminClassroom,
   deleteAdminClassroom,
   fetchAdminFacilitiesBuildings,
-  fetchAdminFacilityBookings,
   fetchAdminFacilityReports,
   fetchAdminFloorClassrooms,
-  updateAdminBookingStatus,
   updateAdminBuildingFloors,
   updateAdminClassroom,
   updateAdminClassroomStatus,
 } from "../services/facilities";
+import { fetchAllResources } from "../services/resources";
 import { readApiError } from "../services/api";
 
 function AdminFacilities() {
   const [reports, setReports] = useState(null);
   const [buildings, setBuildings] = useState([]);
-  const [bookings, setBookings] = useState([]);
   const [classrooms, setClassrooms] = useState([]);
+  const [genericResources, setGenericResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [classroomLoading, setClassroomLoading] = useState(false);
   const [error, setError] = useState("");
@@ -59,14 +58,14 @@ function AdminFacilities() {
     try {
       setError("");
       setLoading(true);
-      const [reportData, buildingData, bookingData] = await Promise.all([
+      const [reportData, buildingData, resourceData] = await Promise.all([
         fetchAdminFacilityReports(),
         fetchAdminFacilitiesBuildings(),
-        fetchAdminFacilityBookings(),
+        fetchAllResources(),
       ]);
       setReports(reportData);
       setBuildings(buildingData);
-      setBookings(bookingData);
+      setGenericResources(resourceData);
 
       const firstBuildingId = selectedBuildingId || buildingData[0]?.id || "";
       const firstFloorCount = buildingData.find((item) => item.id === firstBuildingId)?.floorCount || 1;
@@ -213,15 +212,6 @@ function AdminFacilities() {
         setEditingClassroomId("");
       }
       await loadClassrooms(selectedBuildingId, selectedFloor);
-      await loadAdminData();
-    } catch (err) {
-      setError(readApiError(err));
-    }
-  };
-
-  const handleBookingStatus = async (bookingId, status) => {
-    try {
-      await updateAdminBookingStatus(bookingId, status);
       await loadAdminData();
     } catch (err) {
       setError(readApiError(err));
@@ -465,43 +455,36 @@ function AdminFacilities() {
         <article className="student-modern-workspace-card student-facilities-wide-card">
           <div className="student-modern-card-head">
             <div>
-              <p className="student-modern-section-label">Bookings</p>
-              <h3>Approve, Reject, or Cancel Requests</h3>
+              <p className="student-modern-section-label">Generic Resources</p>
+              <h3>Catalog Overview</h3>
             </div>
           </div>
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Requester</th>
-                  <th>Building</th>
-                  <th>Room</th>
-                  <th>Date</th>
-                  <th>Slot</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bookings.map((booking) => (
-                  <tr key={booking.id}>
-                    <td>{booking.requestedByName}</td>
-                    <td>{booking.buildingName}</td>
-                    <td>{booking.roomNumber}</td>
-                    <td>{booking.bookingDate}</td>
-                    <td>{booking.startTime} - {booking.endTime}</td>
-                    <td>{booking.status}</td>
-                    <td className="admin-facilities-actions">
-                      <button className="solid-btn" type="button" onClick={() => handleBookingStatus(booking.id, "APPROVED")}>Approve</button>
-                      <button className="ghost-btn" type="button" onClick={() => handleBookingStatus(booking.id, "REJECTED")}>Reject</button>
-                      <button className="ghost-btn" type="button" onClick={() => handleBookingStatus(booking.id, "CANCELLED")}>Cancel</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="admin-facility-management-grid" style={{ gridTemplateColumns: "1fr" }}>
+            <div className="student-facility-detail-grid">
+              {genericResources.length ? (
+                genericResources.map((res) => (
+                  <article key={res.id} className="student-facility-card">
+                    <div className="student-facility-card-top">
+                      <div>
+                        <h4>{res.name}</h4>
+                        <p>{res.category}</p>
+                      </div>
+                      <span className={`student-facility-status student-facility-status-${res.operationalStatus.toLowerCase()}`}>
+                        {res.operationalStatus}
+                      </span>
+                    </div>
+                    <div className="student-facility-meta" style={{ marginTop: "0.5rem" }}>
+                      <span>{res.locations?.length || 0} locations</span>
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <p className="helper-text">No generic resources available.</p>
+              )}
+            </div>
           </div>
         </article>
+
       </section>
 
       {loading ? <p className="helper-text">Refreshing admin facilities data...</p> : null}

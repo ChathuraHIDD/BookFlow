@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import StudentPortalShell from "../components/StudentPortalShell";
 import { fetchStudentFacilitiesOverview } from "../services/facilities";
+import { fetchStudentResourceBookings } from "../services/resources";
 import { readApiError } from "../services/api";
 import { facilityCategoryGrid } from "../data/facilityCatalog";
 
@@ -31,8 +32,24 @@ function StudentFacilities() {
   useEffect(() => {
     const loadOverview = async () => {
       try {
-        const data = await fetchStudentFacilitiesOverview();
-        setOverview(data);
+        const [overviewData, resourceBookingsData] = await Promise.all([
+          fetchStudentFacilitiesOverview(),
+          fetchStudentResourceBookings()
+        ]);
+        
+        // Normalize resource bookings to match classroom bookings shape
+        const normalizedResourceBookings = (resourceBookingsData || []).map(rb => ({
+          ...rb,
+          isResource: true,
+          buildingName: rb.resourceCategory,
+          floorNumber: "",
+          roomNumber: rb.resourceName
+        }));
+
+        setOverview({
+          buildings: overviewData.buildings || [],
+          myBookings: [...(overviewData.myBookings || []), ...normalizedResourceBookings]
+        });
       } catch (err) {
         setError(readApiError(err));
       } finally {
@@ -229,12 +246,25 @@ function StudentFacilities() {
                   filteredBookings.map((booking) => (
                     <li key={booking.id} className="student-booking-history-card">
                       <div className="student-booking-history-top">
-                        <strong>{booking.buildingName} | Floor {booking.floorNumber} | {booking.roomNumber}</strong>
+                        <strong>
+                          {booking.isResource 
+                            ? `${booking.buildingName} | ${booking.roomNumber}`
+                            : `${booking.buildingName} | Floor ${booking.floorNumber} | ${booking.roomNumber}`
+                          }
+                        </strong>
                         <span className={`student-booking-status-badge student-booking-status-${statusTone(booking.status)}`}>
                           {booking.status}
                         </span>
                       </div>
                       <p>{booking.bookingDate} | {booking.startTime} - {booking.endTime}</p>
+                      <p className="student-booking-history-meta">
+                        {booking.purpose || "Study"} | {booking.priority || "NORMAL"} | {booking.reviewRequired ? "Review needed" : booking.status}
+                      </p>
+                      {booking.selectedSeats && booking.selectedSeats.length > 0 && (
+                        <p className="student-booking-history-seats">
+                          Seats: {booking.selectedSeats.join(", ")}
+                        </p>
+                      )}
                     </li>
                   ))
                 ) : (

@@ -6,5 +6,6 @@ public record NotificationResponse(
         String message,
         String createdAt,
         String category,
+        String actionUrl,
         boolean read) {
 }

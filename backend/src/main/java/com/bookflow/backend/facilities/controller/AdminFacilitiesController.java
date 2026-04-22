@@ -68,7 +68,7 @@ public class AdminFacilitiesController {
     public List<ClassroomResponse> classrooms(
             @PathVariable String buildingId,
             @PathVariable int floorNumber) {
-        return facilitiesService.classroomsForFloor(buildingId, floorNumber, null);
+        return facilitiesService.classroomsForFloor(buildingId, floorNumber, null, null, null);
     }
 
     @PutMapping("/classrooms/{classroomId}")

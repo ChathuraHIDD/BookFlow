@@ -18,6 +18,7 @@ import StudentFacilityCatalogDetail from "./pages/StudentFacilityCatalogDetail";
 import StudentFacilityCategoryDetail from "./pages/StudentFacilityCategoryDetail";
 import StudentFacilityFloors from "./pages/StudentFacilityFloors";
 import StudentFacilities from "./pages/StudentFacilities";
+import StudentResourceBooking from "./pages/StudentResourceBooking";
 import StudentSupport from "./pages/StudentSupport";
 import StudentSupportRaise from "./pages/StudentSupportRaise";
 import StudentSupportTicket from "./pages/StudentSupportTicket";
@@ -105,6 +106,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["student"]}>
             <StudentFacilityCategoryDetail />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/student/resources/:slug"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentResourceBooking />
           </ProtectedRoute>
         }
       />

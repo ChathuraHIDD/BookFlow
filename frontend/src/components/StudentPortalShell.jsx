@@ -189,7 +189,19 @@ function StudentPortalShell({ activeKey = "home", children }) {
                 {recentNotifications.length ? recentNotifications.map((note) => (
                   <li key={note.id} className={`student-modern-notification-item${note.read ? "" : " student-modern-notification-item-unread"}`}>
                     <div className="student-modern-notification-content">
-                      <strong>{note.title}</strong>
+                      {note.actionUrl ? (
+                        <strong>
+                          <Link 
+                            to={note.actionUrl} 
+                            className="notification-link"
+                            onClick={() => setNotificationsOpen(false)}
+                          >
+                            {note.title}
+                          </Link>
+                        </strong>
+                      ) : (
+                        <strong>{note.title}</strong>
+                      )}
                       <span>{note.message}</span>
                     </div>
                     <div className="student-modern-notification-item-actions">
