@@ -4,8 +4,8 @@ import { Link, useParams } from "react-router-dom";
 import PortalLayout from "../components/PortalLayout";
 import { readApiError } from "../services/api";
 import {
-  addSupportTicketAttachment,
   addSupportTicketComment,
+  downloadSupportAttachment,
   fetchMySupportTicket,
 } from "../services/support";
 
@@ -16,8 +16,6 @@ function StudentSupportTicket() {
   const [error, setError] = useState("");
   const [commentMessage, setCommentMessage] = useState("");
   const [commentBusy, setCommentBusy] = useState(false);
-  const [attachmentFile, setAttachmentFile] = useState(null);
-  const [attachmentBusy, setAttachmentBusy] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -75,22 +73,23 @@ function StudentSupportTicket() {
     }
   };
 
-  const onAddAttachment = async (event) => {
-    event.preventDefault();
-    if (!attachmentFile) {
-      return;
-    }
-
+  const onOpenAttachment = async (attachment) => {
     try {
-      setAttachmentBusy(true);
       setError("");
-      await addSupportTicketAttachment(id, attachmentFile);
-      setAttachmentFile(null);
-      await refreshTicket();
+      const { blob, fileName } = await downloadSupportAttachment(ticket.id, attachment.id);
+      const objectUrl = URL.createObjectURL(blob);
+      const newWindow = window.open(objectUrl, "_blank", "noreferrer");
+      if (!newWindow) {
+        const anchor = document.createElement("a");
+        anchor.href = objectUrl;
+        anchor.download = fileName;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+      }
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
     } catch (err) {
       setError(readApiError(err));
-    } finally {
-      setAttachmentBusy(false);
     }
   };
 
@@ -149,19 +148,6 @@ function StudentSupportTicket() {
             </form>
           </div>
 
-          <div className="support-ticket-detail-section">
-            <h4>Attach File</h4>
-            <form className="admin-ticket-actions" onSubmit={onAddAttachment}>
-              <input
-                type="file"
-                onChange={(event) => setAttachmentFile(event.target.files?.[0] || null)}
-              />
-              <button className="solid-btn" type="submit" disabled={attachmentBusy || !attachmentFile}>
-                {attachmentBusy ? "Uploading..." : "Upload Attachment"}
-              </button>
-            </form>
-          </div>
-
           {ticket.comments?.length ? (
             <div className="support-ticket-detail-section">
               <h4>Comments</h4>
@@ -183,9 +169,15 @@ function StudentSupportTicket() {
               <ul className="support-ticket-attachment-list">
                 {ticket.attachments.map((attachment) => (
                   <li key={attachment.id}>
-                    <a href={attachment.downloadUrl} target="_blank" rel="noreferrer">
-                      {attachment.originalFileName}
-                    </a>
+                    <button
+                      type="button"
+                      className="ghost-btn"
+                      onClick={() => onOpenAttachment(attachment)}
+                      aria-label={`Download ${attachment.originalFileName}`}
+                      title={`Download ${attachment.originalFileName}`}
+                    >
+                      Download {attachment.originalFileName}
+                    </button>
                     <span className="helper-text">
                       {attachment.uploadedByName} · {attachment.createdAt ? new Date(attachment.createdAt).toLocaleString() : ""}
                     </span>

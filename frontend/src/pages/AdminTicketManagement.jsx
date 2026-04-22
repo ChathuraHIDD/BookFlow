@@ -38,7 +38,7 @@ function AdminTicketManagement() {
         const nextDrafts = {};
         ticketsData.forEach((ticket) => {
           nextDrafts[ticket.id] = {
-            status: ticket.status,
+            status: "",
             adminNote: ticket.adminNote || "",
             assignedTechnicianId: ticket.assignedTechnicianId || "",
           };
@@ -102,21 +102,43 @@ function AdminTicketManagement() {
       setBusyTicketId(ticketId);
       setError("");
       const draft = drafts[ticketId] || {};
-      if (draft.assignedTechnicianId) {
+      const ticket = tickets.find((item) => item.id === ticketId);
+      if (!ticket) {
+        throw new Error("Ticket not found");
+      }
+
+      const assignmentChanged =
+        (draft.assignedTechnicianId || "") !== (ticket.assignedTechnicianId || "");
+      const statusChanged = Boolean(draft.status && draft.status !== ticket.status);
+
+      if (!assignmentChanged && !statusChanged) {
+        setError("No changes to save.");
+        return;
+      }
+
+      if (assignmentChanged && draft.assignedTechnicianId) {
         await assignSupportTechnician(ticketId, { technicianId: draft.assignedTechnicianId });
       }
-      const updated = await updateSupportTicketStatus(ticketId, {
-        status: draft.status,
-        adminNote: draft.adminNote,
-      });
+
+      let updated = ticket;
+      if (statusChanged) {
+        updated = await updateSupportTicketStatus(ticketId, {
+          status: draft.status,
+          adminNote: draft.adminNote,
+        });
+      } else if (assignmentChanged) {
+        const refreshed = await fetchAllSupportTickets();
+        const latest = refreshed.find((item) => item.id === ticketId);
+        updated = latest || ticket;
+      }
 
       setTickets((current) => current.map((ticket) => (ticket.id === ticketId ? updated : ticket)));
       setDrafts((current) => ({
         ...current,
         [ticketId]: {
-          status: updated.status,
+          status: "",
           adminNote: updated.adminNote || "",
-            assignedTechnicianId: updated.assignedTechnicianId || "",
+          assignedTechnicianId: updated.assignedTechnicianId || "",
         },
       }));
     } catch (err) {
@@ -178,17 +200,17 @@ function AdminTicketManagement() {
               <article className="metric-card">
                 <h3>Open</h3>
                 <p className="metric-number">{loading ? "--" : counts.open}</p>
-                <p className="helper-text">Waiting for response</p>
+                <p className="helper-text">Awaiting technician action</p>
               </article>
               <article className="metric-card">
                 <h3>In Progress</h3>
                 <p className="metric-number">{loading ? "--" : counts.inProgress}</p>
-                <p className="helper-text">Actively handled</p>
+                <p className="helper-text">Being handled by technician</p>
               </article>
               <article className="metric-card">
                 <h3>Resolved</h3>
                 <p className="metric-number">{loading ? "--" : counts.resolved}</p>
-                <p className="helper-text">Closed by the team</p>
+                <p className="helper-text">Resolved by technician</p>
               </article>
               <article className="metric-card">
                 <h3>Closed</h3>
@@ -251,14 +273,12 @@ function AdminTicketManagement() {
                               ))}
                             </select>
                             <select
-                              value={draft.status || ticket.status}
+                              value={draft.status || ""}
                               onChange={(event) => handleChange(ticket.id, "status", event.target.value)}
                             >
-                              <option>Open</option>
-                              <option>In Progress</option>
-                              <option>Resolved</option>
-                              <option>Closed</option>
-                              <option>Rejected</option>
+                              <option value="">No status change</option>
+                              <option value="Closed">Closed</option>
+                              <option value="Rejected">Rejected</option>
                             </select>
                             <input
                               type="text"

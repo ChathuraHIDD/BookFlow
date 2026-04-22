@@ -41,6 +41,19 @@ export async function addSupportTicketAttachment(ticketId, file) {
   return data;
 }
 
+export async function downloadSupportAttachment(ticketId, attachmentId) {
+  const response = await api.get(`/support/attachments/${ticketId}/${attachmentId}`, {
+    responseType: "blob",
+  });
+
+  const contentDisposition = response.headers?.["content-disposition"] || "";
+  const fileNameMatch = contentDisposition.match(/filename=\"?([^\";]+)\"?/i);
+  const fileName = fileNameMatch?.[1] || `attachment-${attachmentId}`;
+  const blob = new Blob([response.data], { type: response.headers?.["content-type"] || "application/octet-stream" });
+
+  return { blob, fileName };
+}
+
 export async function fetchAllSupportTickets() {
   const { data } = await api.get("/support/admin");
   return data;

@@ -146,28 +146,53 @@ public class SupportTicketService {
 
         SupportTicket saved = supportTicketRepository.save(ticket);
 
+        // Create comment preview for notification (limit to 100 chars)
+        String commentPreview = message.length() > 100 ? message.substring(0, 100) + "..." : message;
+
         if (user.getRole() == UserRole.STUDENT) {
+            // Student comment notification
+            String notificationMessage = String.format("%s commented on ticket %s: \"%s\"", 
+                    saved.getUserName(), saved.getTicketNumber(), commentPreview);
+            
             if (StringUtils.hasText(saved.getAssignedTechnicianId())) {
                 notificationService.notifyUser(
                         saved.getAssignedTechnicianId(),
-                        "Support Ticket Comment",
-                        String.format("%s commented on ticket %s.", saved.getUserName(), saved.getTicketNumber()),
+                        "Support Ticket Comment - Student Feedback",
+                        notificationMessage,
                         "TICKET_MANAGEMENT",
                         "/technician/tickets/" + saved.getId());
             } else {
                 notificationService.notifyAdmins(
-                        "Support Ticket Comment",
-                        String.format("%s commented on ticket %s.", saved.getUserName(), saved.getTicketNumber()),
+                        "Support Ticket Comment - Student Feedback",
+                        notificationMessage,
                         "TICKET_MANAGEMENT",
                         "/admin/tickets/" + saved.getId());
             }
-        } else {
+        } else if (user.getRole() == UserRole.TECHNICIAN || user.getRole() == UserRole.ADMIN || user.getRole() == UserRole.STAFF_MEMBER) {
+            // Staff/Admin/Technician comment - notify student
+            String notificationMessage = String.format("%s added an update to ticket %s: \"%s\"", 
+                    resolveDisplayName(user), saved.getTicketNumber(), commentPreview);
+            
             notificationService.notifyUser(
                     saved.getUserId(),
-                    "Support Ticket Update",
-                    String.format("%s added an update to ticket %s.", resolveDisplayName(user), saved.getTicketNumber()),
+                    "Support Ticket Update - Staff Response",
+                    notificationMessage,
                     "TICKET_MANAGEMENT",
                     "/student/support/" + saved.getId());
+            
+            // Also notify assigned technician if comment is from admin/staff and technician is not the commenter
+            if (StringUtils.hasText(saved.getAssignedTechnicianId()) && !saved.getAssignedTechnicianId().equals(user.getId()) 
+                    && (user.getRole() == UserRole.ADMIN || user.getRole() == UserRole.STAFF_MEMBER)) {
+                String techNotification = String.format("%s added feedback to your assigned ticket %s: \"%s\"", 
+                        resolveDisplayName(user), saved.getTicketNumber(), commentPreview);
+                
+                notificationService.notifyUser(
+                        saved.getAssignedTechnicianId(),
+                        "Assigned Ticket - Staff Feedback",
+                        techNotification,
+                        "TICKET_MANAGEMENT",
+                        "/technician/tickets/" + saved.getId());
+            }
         }
 
         return toResponse(saved);
@@ -264,6 +289,15 @@ public class SupportTicketService {
     public SupportTicketResponse updateStatus(String ticketId, UpdateSupportTicketStatusRequest request) {
         SupportTicket ticket = getTicket(ticketId);
         SupportTicketStatus status = parseStatus(request.status());
+        if (status != SupportTicketStatus.CLOSED && status != SupportTicketStatus.REJECTED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Admin can only set ticket status to Closed or Rejected");
+        }
+        if (status == SupportTicketStatus.CLOSED && ticket.getStatus() != SupportTicketStatus.RESOLVED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Only resolved tickets can be closed by admin");
+        }
+
         String adminNote = trimToNull(request.adminNote());
         if (status == SupportTicketStatus.REJECTED && !StringUtils.hasText(adminNote)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Reject reason is required");
@@ -272,10 +306,7 @@ public class SupportTicketService {
         ticket.setAdminNote(adminNote);
         ticket.setUpdatedAt(Instant.now());
 
-        if (status == SupportTicketStatus.RESOLVED) {
-            ticket.setResolvedAt(ticket.getUpdatedAt());
-            ticket.setFinalizedAt(ticket.getUpdatedAt());
-        } else if (status == SupportTicketStatus.CLOSED || status == SupportTicketStatus.REJECTED) {
+        if (status == SupportTicketStatus.CLOSED || status == SupportTicketStatus.REJECTED) {
             ticket.setFinalizedAt(ticket.getUpdatedAt());
         }
 

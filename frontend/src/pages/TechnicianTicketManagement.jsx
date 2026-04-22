@@ -1,20 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
 import PortalLayout from "../components/PortalLayout";
 import { readApiError } from "../services/api";
-import {
-  addSupportTicketComment,
-  fetchTechnicianSupportTickets,
-  updateTechnicianSupportTicket,
-} from "../services/support";
+import { fetchTechnicianSupportTickets } from "../services/support";
 
 function TechnicianTicketManagement() {
   const [tickets, setTickets] = useState([]);
-  const [drafts, setDrafts] = useState({});
-  const [selectedTicketId, setSelectedTicketId] = useState("");
   const [loading, setLoading] = useState(true);
-  const [busyTicketId, setBusyTicketId] = useState("");
-  const [commentDrafts, setCommentDrafts] = useState({});
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -30,22 +23,10 @@ function TechnicianTicketManagement() {
         }
 
         setTickets(data);
-        const nextDrafts = {};
-        data.forEach((ticket) => {
-          nextDrafts[ticket.id] = {
-            status: ticket.status,
-            resolutionNote: ticket.resolutionNote || "",
-          };
-        });
-        setDrafts(nextDrafts);
-        setCommentDrafts({});
-        setSelectedTicketId((current) => current || (data.length ? data[0].id : ""));
       } catch (err) {
         if (active) {
           setError(readApiError(err));
           setTickets([]);
-          setDrafts({});
-          setSelectedTicketId("");
         }
       } finally {
         if (active) {
@@ -70,72 +51,6 @@ function TechnicianTicketManagement() {
     });
     return summary;
   }, [tickets]);
-
-  const selectedTicket = tickets.find((ticket) => ticket.id === selectedTicketId) || null;
-  const selectedDraft = selectedTicket ? drafts[selectedTicket.id] || {} : {};
-
-  const handleChange = (ticketId, field, value) => {
-    setDrafts((current) => ({
-      ...current,
-      [ticketId]: {
-        ...(current[ticketId] || {}),
-        [field]: value,
-      },
-    }));
-  };
-
-  const handleSave = async (ticketId) => {
-    try {
-      setBusyTicketId(ticketId);
-      setError("");
-      const draft = drafts[ticketId] || {};
-      const updated = await updateTechnicianSupportTicket(ticketId, {
-        status: draft.status,
-        resolutionNote: draft.resolutionNote,
-      });
-
-      setTickets((current) => current.map((ticket) => (ticket.id === ticketId ? updated : ticket)));
-      setDrafts((current) => ({
-        ...current,
-        [ticketId]: {
-          status: updated.status,
-          resolutionNote: updated.resolutionNote || "",
-        },
-      }));
-    } catch (err) {
-      setError(readApiError(err));
-    } finally {
-      setBusyTicketId("");
-    }
-  };
-
-  const handleCommentSave = async (ticketId) => {
-    const message = (commentDrafts[ticketId] || "").trim();
-    if (!message) {
-      setError("Comment message is required.");
-      return;
-    }
-
-    try {
-      setBusyTicketId(`comment:${ticketId}`);
-      setError("");
-      const updated = await addSupportTicketComment(ticketId, { message });
-      setTickets((current) => current.map((ticket) => (ticket.id === ticketId ? updated : ticket)));
-      setDrafts((current) => ({
-        ...current,
-        [ticketId]: {
-          ...(current[ticketId] || {}),
-          status: updated.status,
-          resolutionNote: updated.resolutionNote || "",
-        },
-      }));
-      setCommentDrafts((current) => ({ ...current, [ticketId]: "" }));
-    } catch (err) {
-      setError(readApiError(err));
-    } finally {
-      setBusyTicketId("");
-    }
-  };
 
   return (
     <PortalLayout
@@ -183,7 +98,6 @@ function TechnicianTicketManagement() {
           </thead>
           <tbody>
             {tickets.map((ticket) => {
-              const draft = drafts[ticket.id] || {};
               const statusKey = (ticket.status || "").toLowerCase().replace(/\s+/g, "-");
 
               return (
@@ -199,9 +113,9 @@ function TechnicianTicketManagement() {
                   </td>
                   <td>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : "-"}</td>
                   <td>
-                    <button className="ghost-btn" type="button" onClick={() => setSelectedTicketId(ticket.id)}>
+                    <Link className="ghost-btn" to={`/technician/tickets/${ticket.id}`}>
                       View / Update
-                    </button>
+                    </Link>
                   </td>
                 </tr>
               );
@@ -209,124 +123,6 @@ function TechnicianTicketManagement() {
           </tbody>
         </table>
       </div>
-
-      {selectedTicket ? (
-        <article className="metric-card support-ticket-detail-card" style={{ marginTop: "18px" }}>
-          <div className="support-ticket-detail-head">
-            <div>
-              <p className="helper-text">{selectedTicket.ticketNumber || selectedTicket.id}</p>
-              <h3>{selectedTicket.title}</h3>
-            </div>
-            <span className={`status-badge support-status-badge ${(selectedTicket.status || "").toLowerCase().replace(/\s+/g, "-")}`}>
-              {selectedTicket.status}
-            </span>
-          </div>
-
-          <div className="support-ticket-detail-grid">
-            <p><strong>Category:</strong> {selectedTicket.category}</p>
-            <p><strong>Priority:</strong> {selectedTicket.priority}</p>
-            <p><strong>Location / Resource:</strong> {selectedTicket.locationResource}</p>
-            <p><strong>Student:</strong> {selectedTicket.userName}</p>
-            <p><strong>Contact:</strong> {selectedTicket.contactDetails}</p>
-            <p><strong>Assigned:</strong> {selectedTicket.assignedTechnicianName || "Unassigned"}</p>
-          </div>
-
-          <div className="support-ticket-detail-section">
-            <h4>Description</h4>
-            <p>{selectedTicket.description}</p>
-          </div>
-
-          {selectedTicket.resolutionNote ? (
-            <div className="support-ticket-detail-section">
-              <h4>Resolution Note</h4>
-              <p>{selectedTicket.resolutionNote}</p>
-            </div>
-          ) : null}
-
-          {selectedTicket.comments?.length ? (
-            <div className="support-ticket-detail-section">
-              <h4>Comments</h4>
-              <div className="support-ticket-comment-list">
-                {selectedTicket.comments.map((comment) => (
-                  <article key={comment.id} className="support-ticket-comment-item">
-                    <strong>{comment.authorName}</strong>
-                    <p className="helper-text">{comment.authorRole} · {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ""}</p>
-                    <p>{comment.message}</p>
-                  </article>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {selectedTicket.attachments?.length ? (
-            <div className="support-ticket-detail-section">
-              <h4>Attachments</h4>
-              <ul className="support-ticket-attachment-list">
-                {selectedTicket.attachments.map((attachment) => (
-                  <li key={attachment.id}>
-                    <a href={attachment.downloadUrl} target="_blank" rel="noreferrer">
-                      {attachment.originalFileName}
-                    </a>
-                    <span className="helper-text">
-                      {attachment.uploadedByName} · {attachment.createdAt ? new Date(attachment.createdAt).toLocaleString() : ""}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          <div className="support-ticket-detail-section">
-            <h4>Update Ticket</h4>
-            <div className="admin-ticket-actions" style={{ alignItems: "stretch" }}>
-              <select
-                value={selectedDraft.status || selectedTicket.status}
-                onChange={(event) => handleChange(selectedTicket.id, "status", event.target.value)}
-              >
-                <option value="In Progress">In Progress</option>
-                <option value="Resolved">Resolved</option>
-              </select>
-              <textarea
-                value={selectedDraft.resolutionNote || ""}
-                onChange={(event) => handleChange(selectedTicket.id, "resolutionNote", event.target.value)}
-                placeholder="Add a resolution note"
-                rows="4"
-              />
-              <button
-                className="solid-btn"
-                type="button"
-                disabled={busyTicketId === selectedTicket.id}
-                onClick={() => handleSave(selectedTicket.id)}
-              >
-                {busyTicketId === selectedTicket.id ? "Saving..." : "Save Update"}
-              </button>
-            </div>
-          </div>
-
-          <div className="support-ticket-detail-section">
-            <h4>Add Technician Update</h4>
-            <div className="admin-ticket-actions" style={{ alignItems: "stretch" }}>
-              <textarea
-                value={commentDrafts[selectedTicket.id] || ""}
-                onChange={(event) => setCommentDrafts((current) => ({
-                  ...current,
-                  [selectedTicket.id]: event.target.value,
-                }))}
-                placeholder="Add a progress update or note for the student"
-                rows="3"
-              />
-              <button
-                className="solid-btn"
-                type="button"
-                disabled={busyTicketId === `comment:${selectedTicket.id}`}
-                onClick={() => handleCommentSave(selectedTicket.id)}
-              >
-                {busyTicketId === `comment:${selectedTicket.id}` ? "Posting..." : "Post Update"}
-              </button>
-            </div>
-          </div>
-        </article>
-      ) : null}
 
       {!loading && !tickets.length ? (
         <article className="metric-card" style={{ marginTop: "18px" }}>
