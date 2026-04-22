@@ -36,13 +36,23 @@ public class SupportTicketController {
         this.supportTicketService = supportTicketService;
     }
 
-    @PostMapping("/me")
+    @PostMapping(value = "/me", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasRole('STUDENT')")
     public SupportTicketResponse createMyTicket(
             @AuthenticationPrincipal User user,
             @RequestBody CreateSupportTicketRequest request) {
         return supportTicketService.createTicket(user, request);
+    }
+
+    @PostMapping(value = "/me", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('STUDENT')")
+    public SupportTicketResponse createMyTicketWithAttachments(
+            @AuthenticationPrincipal User user,
+            @RequestPart("payload") CreateSupportTicketRequest request,
+            @RequestPart(value = "attachments", required = false) List<MultipartFile> attachments) {
+        return supportTicketService.createTicket(user, request, attachments);
     }
 
     @GetMapping("/me")
@@ -65,7 +75,16 @@ public class SupportTicketController {
             @AuthenticationPrincipal User user,
             @PathVariable String ticketId,
             @RequestBody AddSupportTicketCommentRequest request) {
-        return supportTicketService.addStudentComment(user, ticketId, request);
+        return supportTicketService.addComment(user, ticketId, request);
+    }
+
+    @PostMapping("/{ticketId}/comments")
+    @PreAuthorize("hasAnyRole('STUDENT','STAFF_MEMBER','ADMIN','TECHNICIAN')")
+    public SupportTicketResponse addComment(
+            @AuthenticationPrincipal User user,
+            @PathVariable String ticketId,
+            @RequestBody AddSupportTicketCommentRequest request) {
+        return supportTicketService.addComment(user, ticketId, request);
     }
 
     @PostMapping(value = "/me/{ticketId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -137,7 +156,7 @@ public class SupportTicketController {
     }
 
     @GetMapping("/attachments/{ticketId}/{attachmentId}")
-    @PreAuthorize("hasAnyRole('STUDENT','TECHNICIAN','ADMIN')")
+    @PreAuthorize("hasAnyRole('STUDENT','STAFF_MEMBER','TECHNICIAN','ADMIN')")
     public org.springframework.http.ResponseEntity<org.springframework.core.io.Resource> downloadAttachment(
             @AuthenticationPrincipal User user,
             @PathVariable String ticketId,

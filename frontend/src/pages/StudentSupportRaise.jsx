@@ -17,6 +17,7 @@ const initialForm = {
 function StudentSupportRaise() {
   const navigate = useNavigate();
   const [form, setForm] = useState(initialForm);
+  const [attachments, setAttachments] = useState([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -33,9 +34,10 @@ function StudentSupportRaise() {
         setBusy(true);
         setError("");
         setMessage("");
-        const created = await createSupportTicket(form);
+        const created = await createSupportTicket(form, attachments);
         setMessage(`Ticket ${created.ticketNumber} created successfully.`);
         setForm(initialForm);
+        setAttachments([]);
         navigate(`/student/support/${created.id}`);
       } catch (err) {
         setError(readApiError(err));
@@ -45,6 +47,25 @@ function StudentSupportRaise() {
     };
 
     submit();
+  };
+
+  const handleAttachmentChange = (event) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length > 3) {
+      setError("You can upload a maximum of 3 image attachments.");
+      setAttachments([]);
+      return;
+    }
+
+    const nonImage = files.find((file) => !file.type?.startsWith("image/"));
+    if (nonImage) {
+      setError("Only image attachments are allowed.");
+      setAttachments([]);
+      return;
+    }
+
+    setError("");
+    setAttachments(files);
   };
 
   return (
@@ -131,6 +152,21 @@ function StudentSupportRaise() {
             placeholder="Phone number or email"
             required
           />
+        </label>
+
+        <label htmlFor="attachments">
+          Attach Images (Optional, up to 3)
+          <input
+            id="attachments"
+            name="attachments"
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleAttachmentChange}
+          />
+          <small className="helper-text">
+            Add screenshots or photos to help explain the incident.
+          </small>
         </label>
 
         <button className="solid-btn" type="submit" disabled={busy}>

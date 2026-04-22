@@ -10,13 +10,25 @@ export async function fetchMySupportTicket(ticketId) {
   return data;
 }
 
-export async function createSupportTicket(payload) {
+export async function createSupportTicket(payload, attachments = []) {
+  if (attachments?.length) {
+    const formData = new FormData();
+    formData.append("payload", new Blob([JSON.stringify(payload)], { type: "application/json" }));
+    attachments.forEach((file) => {
+      formData.append("attachments", file);
+    });
+    const { data } = await api.post("/support/me", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+  }
+
   const { data } = await api.post("/support/me", payload);
   return data;
 }
 
 export async function addSupportTicketComment(ticketId, payload) {
-  const { data } = await api.post(`/support/me/${ticketId}/comments`, payload);
+  const { data } = await api.post(`/support/${ticketId}/comments`, payload);
   return data;
 }
 

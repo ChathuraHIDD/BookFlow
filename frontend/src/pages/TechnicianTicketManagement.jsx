@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 
 import PortalLayout from "../components/PortalLayout";
 import { readApiError } from "../services/api";
-import { fetchTechnicianSupportTickets, updateTechnicianSupportTicket } from "../services/support";
+import {
+  addSupportTicketComment,
+  fetchTechnicianSupportTickets,
+  updateTechnicianSupportTicket,
+} from "../services/support";
 
 function TechnicianTicketManagement() {
   const [tickets, setTickets] = useState([]);
@@ -10,6 +14,7 @@ function TechnicianTicketManagement() {
   const [selectedTicketId, setSelectedTicketId] = useState("");
   const [loading, setLoading] = useState(true);
   const [busyTicketId, setBusyTicketId] = useState("");
+  const [commentDrafts, setCommentDrafts] = useState({});
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -33,6 +38,7 @@ function TechnicianTicketManagement() {
           };
         });
         setDrafts(nextDrafts);
+        setCommentDrafts({});
         setSelectedTicketId((current) => current || (data.length ? data[0].id : ""));
       } catch (err) {
         if (active) {
@@ -96,6 +102,34 @@ function TechnicianTicketManagement() {
           resolutionNote: updated.resolutionNote || "",
         },
       }));
+    } catch (err) {
+      setError(readApiError(err));
+    } finally {
+      setBusyTicketId("");
+    }
+  };
+
+  const handleCommentSave = async (ticketId) => {
+    const message = (commentDrafts[ticketId] || "").trim();
+    if (!message) {
+      setError("Comment message is required.");
+      return;
+    }
+
+    try {
+      setBusyTicketId(`comment:${ticketId}`);
+      setError("");
+      const updated = await addSupportTicketComment(ticketId, { message });
+      setTickets((current) => current.map((ticket) => (ticket.id === ticketId ? updated : ticket)));
+      setDrafts((current) => ({
+        ...current,
+        [ticketId]: {
+          ...(current[ticketId] || {}),
+          status: updated.status,
+          resolutionNote: updated.resolutionNote || "",
+        },
+      }));
+      setCommentDrafts((current) => ({ ...current, [ticketId]: "" }));
     } catch (err) {
       setError(readApiError(err));
     } finally {
@@ -249,7 +283,6 @@ function TechnicianTicketManagement() {
                 value={selectedDraft.status || selectedTicket.status}
                 onChange={(event) => handleChange(selectedTicket.id, "status", event.target.value)}
               >
-                <option value="Open">Open</option>
                 <option value="In Progress">In Progress</option>
                 <option value="Resolved">Resolved</option>
               </select>
@@ -266,6 +299,29 @@ function TechnicianTicketManagement() {
                 onClick={() => handleSave(selectedTicket.id)}
               >
                 {busyTicketId === selectedTicket.id ? "Saving..." : "Save Update"}
+              </button>
+            </div>
+          </div>
+
+          <div className="support-ticket-detail-section">
+            <h4>Add Technician Update</h4>
+            <div className="admin-ticket-actions" style={{ alignItems: "stretch" }}>
+              <textarea
+                value={commentDrafts[selectedTicket.id] || ""}
+                onChange={(event) => setCommentDrafts((current) => ({
+                  ...current,
+                  [selectedTicket.id]: event.target.value,
+                }))}
+                placeholder="Add a progress update or note for the student"
+                rows="3"
+              />
+              <button
+                className="solid-btn"
+                type="button"
+                disabled={busyTicketId === `comment:${selectedTicket.id}`}
+                onClick={() => handleCommentSave(selectedTicket.id)}
+              >
+                {busyTicketId === `comment:${selectedTicket.id}` ? "Posting..." : "Post Update"}
               </button>
             </div>
           </div>

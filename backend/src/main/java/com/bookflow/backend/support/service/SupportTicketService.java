@@ -64,6 +64,10 @@ public class SupportTicketService {
     }
 
     public SupportTicketResponse createTicket(User user, CreateSupportTicketRequest request) {
+        return createTicket(user, request, List.of());
+    }
+
+    public SupportTicketResponse createTicket(User user, CreateSupportTicketRequest request, List<MultipartFile> attachments) {
         String title = requireText(request.title(), "Title");
         String locationResource = requireText(request.locationResource(), "Location / Resource");
         String description = requireText(request.description(), "Description");
@@ -93,6 +97,18 @@ public class SupportTicketService {
         ticket.setResolvedAt(null);
 
         SupportTicket saved = supportTicketRepository.save(ticket);
+
+        List<MultipartFile> normalizedAttachments = attachments == null ? List.of() : attachments;
+        if (!normalizedAttachments.isEmpty()) {
+            validateAttachmentBatch(saved, normalizedAttachments);
+            ensureCollections(saved);
+            for (MultipartFile file : normalizedAttachments) {
+                saved.getAttachments().add(storeAttachment(saved, user, file));
+            }
+            saved.setUpdatedAt(Instant.now());
+            saved = supportTicketRepository.save(saved);
+        }
+
         notificationService.notifyAdmins(
                 "New Support Ticket",
                 String.format("%s submitted support ticket %s.", saved.getUserName(), saved.getTicketNumber()),
@@ -112,8 +128,8 @@ public class SupportTicketService {
         return toResponse(getOwnedTicket(user, ticketId));
     }
 
-    public SupportTicketResponse addStudentComment(User user, String ticketId, AddSupportTicketCommentRequest request) {
-        SupportTicket ticket = getOwnedTicket(user, ticketId);
+    public SupportTicketResponse addComment(User user, String ticketId, AddSupportTicketCommentRequest request) {
+        SupportTicket ticket = getCommentableTicket(user, ticketId);
         String message = requireText(request.message(), "Comment message");
         ensureCollections(ticket);
 
@@ -130,19 +146,28 @@ public class SupportTicketService {
 
         SupportTicket saved = supportTicketRepository.save(ticket);
 
-        if (StringUtils.hasText(saved.getAssignedTechnicianId())) {
-            notificationService.notifyUser(
-                    saved.getAssignedTechnicianId(),
-                    "Support Ticket Comment",
-                    String.format("%s commented on ticket %s.", saved.getUserName(), saved.getTicketNumber()),
-                    "TICKET_MANAGEMENT",
-                    "/technician/tickets/" + saved.getId());
+        if (user.getRole() == UserRole.STUDENT) {
+            if (StringUtils.hasText(saved.getAssignedTechnicianId())) {
+                notificationService.notifyUser(
+                        saved.getAssignedTechnicianId(),
+                        "Support Ticket Comment",
+                        String.format("%s commented on ticket %s.", saved.getUserName(), saved.getTicketNumber()),
+                        "TICKET_MANAGEMENT",
+                        "/technician/tickets/" + saved.getId());
+            } else {
+                notificationService.notifyAdmins(
+                        "Support Ticket Comment",
+                        String.format("%s commented on ticket %s.", saved.getUserName(), saved.getTicketNumber()),
+                        "TICKET_MANAGEMENT",
+                        "/admin/tickets/" + saved.getId());
+            }
         } else {
-            notificationService.notifyAdmins(
-                    "Support Ticket Comment",
-                    String.format("%s commented on ticket %s.", saved.getUserName(), saved.getTicketNumber()),
+            notificationService.notifyUser(
+                    saved.getUserId(),
+                    "Support Ticket Update",
+                    String.format("%s added an update to ticket %s.", resolveDisplayName(user), saved.getTicketNumber()),
                     "TICKET_MANAGEMENT",
-                    "/admin/tickets/" + saved.getId());
+                    "/student/support/" + saved.getId());
         }
 
         return toResponse(saved);
@@ -150,37 +175,9 @@ public class SupportTicketService {
 
     public SupportTicketResponse addAttachment(User user, String ticketId, MultipartFile file) {
         SupportTicket ticket = getOwnedTicket(user, ticketId);
-        if (file == null || file.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Attachment file is required");
-        }
-
+        validateAttachmentBatch(ticket, List.of(file));
         ensureCollections(ticket);
-        String originalFileName = sanitizeFileName(file.getOriginalFilename());
-        String storedFileName = UUID.randomUUID() + "_" + originalFileName;
-        String contentType = StringUtils.hasText(file.getContentType()) ? file.getContentType() : MediaType.APPLICATION_OCTET_STREAM_VALUE;
-
-        Path ticketDirectory = resolveTicketDirectory(ticket.getId());
-        Path storedPath = ticketDirectory.resolve(storedFileName);
-
-        try {
-            Files.createDirectories(ticketDirectory);
-            try (InputStream inputStream = file.getInputStream()) {
-                Files.copy(inputStream, storedPath, StandardCopyOption.REPLACE_EXISTING);
-            }
-        } catch (IOException ex) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to store attachment", ex);
-        }
-
-        SupportTicketAttachment attachment = new SupportTicketAttachment();
-        attachment.setId(UUID.randomUUID().toString());
-        attachment.setOriginalFileName(originalFileName);
-        attachment.setStoredFileName(storedFileName);
-        attachment.setContentType(contentType);
-        attachment.setSize(file.getSize());
-        attachment.setUploadedByUserId(user.getId());
-        attachment.setUploadedByName(resolveDisplayName(user));
-        attachment.setUploadedByRole(user.getRole() != null ? user.getRole().name() : UserRole.STUDENT.name());
-        attachment.setCreatedAt(Instant.now());
+        SupportTicketAttachment attachment = storeAttachment(ticket, user, file);
 
         ticket.getAttachments().add(attachment);
         ticket.setUpdatedAt(attachment.getCreatedAt());
@@ -267,8 +264,12 @@ public class SupportTicketService {
     public SupportTicketResponse updateStatus(String ticketId, UpdateSupportTicketStatusRequest request) {
         SupportTicket ticket = getTicket(ticketId);
         SupportTicketStatus status = parseStatus(request.status());
+        String adminNote = trimToNull(request.adminNote());
+        if (status == SupportTicketStatus.REJECTED && !StringUtils.hasText(adminNote)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Reject reason is required");
+        }
         ticket.setStatus(status);
-        ticket.setAdminNote(trimToNull(request.adminNote()));
+        ticket.setAdminNote(adminNote);
         ticket.setUpdatedAt(Instant.now());
 
         if (status == SupportTicketStatus.RESOLVED) {
@@ -314,13 +315,26 @@ public class SupportTicketService {
     }
 
     private SupportTicket getAccessibleTicket(User user, String ticketId) {
-        if (user.getRole() == UserRole.ADMIN) {
+        if (user.getRole() == UserRole.ADMIN || user.getRole() == UserRole.STAFF_MEMBER) {
             return getTicket(ticketId);
         }
         if (user.getRole() == UserRole.TECHNICIAN) {
             return getAssignedTicket(user, ticketId);
         }
         return getOwnedTicket(user, ticketId);
+    }
+
+    private SupportTicket getCommentableTicket(User user, String ticketId) {
+        if (user.getRole() == UserRole.STUDENT) {
+            return getOwnedTicket(user, ticketId);
+        }
+        if (user.getRole() == UserRole.TECHNICIAN) {
+            return getAssignedTicket(user, ticketId);
+        }
+        if (user.getRole() == UserRole.ADMIN || user.getRole() == UserRole.STAFF_MEMBER) {
+            return getTicket(ticketId);
+        }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to comment on this ticket");
     }
 
     private SupportTicket getOwnedTicket(User user, String ticketId) {
@@ -361,9 +375,6 @@ public class SupportTicketService {
         }
 
         if (currentStatus == SupportTicketStatus.OPEN && nextStatus == SupportTicketStatus.IN_PROGRESS) {
-            return;
-        }
-        if (currentStatus == SupportTicketStatus.OPEN && nextStatus == SupportTicketStatus.RESOLVED) {
             return;
         }
         if (currentStatus == SupportTicketStatus.IN_PROGRESS && nextStatus == SupportTicketStatus.RESOLVED) {
@@ -410,6 +421,57 @@ public class SupportTicketService {
 
     private String trimToNull(String value) {
         return StringUtils.hasText(value) ? value.trim() : null;
+    }
+
+    private void validateAttachmentBatch(SupportTicket ticket, List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+
+        ensureCollections(ticket);
+        if (ticket.getAttachments().size() + files.size() > 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A maximum of 3 image attachments is allowed");
+        }
+
+        for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Attachment file is required");
+            }
+            String contentType = file.getContentType();
+            if (!StringUtils.hasText(contentType) || !contentType.toLowerCase(Locale.ROOT).startsWith("image/")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only image attachments are allowed");
+            }
+        }
+    }
+
+    private SupportTicketAttachment storeAttachment(SupportTicket ticket, User user, MultipartFile file) {
+        String originalFileName = sanitizeFileName(file.getOriginalFilename());
+        String storedFileName = UUID.randomUUID() + "_" + originalFileName;
+        String contentType = StringUtils.hasText(file.getContentType()) ? file.getContentType() : MediaType.APPLICATION_OCTET_STREAM_VALUE;
+
+        Path ticketDirectory = resolveTicketDirectory(ticket.getId());
+        Path storedPath = ticketDirectory.resolve(storedFileName);
+
+        try {
+            Files.createDirectories(ticketDirectory);
+            try (InputStream inputStream = file.getInputStream()) {
+                Files.copy(inputStream, storedPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (IOException ex) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to store attachment", ex);
+        }
+
+        SupportTicketAttachment attachment = new SupportTicketAttachment();
+        attachment.setId(UUID.randomUUID().toString());
+        attachment.setOriginalFileName(originalFileName);
+        attachment.setStoredFileName(storedFileName);
+        attachment.setContentType(contentType);
+        attachment.setSize(file.getSize());
+        attachment.setUploadedByUserId(user.getId());
+        attachment.setUploadedByName(resolveDisplayName(user));
+        attachment.setUploadedByRole(user.getRole() != null ? user.getRole().name() : UserRole.STUDENT.name());
+        attachment.setCreatedAt(Instant.now());
+        return attachment;
     }
 
     private String resolveDisplayName(User user) {
