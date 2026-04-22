@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 
 import PortalLayout from "../components/PortalLayout";
 import { readApiError } from "../services/api";
