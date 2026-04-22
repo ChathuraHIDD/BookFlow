@@ -11,10 +11,12 @@ public class ResourceBookingResponse {
     private String endTime;
     private String status;
     private String requestedByName;
+    private String userId;
+    private String createdAt;
 
     public ResourceBookingResponse(String id, String resourceId, String resourceName, String resourceCategory,
                                    String bookingDate, String startTime, String endTime, String status,
-                                   String requestedByName) {
+                                   String requestedByName, String userId, String createdAt) {
         this.id = id;
         this.resourceId = resourceId;
         this.resourceName = resourceName;
@@ -24,6 +26,8 @@ public class ResourceBookingResponse {
         this.endTime = endTime;
         this.status = status;
         this.requestedByName = requestedByName;
+        this.userId = userId;
+        this.createdAt = createdAt;
     }
 
     public String getId() {
@@ -96,5 +100,21 @@ public class ResourceBookingResponse {
 
     public void setRequestedByName(String requestedByName) {
         this.requestedByName = requestedByName;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
     }
 }

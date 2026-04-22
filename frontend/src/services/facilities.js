@@ -10,9 +10,13 @@ export async function fetchBuildingFloors(buildingId) {
   return data;
 }
 
-export async function fetchFloorClassrooms(buildingId, floorNumber, date) {
+export async function fetchFloorClassrooms(buildingId, floorNumber, date, startTime, endTime) {
   const { data } = await api.get(`/student/facilities/buildings/${buildingId}/floors/${floorNumber}/classrooms`, {
-    params: date ? { date } : {},
+    params: {
+      ...(date ? { date } : {}),
+      ...(startTime ? { startTime } : {}),
+      ...(endTime ? { endTime } : {}),
+    },
   });
   return data;
 }

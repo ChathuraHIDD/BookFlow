@@ -15,8 +15,6 @@ import com.bookflow.backend.resources.model.ResourceBooking;
 import com.bookflow.backend.resources.model.ResourceBookingStatus;
 import com.bookflow.backend.resources.model.ResourceOperationalStatus;
 
-import com.bookflow.backend.resources.dto.ResourceResponse;
-import com.bookflow.backend.resources.model.Resource;
 import com.bookflow.backend.resources.repository.ResourceBookingRepository;
 import com.bookflow.backend.resources.repository.ResourceRepository;
 
@@ -110,6 +108,11 @@ public class ResourceService {
     public ResourceBookingResponse updateBookingStatus(String bookingId, ResourceBookingStatus status) {
         ResourceBooking booking = resourceBookingRepository.findById(bookingId)
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
+
+        if (status == ResourceBookingStatus.APPROVED) {
+            validateApprovalConflict(booking);
+        }
+
         booking.setStatus(status);
         ResourceBooking savedBooking = resourceBookingRepository.save(booking);
         
@@ -145,7 +148,21 @@ public class ResourceService {
                 booking.getStartTime() != null ? booking.getStartTime().toString() : "",
                 booking.getEndTime() != null ? booking.getEndTime().toString() : "",
                 booking.getStatus() != null ? booking.getStatus().name() : "UNKNOWN",
-                booking.getRequestedByName()
+                booking.getRequestedByName(),
+                booking.getUserId(),
+                booking.getCreatedAt() != null ? booking.getCreatedAt().toString() : ""
         );
+    }
+
+    private void validateApprovalConflict(ResourceBooking booking) {
+        List<ResourceBooking> conflicts = resourceBookingRepository.findByResourceIdAndBookingDate(booking.getResourceId(), booking.getBookingDate()).stream()
+                .filter(existing -> !booking.getId().equals(existing.getId()))
+                .filter(existing -> existing.getStatus() == ResourceBookingStatus.PENDING || existing.getStatus() == ResourceBookingStatus.APPROVED)
+                .filter(existing -> booking.getStartTime().isBefore(existing.getEndTime()) && booking.getEndTime().isAfter(existing.getStartTime()))
+                .toList();
+
+        if (!conflicts.isEmpty()) {
+            throw new IllegalArgumentException("This booking conflicts with an existing reservation");
+        }
     }
 }

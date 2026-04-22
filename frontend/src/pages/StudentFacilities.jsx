@@ -257,6 +257,14 @@ function StudentFacilities() {
                         </span>
                       </div>
                       <p>{booking.bookingDate} | {booking.startTime} - {booking.endTime}</p>
+                      <p className="student-booking-history-meta">
+                        {booking.purpose || "Study"} | {booking.priority || "NORMAL"} | {booking.reviewRequired ? "Review needed" : booking.status}
+                      </p>
+                      {booking.selectedSeats && booking.selectedSeats.length > 0 && (
+                        <p className="student-booking-history-seats">
+                          Seats: {booking.selectedSeats.join(", ")}
+                        </p>
+                      )}
                     </li>
                   ))
                 ) : (
