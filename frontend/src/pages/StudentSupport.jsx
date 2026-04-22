@@ -1,79 +1,98 @@
-import PortalLayout from "../components/PortalLayout";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+
+import PortalLayout from "../components/PortalLayout";
+import { readApiError } from "../services/api";
+import { fetchMySupportTickets } from "../services/support";
 
 function StudentSupport() {
   const navigate = useNavigate();
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const mockTickets = [
-    {
-      id: "TCK-1001",
-      subject: "Cannot borrow e-book",
-      category: "Borrowing",
-      status: "Open",
-      updatedAt: "2026-04-17",
-    },
-    {
-      id: "TCK-1002",
-      subject: "Login error on mobile",
-      category: "Technical",
-      status: "In Progress",
-      updatedAt: "2026-04-16",
-    },
-    {
-      id: "TCK-1003",
-      subject: "Need profile email correction",
-      category: "Account",
-      status: "Resolved",
-      updatedAt: "2026-04-14",
-    },
-    {
-      id: "TCK-1004",
-      subject: "Reservation not showing",
-      category: "Technical",
-      status: "Open",
-      updatedAt: "2026-04-13",
-    },
-    {
-      id: "TCK-1005",
-      subject: "Fine amount clarification",
-      category: "Other",
-      status: "Resolved",
-      updatedAt: "2026-04-12",
-    },
-  ];
+  useEffect(() => {
+    let active = true;
 
-  const totalCount = mockTickets.length;
-  const openCount = mockTickets.filter((ticket) => ticket.status === "Open").length;
-  const inProgressCount = mockTickets.filter((ticket) => ticket.status === "In Progress").length;
-  const resolvedCount = mockTickets.filter((ticket) => ticket.status === "Resolved").length;
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const data = await fetchMySupportTickets();
+        if (active) {
+          setTickets(data);
+        }
+      } catch (err) {
+        if (active) {
+          setError(readApiError(err));
+          setTickets([]);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const counts = useMemo(() => {
+    const summary = {
+      total: tickets.length,
+      open: 0,
+      inProgress: 0,
+      resolved: 0,
+    };
+
+    tickets.forEach((ticket) => {
+      if (ticket.status === "Open") {
+        summary.open += 1;
+      }
+      if (ticket.status === "In Progress") {
+        summary.inProgress += 1;
+      }
+      if (ticket.status === "Resolved") {
+        summary.resolved += 1;
+      }
+    });
+
+    return summary;
+  }, [tickets]);
 
   return (
     <PortalLayout
       title="Student Support"
       subtitle="Track your support requests and create new incident tickets from one place."
     >
+      {error ? <p className="error-text">{error}</p> : null}
+
       <section className="stats-grid">
         <article className="metric-card">
           <h3>Total</h3>
-          <p className="metric-number">{totalCount}</p>
+          <p className="metric-number">{loading ? "--" : counts.total}</p>
           <p className="helper-text">All support tickets</p>
         </article>
 
         <article className="metric-card">
           <h3>Open</h3>
-          <p className="metric-number">{openCount}</p>
+          <p className="metric-number">{loading ? "--" : counts.open}</p>
           <p className="helper-text">Waiting for first update</p>
         </article>
 
         <article className="metric-card">
           <h3>In Progress</h3>
-          <p className="metric-number">{inProgressCount}</p>
+          <p className="metric-number">{loading ? "--" : counts.inProgress}</p>
           <p className="helper-text">Currently being handled</p>
         </article>
 
         <article className="metric-card">
           <h3>Resolved</h3>
-          <p className="metric-number">{resolvedCount}</p>
+          <p className="metric-number">{loading ? "--" : counts.resolved}</p>
           <p className="helper-text">Completed requests</p>
         </article>
       </section>
@@ -86,6 +105,10 @@ function StudentSupport() {
 
       <section className="card" style={{ marginTop: "14px" }}>
         <h3>My Support Requests</h3>
+        {loading ? <p className="helper-text" style={{ marginTop: "10px" }}>Loading support tickets...</p> : null}
+        {!loading && !tickets.length ? (
+          <p className="helper-text" style={{ marginTop: "10px" }}>No support tickets yet. Raise a new one to get started.</p>
+        ) : null}
         <div className="table-wrap" style={{ marginTop: "10px" }}>
           <table>
             <thead>
@@ -99,24 +122,32 @@ function StudentSupport() {
               </tr>
             </thead>
             <tbody>
-              {mockTickets.map((ticket) => (
-                <tr key={ticket.id}>
-                  <td>{ticket.id}</td>
-                  <td>{ticket.subject}</td>
-                  <td>{ticket.category}</td>
-                  <td>{ticket.status}</td>
-                  <td>{ticket.updatedAt}</td>
-                  <td>
-                    <button
-                      className="ghost-btn"
-                      type="button"
-                      onClick={() => navigate(`/student/support/${ticket.id}`)}
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {tickets.map((ticket) => {
+                const statusKey = (ticket.status || "").toLowerCase().replace(/\s+/g, "-");
+
+                return (
+                  <tr key={ticket.id}>
+                    <td>{ticket.ticketNumber || ticket.id}</td>
+                    <td>{ticket.title}</td>
+                    <td>{ticket.category}</td>
+                    <td>
+                      <span className={`status-badge support-status-badge ${statusKey}`}>
+                        {ticket.status}
+                      </span>
+                    </td>
+                    <td>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleDateString() : "-"}</td>
+                    <td>
+                      <button
+                        className="ghost-btn"
+                        type="button"
+                        onClick={() => navigate(`/student/support/${ticket.id}`)}
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

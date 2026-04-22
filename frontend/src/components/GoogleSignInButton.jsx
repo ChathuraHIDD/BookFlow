@@ -2,9 +2,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 const GOOGLE_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
 let googleScriptPromise;
-let initializedClientId = "";
 let credentialHandler = null;
-let googleInitialized = false;
+const getGoogleState = () => {
+  if (!window.__bookflowGoogleState) {
+    window.__bookflowGoogleState = {
+      initializedClientId: "",
+      googleInitialized: false,
+    };
+  }
+
+  return window.__bookflowGoogleState;
+};
 
 const loadGoogleScript = () => {
   if (window.google?.accounts?.id) {
@@ -41,6 +49,7 @@ function GoogleSignInButton({ onCredential, onError, text = "continue_with", dis
   const [isReady, setIsReady] = useState(false);
   const containerRef = useRef(null);
   const onCredentialRef = useRef(onCredential);
+  const googleState = getGoogleState();
 
   const clientId = useMemo(() => import.meta.env.VITE_GOOGLE_CLIENT_ID || "", []);
 
@@ -70,7 +79,7 @@ function GoogleSignInButton({ onCredential, onError, text = "continue_with", dis
 
         window.google.accounts.id.disableAutoSelect();
 
-        if (!googleInitialized || initializedClientId !== clientId) {
+        if (!googleState.googleInitialized || googleState.initializedClientId !== clientId) {
           window.google.accounts.id.initialize({
             client_id: clientId,
             auto_select: false,
@@ -82,8 +91,8 @@ function GoogleSignInButton({ onCredential, onError, text = "continue_with", dis
               }
             },
           });
-          initializedClientId = clientId;
-          googleInitialized = true;
+          googleState.initializedClientId = clientId;
+          googleState.googleInitialized = true;
         }
 
         containerRef.current.innerHTML = "";

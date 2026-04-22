@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import PortalLayout from "../components/PortalLayout";
+import { readApiError } from "../services/api";
+import { createSupportTicket } from "../services/support";
 
 const initialForm = {
   title: "",
@@ -13,8 +15,11 @@ const initialForm = {
 };
 
 function StudentSupportRaise() {
+  const navigate = useNavigate();
   const [form, setForm] = useState(initialForm);
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -23,8 +28,23 @@ function StudentSupportRaise() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    setMessage(`Draft saved for ${form.title || "your support request"}.`);
-    setForm(initialForm);
+    const submit = async () => {
+      try {
+        setBusy(true);
+        setError("");
+        setMessage("");
+        const created = await createSupportTicket(form);
+        setMessage(`Ticket ${created.ticketNumber} created successfully.`);
+        setForm(initialForm);
+        navigate(`/student/support/${created.id}`);
+      } catch (err) {
+        setError(readApiError(err));
+      } finally {
+        setBusy(false);
+      }
+    };
+
+    submit();
   };
 
   return (
@@ -38,6 +58,7 @@ function StudentSupportRaise() {
         </Link>
       </div>
 
+      {error ? <p className="error-text" style={{ marginBottom: "12px" }}>{error}</p> : null}
       {message ? <p className="helper-text" style={{ marginBottom: "12px" }}>{message}</p> : null}
 
       <form className="form-grid" onSubmit={handleSubmit}>
@@ -112,8 +133,8 @@ function StudentSupportRaise() {
           />
         </label>
 
-        <button className="solid-btn" type="submit">
-          Save Ticket Draft
+        <button className="solid-btn" type="submit" disabled={busy}>
+          {busy ? "Saving..." : "Create Ticket"}
         </button>
       </form>
     </PortalLayout>
