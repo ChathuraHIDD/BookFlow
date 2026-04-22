@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavLink } from "react-router-dom";
 
 import PortalLayout from "../components/PortalLayout";
 import { readApiError } from "../services/api";
@@ -9,6 +8,7 @@ import {
   fetchTechnicians,
   updateSupportTicketStatus,
 } from "../services/support";
+import "./SupportModule.css";
 
 function AdminTicketManagement() {
   const [tickets, setTickets] = useState([]);
@@ -152,157 +152,158 @@ function AdminTicketManagement() {
     <PortalLayout
       title="Ticket Management"
       subtitle="Review all student support tickets and update their status from one place."
+      pageClassName="support-module-page"
+      heroClassName="support-module-hero support-module-hero-detail"
+      contentCardClassName="support-module-surface"
     >
-      <section className="admin-vision-layout admin-user-vision-layout">
-        <aside className="admin-vision-sidebar">
-          <div className="admin-vision-brand">
-            <img src="/nnic-logo-icon.png" alt="NNIC logo" className="admin-vision-brand-logo" />
+      <section className="admin-user-panel support-admin-panel">
+        {error ? <p className="support-inline-alert error-text">{error}</p> : null}
+
+        <div className="admin-section-head">
+          <div>
+            <p className="student-modern-section-label">Support Oversight</p>
+            <h3 className="admin-section-title">Ticket Management Workspace</h3>
           </div>
-          <nav className="admin-vision-nav" aria-label="Admin quick menu">
-            <NavLink to="/admin/profile" className="admin-vision-link">
-              Dashboard
-            </NavLink>
-            <NavLink to="/admin/users" className="admin-vision-link">
-              User Management
-            </NavLink>
-            <NavLink to="/admin/facilities" className="admin-vision-link">
-              Resource Management
-            </NavLink>
-            <NavLink to="/admin/tickets" className="admin-vision-link">
-              Ticket Management
-            </NavLink>
-            <NavLink to="/admin/bookings" className="admin-vision-link">
-              Booking Management
-            </NavLink>
-            <NavLink to="/admin/notifications" className="admin-vision-link">
-              Notifications
-            </NavLink>
-          </nav>
-        </aside>
+        </div>
 
-        <div className="admin-vision-main admin-user-vision-main">
-          <section className="admin-user-panel">
-            {error ? <p className="error-text">{error}</p> : null}
-
-            <div className="admin-section-head">
-              <div>
-                <p className="student-modern-section-label">Support Oversight</p>
-                <h3 className="admin-section-title">Ticket Management Workspace</h3>
-              </div>
+        <section className="support-overview-band support-admin-overview">
+          <div className="support-overview-copy">
+            <span className="support-eyebrow">Admin Control</span>
+            <h3>Review workload, assign technicians, and close the loop on support requests.</h3>
+            <p>
+              This workspace gives you a single queue for assignment decisions, final approval,
+              and rejection notes when tickets need administrative action.
+            </p>
+          </div>
+          <div className="support-overview-meta">
+            <div className="support-overview-chip">
+              <strong>{loading ? "--" : technicians.length}</strong>
+              <span>technicians available</span>
             </div>
+            <div className="support-overview-chip">
+              <strong>{loading ? "--" : counts.open + counts.inProgress}</strong>
+              <span>tickets still in motion</span>
+            </div>
+          </div>
+        </section>
 
-            <section className="stats-grid" style={{ marginTop: "18px" }}>
-              <article className="metric-card">
-                <h3>Total</h3>
-                <p className="metric-number">{loading ? "--" : counts.total}</p>
-                <p className="helper-text">All support tickets</p>
-              </article>
-              <article className="metric-card">
-                <h3>Open</h3>
-                <p className="metric-number">{loading ? "--" : counts.open}</p>
-                <p className="helper-text">Awaiting technician action</p>
-              </article>
-              <article className="metric-card">
-                <h3>In Progress</h3>
-                <p className="metric-number">{loading ? "--" : counts.inProgress}</p>
-                <p className="helper-text">Being handled by technician</p>
-              </article>
-              <article className="metric-card">
-                <h3>Resolved</h3>
-                <p className="metric-number">{loading ? "--" : counts.resolved}</p>
-                <p className="helper-text">Resolved by technician</p>
-              </article>
-              <article className="metric-card">
-                <h3>Closed</h3>
-                <p className="metric-number">{loading ? "--" : counts.closed}</p>
-                <p className="helper-text">Finalized by admin</p>
-              </article>
-              <article className="metric-card">
-                <h3>Rejected</h3>
-                <p className="metric-number">{loading ? "--" : counts.rejected}</p>
-                <p className="helper-text">Rejected by admin</p>
-              </article>
-            </section>
+        <section className="stats-grid support-stats-grid">
+          <article className="metric-card support-metric-card">
+            <h3>Total</h3>
+            <p className="metric-number">{loading ? "--" : counts.total}</p>
+            <p className="helper-text">All support tickets</p>
+          </article>
+          <article className="metric-card support-metric-card">
+            <h3>Open</h3>
+            <p className="metric-number">{loading ? "--" : counts.open}</p>
+            <p className="helper-text">Awaiting technician action</p>
+          </article>
+          <article className="metric-card support-metric-card">
+            <h3>In Progress</h3>
+            <p className="metric-number">{loading ? "--" : counts.inProgress}</p>
+            <p className="helper-text">Being handled by technician</p>
+          </article>
+          <article className="metric-card support-metric-card">
+            <h3>Resolved</h3>
+            <p className="metric-number">{loading ? "--" : counts.resolved}</p>
+            <p className="helper-text">Resolved by technician</p>
+          </article>
+          <article className="metric-card support-metric-card">
+            <h3>Closed</h3>
+            <p className="metric-number">{loading ? "--" : counts.closed}</p>
+            <p className="helper-text">Finalized by admin</p>
+          </article>
+          <article className="metric-card support-metric-card">
+            <h3>Rejected</h3>
+            <p className="metric-number">{loading ? "--" : counts.rejected}</p>
+            <p className="helper-text">Rejected by admin</p>
+          </article>
+        </section>
 
-            {loading ? <p className="helper-text" style={{ marginTop: "12px" }}>Loading tickets...</p> : null}
+        {loading ? <p className="helper-text">Loading tickets...</p> : null}
 
-            <div className="table-wrap" style={{ marginTop: "18px" }}>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Ticket</th>
-                    <th>Student</th>
-                    <th>Title</th>
-                    <th>Category</th>
-                    <th>Status</th>
-                    <th>Updated</th>
-                    <th>Actions</th>
+        <div className="table-wrap support-ticket-table-wrap support-admin-table-wrap">
+          <table className="support-ticket-table support-admin-ticket-table">
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Student</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Updated</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tickets.map((ticket) => {
+                const draft = drafts[ticket.id] || {};
+                const statusKey = (ticket.status || "").toLowerCase().replace(/\s+/g, "-");
+
+                return (
+                  <tr key={ticket.id}>
+                    <td className="support-ticket-table-id">{ticket.ticketNumber || ticket.id}</td>
+                    <td>
+                      <div className="support-ticket-table-subject">
+                        <strong>{ticket.userName}</strong>
+                        <span className="helper-text">{ticket.userEmail}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="support-ticket-table-subject">
+                        <strong>{ticket.title}</strong>
+                        <span className="helper-text">{ticket.locationResource || "General request"}</span>
+                      </div>
+                    </td>
+                    <td>{ticket.category}</td>
+                    <td>
+                      <span className={`status-badge support-status-badge ${statusKey}`}>
+                        {ticket.status}
+                      </span>
+                    </td>
+                    <td>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : "-"}</td>
+                    <td>
+                      <div className="admin-ticket-actions support-admin-actions">
+                        <select
+                          value={draft.assignedTechnicianId || ticket.assignedTechnicianId || ""}
+                          onChange={(event) => handleChange(ticket.id, "assignedTechnicianId", event.target.value)}
+                        >
+                          <option value="">Unassigned</option>
+                          {technicians.map((technician) => (
+                            <option key={technician.id} value={technician.id}>
+                              {technician.fullName || technician.email}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          value={draft.status || ""}
+                          onChange={(event) => handleChange(ticket.id, "status", event.target.value)}
+                        >
+                          <option value="">No status change</option>
+                          <option value="Closed">Closed</option>
+                          <option value="Rejected">Rejected</option>
+                        </select>
+                        <input
+                          type="text"
+                          value={draft.adminNote || ""}
+                          onChange={(event) => handleChange(ticket.id, "adminNote", event.target.value)}
+                          placeholder="Admin note"
+                        />
+                        <button
+                          className="ghost-btn"
+                          type="button"
+                          disabled={busyTicketId === ticket.id}
+                          onClick={() => handleSave(ticket.id)}
+                        >
+                          {busyTicketId === ticket.id ? "Saving..." : "Save"}
+                        </button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {tickets.map((ticket) => {
-                    const draft = drafts[ticket.id] || {};
-                    const statusKey = (ticket.status || "").toLowerCase().replace(/\s+/g, "-");
-
-                    return (
-                      <tr key={ticket.id}>
-                        <td>{ticket.ticketNumber || ticket.id}</td>
-                        <td>
-                          <strong>{ticket.userName}</strong>
-                          <p className="helper-text">{ticket.userEmail}</p>
-                        </td>
-                        <td>{ticket.title}</td>
-                        <td>{ticket.category}</td>
-                        <td>
-                          <span className={`status-badge support-status-badge ${statusKey}`}>
-                            {ticket.status}
-                          </span>
-                        </td>
-                        <td>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : "-"}</td>
-                        <td>
-                          <div className="admin-ticket-actions">
-                            <select
-                              value={draft.assignedTechnicianId || ticket.assignedTechnicianId || ""}
-                              onChange={(event) => handleChange(ticket.id, "assignedTechnicianId", event.target.value)}
-                            >
-                              <option value="">Unassigned</option>
-                              {technicians.map((technician) => (
-                                <option key={technician.id} value={technician.id}>
-                                  {technician.fullName || technician.email}
-                                </option>
-                              ))}
-                            </select>
-                            <select
-                              value={draft.status || ""}
-                              onChange={(event) => handleChange(ticket.id, "status", event.target.value)}
-                            >
-                              <option value="">No status change</option>
-                              <option value="Closed">Closed</option>
-                              <option value="Rejected">Rejected</option>
-                            </select>
-                            <input
-                              type="text"
-                              value={draft.adminNote || ""}
-                              onChange={(event) => handleChange(ticket.id, "adminNote", event.target.value)}
-                              placeholder="Admin note"
-                            />
-                            <button
-                              className="ghost-btn"
-                              type="button"
-                              disabled={busyTicketId === ticket.id}
-                              onClick={() => handleSave(ticket.id)}
-                            >
-                              {busyTicketId === ticket.id ? "Saving..." : "Save"}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </section>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </section>
     </PortalLayout>

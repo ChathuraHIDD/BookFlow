@@ -9,6 +9,7 @@ import {
   fetchTechnicianSupportTicket,
   updateTechnicianSupportTicket,
 } from "../services/support";
+import "./SupportModule.css";
 
 function TechnicianTicketDetail() {
   const { ticketId } = useParams();
@@ -130,151 +131,202 @@ function TechnicianTicketDetail() {
     }
   };
 
+  const statusKey = (ticket?.status || "").toLowerCase().replace(/\s+/g, "-");
+
   return (
     <PortalLayout
       title="Technician Ticket Details"
       subtitle="Review ticket information and submit updates from this dedicated page."
+      pageClassName="support-module-page"
+      heroClassName="support-module-hero support-module-hero-detail"
+      contentCardClassName="support-module-surface"
     >
-      <div className="cta-row" style={{ marginBottom: "14px" }}>
-        <Link className="ghost-btn" to="/technician/tickets">
-          Back to Ticket List
-        </Link>
+      <div className="support-module-stack">
+        <div className="support-breadcrumb-row">
+          <Link className="ghost-btn" to="/technician/tickets">
+            Back to Ticket List
+          </Link>
+        </div>
+
+        {error ? <p className="support-inline-alert error-text">{error}</p> : null}
+        {loading ? <p className="helper-text">Loading ticket...</p> : null}
+
+        {!loading && !ticket ? (
+          <article className="metric-card support-not-found-card">
+            <h3>Ticket not found</h3>
+            <p className="helper-text">This ticket may no longer be assigned to you.</p>
+            <button className="ghost-btn" type="button" onClick={() => navigate("/technician/tickets")}>
+              Go Back
+            </button>
+          </article>
+        ) : null}
+
+        {ticket ? (
+          <article className="support-ticket-detail-shell">
+            <div className="support-ticket-hero-card">
+              <div className="support-ticket-detail-head">
+                <div>
+                  <span className="support-ticket-id-label">{ticket.ticketNumber || ticket.id}</span>
+                  <h3>{ticket.title}</h3>
+                  <p className="helper-text">
+                    Student: {ticket.userName} | Location: {ticket.locationResource || "General request"}
+                  </p>
+                </div>
+                <span className={`status-badge support-status-badge ${statusKey}`}>{ticket.status}</span>
+              </div>
+
+              <div className="support-ticket-detail-grid">
+                <article className="support-detail-stat">
+                  <span>Category</span>
+                  <strong>{ticket.category}</strong>
+                </article>
+                <article className="support-detail-stat">
+                  <span>Priority</span>
+                  <strong>{ticket.priority}</strong>
+                </article>
+                <article className="support-detail-stat">
+                  <span>Student</span>
+                  <strong>{ticket.userName}</strong>
+                </article>
+                <article className="support-detail-stat">
+                  <span>Contact</span>
+                  <strong>{ticket.contactDetails || "-"}</strong>
+                </article>
+                <article className="support-detail-stat">
+                  <span>Assigned</span>
+                  <strong>{ticket.assignedTechnicianName || "Unassigned"}</strong>
+                </article>
+                <article className="support-detail-stat">
+                  <span>Updated</span>
+                  <strong>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : "-"}</strong>
+                </article>
+              </div>
+            </div>
+
+            <div className="support-ticket-detail-columns">
+              <section className="support-ticket-panel">
+                <div className="support-ticket-detail-section">
+                  <span className="support-eyebrow">Issue Summary</span>
+                  <h4>Description</h4>
+                  <p>{ticket.description}</p>
+                </div>
+
+                {ticket.resolutionNote ? (
+                  <div className="support-ticket-detail-section">
+                    <span className="support-eyebrow">Latest Resolution</span>
+                    <h4>Resolution Note</h4>
+                    <p>{ticket.resolutionNote}</p>
+                  </div>
+                ) : null}
+
+                {ticket.comments?.length ? (
+                  <div className="support-ticket-detail-section">
+                    <span className="support-eyebrow">Timeline</span>
+                    <h4>Comments</h4>
+                    <div className="support-ticket-comment-list">
+                      {ticket.comments.map((comment) => (
+                        <article key={comment.id} className="support-ticket-comment-item">
+                          <div className="support-comment-meta">
+                            <strong>{comment.authorName}</strong>
+                            <span className="helper-text">
+                              {comment.authorRole} | {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ""}
+                            </span>
+                          </div>
+                          <p>{comment.message}</p>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </section>
+
+              <aside className="support-ticket-sidebar">
+                {ticket.attachments?.length ? (
+                  <div className="support-ticket-panel support-ticket-detail-section">
+                    <span className="support-eyebrow">Files</span>
+                    <h4>Attachments</h4>
+                    <ul className="support-ticket-attachment-list">
+                      {ticket.attachments.map((attachment) => (
+                        <li key={attachment.id} className="support-attachment-card">
+                          <div>
+                            <strong>{attachment.originalFileName}</strong>
+                            <span className="helper-text">
+                              {attachment.uploadedByName} | {attachment.createdAt ? new Date(attachment.createdAt).toLocaleString() : ""}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            className="ghost-btn"
+                            onClick={() => handleAttachmentOpen(attachment)}
+                            aria-label={`Download ${attachment.originalFileName}`}
+                            title={`Download ${attachment.originalFileName}`}
+                          >
+                            Download
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                <div className="support-ticket-panel support-ticket-detail-section">
+                  <span className="support-eyebrow">Action Panel</span>
+                  <h4>Update Ticket</h4>
+                  <button
+                    type="button"
+                    className="solid-btn"
+                    onClick={() => setUpdatePanelOpen((current) => !current)}
+                  >
+                    {updatePanelOpen ? "Close Update Ticket" : "Update Ticket"}
+                  </button>
+                  {updatePanelOpen ? (
+                    <div className="admin-ticket-actions support-comment-form support-action-panel">
+                      <select value={status} onChange={(event) => setStatus(event.target.value)}>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                      </select>
+                      <textarea
+                        value={resolutionNote}
+                        onChange={(event) => setResolutionNote(event.target.value)}
+                        placeholder="Add a resolution note"
+                        rows="4"
+                      />
+                      <button className="solid-btn" type="button" disabled={busy} onClick={handleSave}>
+                        {busy ? "Saving..." : "Save Update"}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="support-ticket-panel support-ticket-detail-section">
+                  <span className="support-eyebrow">Technician Note</span>
+                  <h4>Add Technician Update</h4>
+                  <button
+                    type="button"
+                    className="solid-btn"
+                    onClick={() => setCommentPanelOpen((current) => !current)}
+                  >
+                    {commentPanelOpen ? "Close Technician Update" : "Add Technician Update"}
+                  </button>
+                  {commentPanelOpen ? (
+                    <div className="admin-ticket-actions support-comment-form support-action-panel">
+                      <textarea
+                        value={commentDraft}
+                        onChange={(event) => setCommentDraft(event.target.value)}
+                        placeholder="Add a progress update or note for the student"
+                        rows="3"
+                      />
+                      <button className="solid-btn" type="button" disabled={busy} onClick={handleCommentSave}>
+                        {busy ? "Posting..." : "Post Update"}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              </aside>
+            </div>
+          </article>
+        ) : null}
       </div>
-
-      {error ? <p className="error-text">{error}</p> : null}
-      {loading ? <p className="helper-text">Loading ticket...</p> : null}
-
-      {!loading && !ticket ? (
-        <article className="metric-card">
-          <h3>Ticket not found</h3>
-          <p className="helper-text">This ticket may no longer be assigned to you.</p>
-          <button className="ghost-btn" type="button" onClick={() => navigate("/technician/tickets")}>Go Back</button>
-        </article>
-      ) : null}
-
-      {ticket ? (
-        <article className="metric-card support-ticket-detail-card" style={{ marginTop: "8px" }}>
-          <div className="support-ticket-detail-head">
-            <div>
-              <p className="helper-text">{ticket.ticketNumber || ticket.id}</p>
-              <h3>{ticket.title}</h3>
-            </div>
-            <span className={`status-badge support-status-badge ${(ticket.status || "").toLowerCase().replace(/\s+/g, "-")}`}>
-              {ticket.status}
-            </span>
-          </div>
-
-          <div className="support-ticket-detail-grid">
-            <p><strong>Category:</strong> {ticket.category}</p>
-            <p><strong>Priority:</strong> {ticket.priority}</p>
-            <p><strong>Location / Resource:</strong> {ticket.locationResource}</p>
-            <p><strong>Student:</strong> {ticket.userName}</p>
-            <p><strong>Contact:</strong> {ticket.contactDetails}</p>
-            <p><strong>Assigned:</strong> {ticket.assignedTechnicianName || "Unassigned"}</p>
-          </div>
-
-          <div className="support-ticket-detail-section">
-            <h4>Description</h4>
-            <p>{ticket.description}</p>
-          </div>
-
-          {ticket.resolutionNote ? (
-            <div className="support-ticket-detail-section">
-              <h4>Resolution Note</h4>
-              <p>{ticket.resolutionNote}</p>
-            </div>
-          ) : null}
-
-          {ticket.comments?.length ? (
-            <div className="support-ticket-detail-section">
-              <h4>Comments</h4>
-              <div className="support-ticket-comment-list">
-                {ticket.comments.map((comment) => (
-                  <article key={comment.id} className="support-ticket-comment-item">
-                    <strong>{comment.authorName}</strong>
-                    <p className="helper-text">{comment.authorRole} · {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ""}</p>
-                    <p>{comment.message}</p>
-                  </article>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          {ticket.attachments?.length ? (
-            <div className="support-ticket-detail-section">
-              <h4>Attachments</h4>
-              <ul className="support-ticket-attachment-list">
-                {ticket.attachments.map((attachment) => (
-                  <li key={attachment.id}>
-                    <button
-                      type="button"
-                      className="ghost-btn"
-                      onClick={() => handleAttachmentOpen(attachment)}
-                      aria-label={`Download ${attachment.originalFileName}`}
-                      title={`Download ${attachment.originalFileName}`}
-                    >
-                      Download {attachment.originalFileName}
-                    </button>
-                    <span className="helper-text">
-                      {attachment.uploadedByName} · {attachment.createdAt ? new Date(attachment.createdAt).toLocaleString() : ""}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          <div className="support-ticket-detail-section">
-            <button
-              type="button"
-              className="solid-btn"
-              onClick={() => setUpdatePanelOpen((current) => !current)}
-            >
-              {updatePanelOpen ? "Close Update Ticket" : "Update Ticket"}
-            </button>
-            {updatePanelOpen ? (
-              <div className="admin-ticket-actions" style={{ alignItems: "stretch", marginTop: "12px" }}>
-                <select value={status} onChange={(event) => setStatus(event.target.value)}>
-                  <option value="In Progress">In Progress</option>
-                  <option value="Resolved">Resolved</option>
-                </select>
-                <textarea
-                  value={resolutionNote}
-                  onChange={(event) => setResolutionNote(event.target.value)}
-                  placeholder="Add a resolution note"
-                  rows="4"
-                />
-                <button className="solid-btn" type="button" disabled={busy} onClick={handleSave}>
-                  {busy ? "Saving..." : "Save Update"}
-                </button>
-              </div>
-            ) : null}
-          </div>
-
-          <div className="support-ticket-detail-section">
-            <button
-              type="button"
-              className="solid-btn"
-              onClick={() => setCommentPanelOpen((current) => !current)}
-            >
-              {commentPanelOpen ? "Close Technician Update" : "Add Technician Update"}
-            </button>
-            {commentPanelOpen ? (
-              <div className="admin-ticket-actions" style={{ alignItems: "stretch", marginTop: "12px" }}>
-                <textarea
-                  value={commentDraft}
-                  onChange={(event) => setCommentDraft(event.target.value)}
-                  placeholder="Add a progress update or note for the student"
-                  rows="3"
-                />
-                <button className="solid-btn" type="button" disabled={busy} onClick={handleCommentSave}>
-                  {busy ? "Posting..." : "Post Update"}
-                </button>
-              </div>
-            ) : null}
-          </div>
-        </article>
-      ) : null}
     </PortalLayout>
   );
 }

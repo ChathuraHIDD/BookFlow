@@ -21,7 +21,7 @@ function PortalLayout({
   const { user, isAuthenticated, logout } = useAuth();
 
   const role = normalizeRole(user?.role);
-  const roleProfileLabel = role === "technician" ? "Technician Tickets" : `${roleLabel(role)} Profile`;
+  const roleProfileLabel = role === "technician" ? "Ticket Management" : `${roleLabel(role)} Profile`;
 
   const onLogout = () => {
     logout();
@@ -82,11 +82,6 @@ function PortalLayout({
             {role === "admin" ? (
               <NavLink className={topLinkClassName} to="/admin/notifications" end>
                 Notifications
-              </NavLink>
-            ) : null}
-            {role === "technician" ? (
-              <NavLink className={topLinkClassName} to="/technician/tickets" end>
-                Technician Tickets
               </NavLink>
             ) : null}
             <button className="ghost-btn" type="button" onClick={onLogout}>

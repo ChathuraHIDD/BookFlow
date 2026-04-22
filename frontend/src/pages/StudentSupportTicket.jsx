@@ -8,6 +8,7 @@ import {
   downloadSupportAttachment,
   fetchMySupportTicket,
 } from "../services/support";
+import "./SupportModule.css";
 
 function StudentSupportTicket() {
   const { id } = useParams();
@@ -97,111 +98,155 @@ function StudentSupportTicket() {
     <PortalLayout
       title="Support Ticket Details"
       subtitle="View the details, priority, and current status of one support request."
+      pageClassName="support-module-page"
+      heroClassName="support-module-hero support-module-hero-detail"
+      contentCardClassName="support-module-surface"
     >
-      <div className="cta-row" style={{ marginBottom: "14px" }}>
-        <Link className="ghost-btn" to="/student/support">
-          Back to Support
-        </Link>
-      </div>
+      <div className="support-module-stack">
+        <div className="support-breadcrumb-row">
+          <Link className="ghost-btn" to="/student/support">
+            Back to Support
+          </Link>
+        </div>
 
-      {loading ? <p className="helper-text">Loading ticket details...</p> : null}
-      {error ? <p className="error-text">{error}</p> : null}
+        {loading ? <p className="helper-text">Loading ticket details...</p> : null}
+        {error ? <p className="support-inline-alert error-text">{error}</p> : null}
 
-      {!loading && ticket ? (
-        <article className="metric-card support-ticket-detail-card">
-          <div className="support-ticket-detail-head">
-            <div>
-              <p className="helper-text">{ticket.ticketNumber || ticket.id}</p>
-              <h3>{ticket.title}</h3>
-            </div>
-            <span className={`status-badge support-status-badge ${statusKey}`}>{ticket.status}</span>
-          </div>
+        {!loading && ticket ? (
+          <article className="support-ticket-detail-shell">
+            <div className="support-ticket-hero-card">
+              <div className="support-ticket-detail-head">
+                <div>
+                  <span className="support-ticket-id-label">{ticket.ticketNumber || ticket.id}</span>
+                  <h3>{ticket.title}</h3>
+                  <p className="helper-text">
+                    Submitted by {ticket.userName} for {ticket.locationResource || "General request"}
+                  </p>
+                </div>
+                <span className={`status-badge support-status-badge ${statusKey}`}>{ticket.status}</span>
+              </div>
 
-          <div className="support-ticket-detail-grid">
-            <p><strong>Category:</strong> {ticket.category}</p>
-            <p><strong>Priority:</strong> {ticket.priority}</p>
-            <p><strong>Location / Resource:</strong> {ticket.locationResource}</p>
-            <p><strong>Created:</strong> {ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : "-"}</p>
-            <p><strong>Updated:</strong> {ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : "-"}</p>
-            <p><strong>Resolved:</strong> {ticket.resolvedAt ? new Date(ticket.resolvedAt).toLocaleString() : "-"}</p>
-            <p><strong>Contact:</strong> {ticket.contactDetails}</p>
-            <p><strong>Student:</strong> {ticket.userName}</p>
-          </div>
-
-          <div className="support-ticket-detail-section">
-            <h4>Description</h4>
-            <p>{ticket.description}</p>
-          </div>
-
-          <div className="support-ticket-detail-section">
-            <h4>Add Comment</h4>
-            <form className="admin-ticket-actions" onSubmit={onAddComment}>
-              <textarea
-                value={commentMessage}
-                onChange={(event) => setCommentMessage(event.target.value)}
-                rows="3"
-                placeholder="Add a follow-up comment"
-              />
-              <button className="solid-btn" type="submit" disabled={commentBusy || !commentMessage.trim()}>
-                {commentBusy ? "Posting..." : "Post Comment"}
-              </button>
-            </form>
-          </div>
-
-          {ticket.comments?.length ? (
-            <div className="support-ticket-detail-section">
-              <h4>Comments</h4>
-              <div className="support-ticket-comment-list">
-                {ticket.comments.map((comment) => (
-                  <article key={comment.id} className="support-ticket-comment-item">
-                    <strong>{comment.authorName}</strong>
-                    <p className="helper-text">{comment.authorRole} · {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ""}</p>
-                    <p>{comment.message}</p>
-                  </article>
-                ))}
+              <div className="support-ticket-detail-grid">
+                <article className="support-detail-stat">
+                  <span>Category</span>
+                  <strong>{ticket.category}</strong>
+                </article>
+                <article className="support-detail-stat">
+                  <span>Priority</span>
+                  <strong>{ticket.priority}</strong>
+                </article>
+                <article className="support-detail-stat">
+                  <span>Created</span>
+                  <strong>{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : "-"}</strong>
+                </article>
+                <article className="support-detail-stat">
+                  <span>Last Updated</span>
+                  <strong>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : "-"}</strong>
+                </article>
+                <article className="support-detail-stat">
+                  <span>Resolved</span>
+                  <strong>{ticket.resolvedAt ? new Date(ticket.resolvedAt).toLocaleString() : "-"}</strong>
+                </article>
+                <article className="support-detail-stat">
+                  <span>Contact</span>
+                  <strong>{ticket.contactDetails || "-"}</strong>
+                </article>
               </div>
             </div>
-          ) : null}
 
-          {ticket.attachments?.length ? (
-            <div className="support-ticket-detail-section">
-              <h4>Attachments</h4>
-              <ul className="support-ticket-attachment-list">
-                {ticket.attachments.map((attachment) => (
-                  <li key={attachment.id}>
-                    <button
-                      type="button"
-                      className="ghost-btn"
-                      onClick={() => onOpenAttachment(attachment)}
-                      aria-label={`Download ${attachment.originalFileName}`}
-                      title={`Download ${attachment.originalFileName}`}
-                    >
-                      Download {attachment.originalFileName}
+            <div className="support-ticket-detail-columns">
+              <section className="support-ticket-panel">
+                <div className="support-ticket-detail-section">
+                  <span className="support-eyebrow">Issue Summary</span>
+                  <h4>Description</h4>
+                  <p>{ticket.description}</p>
+                </div>
+
+                <div className="support-ticket-detail-section">
+                  <span className="support-eyebrow">Conversation</span>
+                  <h4>Add Comment</h4>
+                  <form className="admin-ticket-actions support-comment-form" onSubmit={onAddComment}>
+                    <textarea
+                      value={commentMessage}
+                      onChange={(event) => setCommentMessage(event.target.value)}
+                      rows="4"
+                      placeholder="Add a follow-up comment"
+                    />
+                    <button className="solid-btn" type="submit" disabled={commentBusy || !commentMessage.trim()}>
+                      {commentBusy ? "Posting..." : "Post Comment"}
                     </button>
-                    <span className="helper-text">
-                      {attachment.uploadedByName} · {attachment.createdAt ? new Date(attachment.createdAt).toLocaleString() : ""}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
+                  </form>
+                </div>
 
-          {ticket.adminNote ? (
-            <div className="support-ticket-detail-section">
-              <h4>Admin Note</h4>
-              <p>{ticket.adminNote}</p>
-            </div>
-          ) : null}
-        </article>
-      ) : null}
+                {ticket.comments?.length ? (
+                  <div className="support-ticket-detail-section">
+                    <span className="support-eyebrow">Updates</span>
+                    <h4>Comments</h4>
+                    <div className="support-ticket-comment-list">
+                      {ticket.comments.map((comment) => (
+                        <article key={comment.id} className="support-ticket-comment-item">
+                          <div className="support-comment-meta">
+                            <strong>{comment.authorName}</strong>
+                            <span className="helper-text">
+                              {comment.authorRole} | {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ""}
+                            </span>
+                          </div>
+                          <p>{comment.message}</p>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </section>
 
-      {!loading && !ticket ? (
-        <article className="metric-card">
-          <h3>Ticket not found</h3>
-          <p className="helper-text">We could not find a support ticket for this ID.</p>
-        </article>
-      ) : null}
+              <aside className="support-ticket-sidebar">
+                {ticket.attachments?.length ? (
+                  <div className="support-ticket-panel support-ticket-detail-section">
+                    <span className="support-eyebrow">Files</span>
+                    <h4>Attachments</h4>
+                    <ul className="support-ticket-attachment-list">
+                      {ticket.attachments.map((attachment) => (
+                        <li key={attachment.id} className="support-attachment-card">
+                          <div>
+                            <strong>{attachment.originalFileName}</strong>
+                            <span className="helper-text">
+                              {attachment.uploadedByName} | {attachment.createdAt ? new Date(attachment.createdAt).toLocaleString() : ""}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            className="ghost-btn"
+                            onClick={() => onOpenAttachment(attachment)}
+                            aria-label={`Download ${attachment.originalFileName}`}
+                            title={`Download ${attachment.originalFileName}`}
+                          >
+                            Download
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {ticket.adminNote ? (
+                  <div className="support-ticket-panel support-ticket-detail-section">
+                    <span className="support-eyebrow">Admin Review</span>
+                    <h4>Admin Note</h4>
+                    <p>{ticket.adminNote}</p>
+                  </div>
+                ) : null}
+              </aside>
+            </div>
+          </article>
+        ) : null}
+
+        {!loading && !ticket ? (
+          <article className="metric-card support-not-found-card">
+            <h3>Ticket not found</h3>
+            <p className="helper-text">We could not find a support ticket for this ID.</p>
+          </article>
+        ) : null}
+      </div>
     </PortalLayout>
   );
 }
