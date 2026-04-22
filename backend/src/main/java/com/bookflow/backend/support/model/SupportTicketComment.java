@@ -16,6 +16,8 @@ public class SupportTicketComment {
 
     private Instant createdAt;
 
+    private Instant updatedAt;
+
     public String getId() {
         return id;
     }
@@ -62,5 +64,13 @@ public class SupportTicketComment {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

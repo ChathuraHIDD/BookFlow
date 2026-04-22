@@ -141,6 +141,7 @@ public class SupportTicketService {
         comment.setAuthorName(resolveDisplayName(user));
         comment.setAuthorRole(user.getRole() != null ? user.getRole().name() : UserRole.STUDENT.name());
         comment.setCreatedAt(Instant.now());
+        comment.setUpdatedAt(null);
 
         ticket.getComments().add(comment);
         ticket.setUpdatedAt(comment.getCreatedAt());
@@ -196,6 +197,35 @@ public class SupportTicketService {
             }
         }
 
+        return toResponse(saved);
+    }
+
+    public SupportTicketResponse updateComment(
+            User user,
+            String ticketId,
+            String commentId,
+            AddSupportTicketCommentRequest request) {
+        SupportTicket ticket = getCommentableTicket(user, ticketId);
+        SupportTicketComment comment = getComment(ticket, commentId);
+        ensureCommentEditable(user, comment);
+
+        comment.setMessage(requireText(request.message(), "Comment message"));
+        comment.setUpdatedAt(Instant.now());
+        ticket.setUpdatedAt(comment.getUpdatedAt());
+
+        SupportTicket saved = supportTicketRepository.save(ticket);
+        return toResponse(saved);
+    }
+
+    public SupportTicketResponse deleteComment(User user, String ticketId, String commentId) {
+        SupportTicket ticket = getCommentableTicket(user, ticketId);
+        SupportTicketComment comment = getComment(ticket, commentId);
+        ensureCommentDeletable(user, comment);
+
+        ticket.getComments().removeIf(item -> item != null && commentId.equals(item.getId()));
+        ticket.setUpdatedAt(Instant.now());
+
+        SupportTicket saved = supportTicketRepository.save(ticket);
         return toResponse(saved);
     }
 
@@ -367,6 +397,35 @@ public class SupportTicketService {
             return getTicket(ticketId);
         }
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to comment on this ticket");
+    }
+
+    private SupportTicketComment getComment(SupportTicket ticket, String commentId) {
+        ensureCollections(ticket);
+        return ticket.getComments().stream()
+                .filter(Objects::nonNull)
+                .filter(comment -> commentId.equals(comment.getId()))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found"));
+    }
+
+    private void ensureCommentEditable(User user, SupportTicketComment comment) {
+        if (!isCommentOwner(user, comment)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only edit your own comments");
+        }
+    }
+
+    private void ensureCommentDeletable(User user, SupportTicketComment comment) {
+        if (user.getRole() == UserRole.ADMIN || isCommentOwner(user, comment)) {
+            return;
+        }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only delete your own comments");
+    }
+
+    private boolean isCommentOwner(User user, SupportTicketComment comment) {
+        return user != null
+                && comment != null
+                && StringUtils.hasText(user.getId())
+                && user.getId().equals(comment.getAuthorUserId());
     }
 
     private SupportTicket getOwnedTicket(User user, String ticketId) {
@@ -546,7 +605,8 @@ public class SupportTicketService {
                         comment.getAuthorUserId(),
                         comment.getAuthorName(),
                         comment.getAuthorRole(),
-                        comment.getCreatedAt() != null ? comment.getCreatedAt().toString() : ""))
+                        comment.getCreatedAt() != null ? comment.getCreatedAt().toString() : "",
+                        comment.getUpdatedAt() != null ? comment.getUpdatedAt().toString() : ""))
                 .toList();
 
         List<SupportTicketAttachmentResponse> attachmentResponses = ticket.getAttachments().stream()

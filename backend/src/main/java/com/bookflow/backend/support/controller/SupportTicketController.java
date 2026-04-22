@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -85,6 +86,25 @@ public class SupportTicketController {
             @PathVariable String ticketId,
             @RequestBody AddSupportTicketCommentRequest request) {
         return supportTicketService.addComment(user, ticketId, request);
+    }
+
+    @PatchMapping("/{ticketId}/comments/{commentId}")
+    @PreAuthorize("hasAnyRole('STUDENT','STAFF_MEMBER','ADMIN','TECHNICIAN')")
+    public SupportTicketResponse updateComment(
+            @AuthenticationPrincipal User user,
+            @PathVariable String ticketId,
+            @PathVariable String commentId,
+            @RequestBody AddSupportTicketCommentRequest request) {
+        return supportTicketService.updateComment(user, ticketId, commentId, request);
+    }
+
+    @DeleteMapping("/{ticketId}/comments/{commentId}")
+    @PreAuthorize("hasAnyRole('STUDENT','STAFF_MEMBER','ADMIN','TECHNICIAN')")
+    public SupportTicketResponse deleteComment(
+            @AuthenticationPrincipal User user,
+            @PathVariable String ticketId,
+            @PathVariable String commentId) {
+        return supportTicketService.deleteComment(user, ticketId, commentId);
     }
 
     @PostMapping(value = "/me/{ticketId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

@@ -2,21 +2,27 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import PortalLayout from "../components/PortalLayout";
+import { useAuth } from "../context/useAuth";
 import { readApiError } from "../services/api";
 import {
   addSupportTicketComment,
+  deleteSupportTicketComment,
   downloadSupportAttachment,
   fetchMySupportTicket,
+  updateSupportTicketComment,
 } from "../services/support";
 import "./SupportModule.css";
 
 function StudentSupportTicket() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [commentMessage, setCommentMessage] = useState("");
   const [commentBusy, setCommentBusy] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState("");
+  const [editingCommentMessage, setEditingCommentMessage] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -67,6 +73,52 @@ function StudentSupportTicket() {
       await addSupportTicketComment(id, { message: commentMessage });
       setCommentMessage("");
       await refreshTicket();
+    } catch (err) {
+      setError(readApiError(err));
+    } finally {
+      setCommentBusy(false);
+    }
+  };
+
+  const onStartEditComment = (comment) => {
+    setEditingCommentId(comment.id);
+    setEditingCommentMessage(comment.message || "");
+    setError("");
+  };
+
+  const onCancelEditComment = () => {
+    setEditingCommentId("");
+    setEditingCommentMessage("");
+  };
+
+  const onSaveEditedComment = async (commentId) => {
+    if (!editingCommentMessage.trim()) {
+      setError("Comment message is required.");
+      return;
+    }
+
+    try {
+      setCommentBusy(true);
+      setError("");
+      const updated = await updateSupportTicketComment(id, commentId, { message: editingCommentMessage });
+      setTicket(updated);
+      onCancelEditComment();
+    } catch (err) {
+      setError(readApiError(err));
+    } finally {
+      setCommentBusy(false);
+    }
+  };
+
+  const onDeleteComment = async (commentId) => {
+    try {
+      setCommentBusy(true);
+      setError("");
+      const updated = await deleteSupportTicketComment(id, commentId);
+      setTicket(updated);
+      if (editingCommentId === commentId) {
+        onCancelEditComment();
+      }
     } catch (err) {
       setError(readApiError(err));
     } finally {
@@ -189,9 +241,50 @@ function StudentSupportTicket() {
                             <strong>{comment.authorName}</strong>
                             <span className="helper-text">
                               {comment.authorRole} | {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ""}
+                              {comment.updatedAt ? ` | Edited ${new Date(comment.updatedAt).toLocaleString()}` : ""}
                             </span>
                           </div>
-                          <p>{comment.message}</p>
+                          {editingCommentId === comment.id ? (
+                            <div className="support-comment-editor">
+                              <textarea
+                                value={editingCommentMessage}
+                                onChange={(event) => setEditingCommentMessage(event.target.value)}
+                                rows="3"
+                              />
+                              <div className="support-comment-actions">
+                                <button
+                                  className="solid-btn"
+                                  type="button"
+                                  disabled={commentBusy}
+                                  onClick={() => onSaveEditedComment(comment.id)}
+                                >
+                                  {commentBusy ? "Saving..." : "Save"}
+                                </button>
+                                <button className="ghost-btn" type="button" onClick={onCancelEditComment}>
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p>{comment.message}</p>
+                          )}
+                          {user?.id === comment.authorUserId ? (
+                            <div className="support-comment-actions support-comment-actions-inline">
+                              {editingCommentId !== comment.id ? (
+                                <button className="ghost-btn" type="button" onClick={() => onStartEditComment(comment)}>
+                                  Edit
+                                </button>
+                              ) : null}
+                              <button
+                                className="ghost-btn"
+                                type="button"
+                                disabled={commentBusy}
+                                onClick={() => onDeleteComment(comment.id)}
+                              >
+                                {commentBusy ? "Working..." : "Delete"}
+                              </button>
+                            </div>
+                          ) : null}
                         </article>
                       ))}
                     </div>

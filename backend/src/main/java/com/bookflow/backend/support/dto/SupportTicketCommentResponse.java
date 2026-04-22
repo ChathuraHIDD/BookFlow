@@ -6,5 +6,6 @@ public record SupportTicketCommentResponse(
         String authorUserId,
         String authorName,
         String authorRole,
-        String createdAt) {
+        String createdAt,
+        String updatedAt) {
 }

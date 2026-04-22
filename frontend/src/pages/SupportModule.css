@@ -621,6 +621,28 @@
   padding-left: 10px;
 }
 
+.support-comment-editor {
+  display: grid;
+  gap: 10px;
+  padding-left: 10px;
+}
+
+.support-comment-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-left: 10px;
+}
+
+.support-comment-actions-inline {
+  padding-top: 2px;
+}
+
+.support-comment-actions .ghost-btn,
+.support-comment-actions .solid-btn {
+  min-width: 92px;
+}
+
 .support-attachment-card {
   display: flex;
   justify-content: space-between;

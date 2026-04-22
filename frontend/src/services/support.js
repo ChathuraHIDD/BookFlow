@@ -32,6 +32,16 @@ export async function addSupportTicketComment(ticketId, payload) {
   return data;
 }
 
+export async function updateSupportTicketComment(ticketId, commentId, payload) {
+  const { data } = await api.patch(`/support/${ticketId}/comments/${commentId}`, payload);
+  return data;
+}
+
+export async function deleteSupportTicketComment(ticketId, commentId) {
+  const { data } = await api.delete(`/support/${ticketId}/comments/${commentId}`);
+  return data;
+}
+
 export async function addSupportTicketAttachment(ticketId, file) {
   const formData = new FormData();
   formData.append("file", file);
