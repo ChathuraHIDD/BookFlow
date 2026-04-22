@@ -51,21 +51,46 @@ function StudentSupportRaise() {
 
   const handleAttachmentChange = (event) => {
     const files = Array.from(event.target.files || []);
-    if (files.length > 3) {
-      setError("You can upload a maximum of 3 image attachments.");
-      setAttachments([]);
+    if (!files.length) {
       return;
     }
 
     const nonImage = files.find((file) => !file.type?.startsWith("image/"));
     if (nonImage) {
       setError("Only image attachments are allowed.");
-      setAttachments([]);
+      event.target.value = "";
+      return;
+    }
+
+    const nextAttachments = [...attachments];
+    for (const file of files) {
+      const duplicate = nextAttachments.some(
+        (item) => item.name === file.name && item.size === file.size && item.lastModified === file.lastModified,
+      );
+      if (!duplicate) {
+        nextAttachments.push(file);
+      }
+    }
+
+    if (nextAttachments.length > 3) {
+      setError("You can upload a maximum of 3 image attachments.");
+      event.target.value = "";
       return;
     }
 
     setError("");
-    setAttachments(files);
+    setAttachments(nextAttachments);
+    event.target.value = "";
+  };
+
+  const handleRemoveAttachment = (indexToRemove) => {
+    setAttachments((current) => current.filter((_, index) => index !== indexToRemove));
+    setError("");
+  };
+
+  const handleClearAttachments = () => {
+    setAttachments([]);
+    setError("");
   };
 
   return (
@@ -167,6 +192,37 @@ function StudentSupportRaise() {
           <small className="helper-text">
             Add screenshots or photos to help explain the incident.
           </small>
+
+          {attachments.length ? (
+            <div style={{ marginTop: "10px" }}>
+              <p className="helper-text" style={{ marginBottom: "8px" }}>
+                Selected files: {attachments.length}/3
+              </p>
+              <ul style={{ margin: 0, paddingLeft: "18px" }}>
+                {attachments.map((file, index) => (
+                  <li key={`${file.name}-${file.size}-${file.lastModified}`} style={{ marginBottom: "6px" }}>
+                    <span>{file.name}</span>
+                    <button
+                      type="button"
+                      className="ghost-btn"
+                      style={{ marginLeft: "8px", padding: "4px 8px" }}
+                      onClick={() => handleRemoveAttachment(index)}
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                className="ghost-btn"
+                style={{ marginTop: "8px" }}
+                onClick={handleClearAttachments}
+              >
+                Clear all
+              </button>
+            </div>
+          ) : null}
         </label>
 
         <button className="solid-btn" type="submit" disabled={busy}>
