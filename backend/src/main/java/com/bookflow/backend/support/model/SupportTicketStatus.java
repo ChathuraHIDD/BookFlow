@@ -3,7 +3,9 @@ package com.bookflow.backend.support.model;
 public enum SupportTicketStatus {
     OPEN("Open"),
     IN_PROGRESS("In Progress"),
-    RESOLVED("Resolved");
+    RESOLVED("Resolved"),
+    CLOSED("Closed"),
+    REJECTED("Rejected");
 
     private final String displayName;
 

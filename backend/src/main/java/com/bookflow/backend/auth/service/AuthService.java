@@ -181,6 +181,13 @@ public class AuthService {
                 user.setCampusYear(null);
                 user.setSemester(null);
             }
+            case TECHNICIAN -> {
+                user.setTelephone(requireNonBlank(request.telephone(), "Telephone is required for technicians"));
+                user.setCampusYear(null);
+                user.setSemester(null);
+                user.setCenter(null);
+                user.setDegreeProgram(null);
+            }
             case LIBRARIAN, ADMIN -> {
                 user.setTelephone(null);
                 user.setCampusYear(null);
@@ -207,6 +214,13 @@ public class AuthService {
                 user.setCampusYear(null);
                 user.setSemester(null);
             }
+            case TECHNICIAN -> {
+                user.setTelephone(requireNonBlank(request.telephone(), "Telephone is required for technicians"));
+                user.setCampusYear(null);
+                user.setSemester(null);
+                user.setCenter(null);
+                user.setDegreeProgram(null);
+            }
             case LIBRARIAN, ADMIN -> {
                 user.setTelephone(null);
                 user.setCampusYear(null);
@@ -222,7 +236,7 @@ public class AuthService {
             return UserRole.fromValue(rawRole);
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Invalid role. Allowed: student, admin, staff member");
+                    "Invalid role. Allowed: student, admin, staff member, technician");
         }
     }
 

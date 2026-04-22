@@ -11,9 +11,15 @@ public record SupportTicketResponse(
         String status,
         String contactDetails,
         String adminNote,
+        String assignedTechnicianId,
+        String assignedTechnicianName,
+        String resolutionNote,
         String userName,
         String userEmail,
         String createdAt,
         String updatedAt,
-        String resolvedAt) {
+        String resolvedAt,
+        String finalizedAt,
+        java.util.List<SupportTicketCommentResponse> comments,
+        java.util.List<SupportTicketAttachmentResponse> attachments) {
 }

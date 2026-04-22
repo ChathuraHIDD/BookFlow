@@ -1,6 +1,8 @@
 package com.bookflow.backend.support.model;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -37,6 +39,18 @@ public class SupportTicket {
     private String contactDetails;
 
     private String adminNote;
+
+    private String assignedTechnicianId;
+
+    private String assignedTechnicianName;
+
+    private String resolutionNote;
+
+    private Instant finalizedAt;
+
+    private List<SupportTicketComment> comments = new ArrayList<>();
+
+    private List<SupportTicketAttachment> attachments = new ArrayList<>();
 
     private Instant createdAt;
 
@@ -146,6 +160,54 @@ public class SupportTicket {
 
     public void setAdminNote(String adminNote) {
         this.adminNote = adminNote;
+    }
+
+    public String getAssignedTechnicianId() {
+        return assignedTechnicianId;
+    }
+
+    public void setAssignedTechnicianId(String assignedTechnicianId) {
+        this.assignedTechnicianId = assignedTechnicianId;
+    }
+
+    public String getAssignedTechnicianName() {
+        return assignedTechnicianName;
+    }
+
+    public void setAssignedTechnicianName(String assignedTechnicianName) {
+        this.assignedTechnicianName = assignedTechnicianName;
+    }
+
+    public String getResolutionNote() {
+        return resolutionNote;
+    }
+
+    public void setResolutionNote(String resolutionNote) {
+        this.resolutionNote = resolutionNote;
+    }
+
+    public Instant getFinalizedAt() {
+        return finalizedAt;
+    }
+
+    public void setFinalizedAt(Instant finalizedAt) {
+        this.finalizedAt = finalizedAt;
+    }
+
+    public List<SupportTicketComment> getComments() {
+        return comments;
+    }
+
+    public void setComments(List<SupportTicketComment> comments) {
+        this.comments = comments;
+    }
+
+    public List<SupportTicketAttachment> getAttachments() {
+        return attachments;
+    }
+
+    public void setAttachments(List<SupportTicketAttachment> attachments) {
+        this.attachments = attachments;
     }
 
     public Instant getCreatedAt() {

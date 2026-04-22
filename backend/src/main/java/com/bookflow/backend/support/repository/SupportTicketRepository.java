@@ -11,9 +11,13 @@ import com.bookflow.backend.support.model.SupportTicketStatus;
 public interface SupportTicketRepository extends MongoRepository<SupportTicket, String> {
     List<SupportTicket> findByUserIdOrderByUpdatedAtDesc(String userId);
 
+    List<SupportTicket> findByAssignedTechnicianIdOrderByUpdatedAtDesc(String assignedTechnicianId);
+
     List<SupportTicket> findAllByOrderByUpdatedAtDesc();
 
     Optional<SupportTicket> findByUserIdAndId(String userId, String id);
+
+    Optional<SupportTicket> findByAssignedTechnicianIdAndId(String assignedTechnicianId, String id);
 
     Optional<SupportTicket> findByTicketNumber(String ticketNumber);
 
