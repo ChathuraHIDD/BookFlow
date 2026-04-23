@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -21,6 +22,7 @@ function StudentSupportTicket() {
   const [error, setError] = useState("");
   const [commentMessage, setCommentMessage] = useState("");
   const [commentBusy, setCommentBusy] = useState(false);
+  const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState("");
   const [editingCommentMessage, setEditingCommentMessage] = useState("");
 
@@ -54,6 +56,19 @@ function StudentSupportTicket() {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (!commentModalOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [commentModalOpen]);
+
   const statusKey = (ticket?.status || "").toLowerCase().replace(/\s+/g, "-");
   const commentCount = ticket?.comments?.length || 0;
   const attachmentCount = ticket?.attachments?.length || 0;
@@ -63,8 +78,7 @@ function StudentSupportTicket() {
     setTicket(data);
   };
 
-  const onAddComment = async (event) => {
-    event.preventDefault();
+  const onAddComment = async () => {
     if (!commentMessage.trim()) {
       return;
     }
@@ -75,6 +89,7 @@ function StudentSupportTicket() {
       await addSupportTicketComment(id, { message: commentMessage });
       setCommentMessage("");
       await refreshTicket();
+      setCommentModalOpen(false);
     } catch (err) {
       setError(readApiError(err));
     } finally {
@@ -228,35 +243,17 @@ function StudentSupportTicket() {
                   <span>Contact</span>
                   <strong>{ticket.contactDetails || "-"}</strong>
                 </article>
+                <article className="support-detail-stat support-detail-stat-full">
+                  <span>Description</span>
+                  <p>{ticket.description || "-"}</p>
+                </article>
               </div>
             </div>
 
             <div className="support-ticket-detail-columns">
               <section className="support-ticket-panel">
-                <div className="support-ticket-detail-section">
-                  <span className="support-eyebrow">Issue Summary</span>
-                  <h4>Description</h4>
-                  <p>{ticket.description}</p>
-                </div>
-
-                <div className="support-ticket-detail-section">
-                  <span className="support-eyebrow">Conversation</span>
-                  <h4>Add Comment</h4>
-                  <form className="admin-ticket-actions support-comment-form" onSubmit={onAddComment}>
-                    <textarea
-                      value={commentMessage}
-                      onChange={(event) => setCommentMessage(event.target.value)}
-                      rows="4"
-                      placeholder="Add a follow-up comment"
-                    />
-                    <button className="solid-btn" type="submit" disabled={commentBusy || !commentMessage.trim()}>
-                      {commentBusy ? "Posting..." : "Post Update"}
-                    </button>
-                  </form>
-                </div>
-
                 {ticket.comments?.length ? (
-                  <div className="support-ticket-detail-section">
+                  <div className="support-ticket-detail-section support-updates-section">
                     <span className="support-eyebrow">Updates</span>
                     <h4>Comments</h4>
                     <div className="support-ticket-comment-list">
@@ -315,15 +312,28 @@ function StudentSupportTicket() {
                     </div>
                   </div>
                 ) : (
-                  <div className="support-ticket-detail-section">
+                  <div className="support-ticket-detail-section support-updates-section">
                     <span className="support-eyebrow">Updates</span>
                     <h4>Comments</h4>
                     <article className="support-inline-empty-card">
                       <strong>No conversation yet</strong>
-                      <p className="helper-text">Post a comment above to add context or follow up with the technician.</p>
+                      <p className="helper-text">Add a comment to share context or follow up with the technician.</p>
                     </article>
                   </div>
                 )}
+
+                <div className="support-comment-cta-row">
+                  <button
+                    className="solid-btn"
+                    type="button"
+                    onClick={() => {
+                      setError("");
+                      setCommentModalOpen(true);
+                    }}
+                  >
+                    Add Comment
+                  </button>
+                </div>
               </section>
 
               <aside className="support-ticket-sidebar">
@@ -363,7 +373,7 @@ function StudentSupportTicket() {
                   </div>
                 ) : null}
 
-                <div className="support-ticket-panel support-ticket-detail-section">
+                <div className="support-ticket-panel support-ticket-detail-section support-ticket-health-card">
                   <span className="support-eyebrow">Ticket Health</span>
                   <h4>Progress Snapshot</h4>
                   <div className="support-health-list">
@@ -392,6 +402,61 @@ function StudentSupportTicket() {
             <p className="helper-text">We could not find a support ticket for this ID.</p>
           </article>
         ) : null}
+
+        {commentModalOpen
+          ? createPortal(
+              <div
+                className="support-modal-backdrop"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="student-comment-modal-title"
+                onClick={() => {
+                  if (!commentBusy) {
+                    setCommentModalOpen(false);
+                  }
+                }}
+              >
+                <div className="support-modal-card" onClick={(event) => event.stopPropagation()}>
+                  <button
+                    className="support-modal-close"
+                    type="button"
+                    aria-label="Close add comment dialog"
+                    onClick={() => setCommentModalOpen(false)}
+                    disabled={commentBusy}
+                  >
+                    ×
+                  </button>
+                  <h4 id="student-comment-modal-title">Add Comment</h4>
+                  <p className="helper-text">Share any follow-up details for your support request.</p>
+                  <textarea
+                    value={commentMessage}
+                    onChange={(event) => setCommentMessage(event.target.value)}
+                    rows="5"
+                    placeholder="Write your comment"
+                  />
+                  <div className="support-modal-actions">
+                    <button
+                      className="ghost-btn"
+                      type="button"
+                      disabled={commentBusy}
+                      onClick={() => setCommentModalOpen(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="solid-btn"
+                      type="button"
+                      disabled={commentBusy || !commentMessage.trim()}
+                      onClick={onAddComment}
+                    >
+                      {commentBusy ? "Posting..." : "Save Comment"}
+                    </button>
+                  </div>
+                </div>
+              </div>,
+              document.body,
+            )
+          : null}
       </div>
     </PortalLayout>
   );

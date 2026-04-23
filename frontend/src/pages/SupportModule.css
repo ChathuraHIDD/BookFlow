@@ -638,6 +638,10 @@
   padding: 20px;
 }
 
+.support-ticket-health-card {
+  padding-top: 72px;
+}
+
 .support-ticket-detail-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -674,6 +678,22 @@
   font-size: 0.95rem;
 }
 
+.support-ticket-signal-strip .support-signal-icon {
+  animation: signalIconPulse 2.6s ease-in-out infinite;
+}
+
+.support-ticket-signal-strip article:nth-child(2) .support-signal-icon {
+  animation-delay: 0.15s;
+}
+
+.support-ticket-signal-strip article:nth-child(3) .support-signal-icon {
+  animation-delay: 0.3s;
+}
+
+.support-ticket-signal-strip article:nth-child(4) .support-signal-icon {
+  animation-delay: 0.45s;
+}
+
 .support-ticket-signal-strip-tech article {
   background: rgba(242, 249, 255, 0.95);
 }
@@ -688,24 +708,28 @@
 
 .support-signal-icon-priority {
   border-radius: 999px;
-  background: radial-gradient(circle at 30% 30%, #fff, #f5cb8a 55%, #f0a556);
+  background: radial-gradient(circle at 30% 30%, #fff7df, #f7c76d 52%, #d98a1d);
+  border-color: rgba(217, 138, 29, 0.42);
 }
 
 .support-signal-icon-comments {
   clip-path: polygon(0 0, 100% 0, 100% 75%, 58% 75%, 45% 100%, 44% 75%, 0 75%);
   border-radius: 0;
-  background: linear-gradient(145deg, #dff2ff, #8ec8ef);
+  background: linear-gradient(145deg, #eefaff, #67b6f4);
+  border-color: rgba(103, 182, 244, 0.42);
 }
 
 .support-signal-icon-attachments {
   border-radius: 10px;
   transform: rotate(-12deg);
-  background: linear-gradient(145deg, #e7f3ff, #82b8ee);
+  background: linear-gradient(145deg, #e9fff8, #45c9a2);
+  border-color: rgba(69, 201, 162, 0.42);
 }
 
 .support-signal-icon-stage {
   border-radius: 999px;
-  background: conic-gradient(from 100deg, #4a7dc0, #70cfc1, #4a7dc0);
+  background: conic-gradient(from 100deg, #6e7cff, #5bc5ff, #45c9a2, #6e7cff);
+  border-color: rgba(110, 124, 255, 0.42);
 }
 
 .support-detail-stat {
@@ -716,6 +740,7 @@
   border: 1px solid rgba(194, 211, 237, 0.88);
   background: rgba(252, 254, 255, 0.88);
 }
+
 
 .support-detail-stat span {
   font-size: 0.8rem;
@@ -729,6 +754,16 @@
   color: #23487f;
 }
 
+.support-detail-stat-full {
+  grid-column: 1 / -1;
+}
+
+.support-detail-stat-full p {
+  margin: 0;
+  color: #2e4d78;
+  line-height: 1.55;
+}
+
 .support-ticket-detail-section {
   display: grid;
   gap: 10px;
@@ -738,6 +773,18 @@
   margin-top: 18px;
   padding-top: 18px;
   border-top: 1px solid rgba(199, 214, 236, 0.88);
+}
+
+.support-updates-section {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.support-ticket-panel > .support-updates-section {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  border-top: 0 !important;
 }
 
 .support-comment-form {
@@ -819,6 +866,12 @@
   min-width: 92px;
 }
 
+.support-comment-cta-row {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 6px;
+}
+
 .support-attachment-card {
   display: flex;
   justify-content: space-between;
@@ -860,6 +913,80 @@
   margin: 0;
 }
 
+.support-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(9, 25, 51, 0.5);
+  backdrop-filter: blur(6px);
+  overflow: hidden;
+}
+
+.support-modal-card {
+  position: relative;
+  width: min(560px, 100%);
+  max-height: calc(100dvh - 48px);
+  overflow: auto;
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(177, 201, 236, 0.9);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(242, 248, 255, 0.98));
+  box-shadow: 0 20px 40px rgba(16, 37, 70, 0.28);
+}
+
+.support-modal-card h4 {
+  margin: 0;
+  color: #1c3e70;
+}
+
+.support-modal-card p {
+  margin: 0;
+}
+
+.support-modal-card textarea {
+  width: 100%;
+}
+
+.support-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(160, 188, 230, 0.9);
+  background: rgba(245, 250, 255, 0.95);
+  color: #1f467f;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.support-modal-close:hover {
+  background: rgba(232, 243, 255, 0.98);
+}
+
+.support-modal-close:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.support-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .support-health-list {
   display: grid;
   gap: 10px;
@@ -884,6 +1011,26 @@
 
 .support-health-list strong {
   color: #22477f;
+}
+
+@keyframes signalIconPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: saturate(1);
+    box-shadow: 0 6px 12px rgba(35, 72, 127, 0.12);
+  }
+  50% {
+    transform: scale(1.12);
+    filter: saturate(1.15);
+    box-shadow: 0 10px 18px rgba(35, 72, 127, 0.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .support-ticket-signal-strip .support-signal-icon {
+    animation: none !important;
+  }
 }
 
 .support-module-page .status-badge.support-status-badge {
@@ -1004,5 +1151,25 @@
 
   .support-ticket-signal-strip {
     grid-template-columns: 1fr;
+  }
+
+  .support-modal-actions .solid-btn,
+  .support-modal-actions .ghost-btn {
+    width: 100%;
+  }
+}
+
+.support-ticket-sidebar .support-ticket-health-card {
+  padding: 24px 20px 20px;
+}
+
+.support-module-stack > .support-modal-backdrop {
+  animation: none !important;
+  transform: none !important;
+}
+
+@media (max-width: 760px) {
+  .support-ticket-sidebar .support-ticket-health-card {
+    padding: 24px 16px 16px;
   }
 }
