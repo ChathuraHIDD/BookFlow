@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import PortalLayout from "../components/PortalLayout";
+import SupportDropdown from "../components/SupportDropdown";
 import { readApiError } from "../services/api";
 import { createSupportTicket } from "../services/support";
 import "./SupportModule.css";
@@ -124,7 +125,7 @@ function StudentSupportRaise() {
               </div>
 
               <div className="support-form-grid support-form-grid-two">
-                <label htmlFor="title">
+                <label className="support-filter-field" htmlFor="title">
                   Title
                   <input
                     id="title"
@@ -137,17 +138,20 @@ function StudentSupportRaise() {
                   />
                 </label>
 
-                <label htmlFor="category">
-                  Category
-                  <select id="category" name="category" value={form.category} onChange={handleChange}>
-                    <option>Technical</option>
-                    <option>Borrowing</option>
-                    <option>Account</option>
-                    <option>Other</option>
-                  </select>
-                </label>
+                <SupportDropdown
+                  id="category"
+                  label="Category"
+                  value={form.category}
+                  onChange={(value) => setForm((current) => ({ ...current, category: value }))}
+                  options={[
+                    { value: "Technical", label: "Technical" },
+                    { value: "Borrowing", label: "Borrowing" },
+                    { value: "Account", label: "Account" },
+                    { value: "Other", label: "Other" },
+                  ]}
+                />
 
-                <label className="support-form-span-full" htmlFor="locationResource">
+                <label className="support-filter-field support-form-span-full" htmlFor="locationResource">
                   Location / Resource
                   <input
                     id="locationResource"
@@ -160,7 +164,7 @@ function StudentSupportRaise() {
                   />
                 </label>
 
-                <label className="support-form-span-full" htmlFor="description">
+                <label className="support-filter-field support-form-span-full" htmlFor="description">
                   Description
                   <textarea
                     id="description"
@@ -182,16 +186,19 @@ function StudentSupportRaise() {
               </div>
 
               <div className="support-form-grid support-form-grid-two">
-                <label htmlFor="priority">
-                  Priority
-                  <select id="priority" name="priority" value={form.priority} onChange={handleChange}>
-                    <option>Low</option>
-                    <option>Medium</option>
-                    <option>High</option>
-                  </select>
-                </label>
+                <SupportDropdown
+                  id="priority"
+                  label="Priority"
+                  value={form.priority}
+                  onChange={(value) => setForm((current) => ({ ...current, priority: value }))}
+                  options={[
+                    { value: "Low", label: "Low" },
+                    { value: "Medium", label: "Medium" },
+                    { value: "High", label: "High" },
+                  ]}
+                />
 
-                <label htmlFor="contactDetails">
+                <label className="support-filter-field" htmlFor="contactDetails">
                   Contact Details
                   <input
                     id="contactDetails"

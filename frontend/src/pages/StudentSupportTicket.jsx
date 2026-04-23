@@ -251,90 +251,100 @@ function StudentSupportTicket() {
             </div>
 
             <div className="support-ticket-detail-columns">
-              <section className="support-ticket-panel">
-                {ticket.comments?.length ? (
-                  <div className="support-ticket-detail-section support-updates-section">
-                    <span className="support-eyebrow">Updates</span>
-                    <h4>Comments</h4>
-                    <div className="support-ticket-comment-list">
-                      {ticket.comments.map((comment) => (
-                        <article key={comment.id} className="support-ticket-comment-item">
-                          <div className="support-comment-meta">
-                            <strong>{comment.authorName}</strong>
-                            <span className="helper-text">
-                              {comment.authorRole} | {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ""}
-                              {comment.updatedAt ? ` | Edited ${new Date(comment.updatedAt).toLocaleString()}` : ""}
-                            </span>
-                          </div>
-                          {editingCommentId === comment.id ? (
-                            <div className="support-comment-editor">
-                              <textarea
-                                value={editingCommentMessage}
-                                onChange={(event) => setEditingCommentMessage(event.target.value)}
-                                rows="3"
-                              />
-                              <div className="support-comment-actions">
+              <div className="support-ticket-sidebar">
+                <section className="support-ticket-panel">
+                  {ticket.comments?.length ? (
+                    <div className="support-ticket-detail-section support-updates-section">
+                      <span className="support-eyebrow">Updates</span>
+                      <h4>Comments</h4>
+                      <div className="support-ticket-comment-list">
+                        {ticket.comments.map((comment) => (
+                          <article key={comment.id} className="support-ticket-comment-item">
+                            <div className="support-comment-meta">
+                              <strong>{comment.authorName}</strong>
+                              <span className="helper-text">
+                                {comment.authorRole} | {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ""}
+                                {comment.updatedAt ? ` | Edited ${new Date(comment.updatedAt).toLocaleString()}` : ""}
+                              </span>
+                            </div>
+                            {editingCommentId === comment.id ? (
+                              <div className="support-comment-editor">
+                                <textarea
+                                  value={editingCommentMessage}
+                                  onChange={(event) => setEditingCommentMessage(event.target.value)}
+                                  rows="3"
+                                />
+                                <div className="support-comment-actions">
+                                  <button
+                                    className="solid-btn"
+                                    type="button"
+                                    disabled={commentBusy}
+                                    onClick={() => onSaveEditedComment(comment.id)}
+                                  >
+                                    {commentBusy ? "Saving..." : "Save"}
+                                  </button>
+                                  <button className="ghost-btn" type="button" onClick={onCancelEditComment}>
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="support-comment-message">{comment.message}</p>
+                            )}
+                            {user?.id === comment.authorUserId ? (
+                              <div className="support-comment-actions support-comment-actions-inline">
+                                {editingCommentId !== comment.id ? (
+                                  <button className="ghost-btn" type="button" onClick={() => onStartEditComment(comment)}>
+                                    Edit
+                                  </button>
+                                ) : null}
                                 <button
-                                  className="solid-btn"
+                                  className="ghost-btn"
                                   type="button"
                                   disabled={commentBusy}
-                                  onClick={() => onSaveEditedComment(comment.id)}
+                                  onClick={() => onDeleteComment(comment.id)}
                                 >
-                                  {commentBusy ? "Saving..." : "Save"}
-                                </button>
-                                <button className="ghost-btn" type="button" onClick={onCancelEditComment}>
-                                  Cancel
+                                  {commentBusy ? "Working..." : "Delete"}
                                 </button>
                               </div>
-                            </div>
-                          ) : (
-                            <p className="support-comment-message">{comment.message}</p>
-                          )}
-                          {user?.id === comment.authorUserId ? (
-                            <div className="support-comment-actions support-comment-actions-inline">
-                              {editingCommentId !== comment.id ? (
-                                <button className="ghost-btn" type="button" onClick={() => onStartEditComment(comment)}>
-                                  Edit
-                                </button>
-                              ) : null}
-                              <button
-                                className="ghost-btn"
-                                type="button"
-                                disabled={commentBusy}
-                                onClick={() => onDeleteComment(comment.id)}
-                              >
-                                {commentBusy ? "Working..." : "Delete"}
-                              </button>
-                            </div>
-                          ) : null}
-                        </article>
-                      ))}
+                            ) : null}
+                          </article>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="support-ticket-detail-section support-updates-section">
-                    <span className="support-eyebrow">Updates</span>
-                    <h4>Comments</h4>
-                    <article className="support-inline-empty-card">
-                      <strong>No conversation yet</strong>
-                      <p className="helper-text">Add a comment to share context or follow up with the technician.</p>
-                    </article>
-                  </div>
-                )}
+                  ) : (
+                    <div className="support-ticket-detail-section support-updates-section">
+                      <span className="support-eyebrow">Updates</span>
+                      <h4>Comments</h4>
+                      <article className="support-inline-empty-card">
+                        <strong>No conversation yet</strong>
+                        <p className="helper-text">Add a comment to share context or follow up with the technician.</p>
+                      </article>
+                    </div>
+                  )}
 
-                <div className="support-comment-cta-row">
-                  <button
-                    className="solid-btn"
-                    type="button"
-                    onClick={() => {
-                      setError("");
-                      setCommentModalOpen(true);
-                    }}
-                  >
-                    Add Comment
-                  </button>
-                </div>
-              </section>
+                  <div className="support-comment-cta-row">
+                    <button
+                      className="solid-btn"
+                      type="button"
+                      onClick={() => {
+                        setError("");
+                        setCommentModalOpen(true);
+                      }}
+                    >
+                      Add Comment
+                    </button>
+                  </div>
+                </section>
+
+                {ticket.adminNote ? (
+                  <section className="support-ticket-panel support-ticket-detail-section support-admin-review-card">
+                    <span className="support-eyebrow">Admin Review</span>
+                    <h4>Admin Note</h4>
+                    <p>{ticket.adminNote}</p>
+                  </section>
+                ) : null}
+              </div>
 
               <aside className="support-ticket-sidebar">
                 {ticket.attachments?.length ? (
@@ -362,14 +372,6 @@ function StudentSupportTicket() {
                         </li>
                       ))}
                     </ul>
-                  </div>
-                ) : null}
-
-                {ticket.adminNote ? (
-                  <div className="support-ticket-panel support-ticket-detail-section">
-                    <span className="support-eyebrow">Admin Review</span>
-                    <h4>Admin Note</h4>
-                    <p>{ticket.adminNote}</p>
                   </div>
                 ) : null}
 

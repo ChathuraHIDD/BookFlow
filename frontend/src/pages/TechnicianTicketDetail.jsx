@@ -1,7 +1,9 @@
+import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import PortalLayout from "../components/PortalLayout";
+import SupportDropdown from "../components/SupportDropdown";
 import { useAuth } from "../context/useAuth";
 import { readApiError } from "../services/api";
 import {
@@ -22,8 +24,8 @@ function TechnicianTicketDetail() {
   const [status, setStatus] = useState("In Progress");
   const [resolutionNote, setResolutionNote] = useState("");
   const [commentDraft, setCommentDraft] = useState("");
-  const [updatePanelOpen, setUpdatePanelOpen] = useState(false);
-  const [commentPanelOpen, setCommentPanelOpen] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -45,8 +47,8 @@ function TechnicianTicketDetail() {
         setStatus(data.status === "Resolved" ? "Resolved" : "In Progress");
         setResolutionNote("");
         setCommentDraft("");
-        setUpdatePanelOpen(false);
-        setCommentPanelOpen(false);
+        setStatusModalOpen(false);
+        setCommentModalOpen(false);
       } catch (err) {
         if (active) {
           setError(readApiError(err));
@@ -66,6 +68,19 @@ function TechnicianTicketDetail() {
     };
   }, [ticketId]);
 
+  useEffect(() => {
+    if (!statusModalOpen && !commentModalOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [statusModalOpen, commentModalOpen]);
+
   const handleSave = async () => {
     if (!ticket) {
       return;
@@ -80,7 +95,7 @@ function TechnicianTicketDetail() {
       setTicket(updated);
       setStatus(updated.status === "Resolved" ? "Resolved" : "In Progress");
       setResolutionNote("");
-      setUpdatePanelOpen(false);
+      setStatusModalOpen(false);
     } catch (err) {
       setError(readApiError(err));
     } finally {
@@ -106,7 +121,7 @@ function TechnicianTicketDetail() {
       setStatus(updated.status === "Resolved" ? "Resolved" : "In Progress");
       setResolutionNote("");
       setCommentDraft("");
-      setCommentPanelOpen(false);
+      setCommentModalOpen(false);
     } catch (err) {
       setError(readApiError(err));
     } finally {
@@ -281,7 +296,8 @@ function TechnicianTicketDetail() {
             </div>
 
             <div className="support-ticket-detail-columns">
-              <section className="support-ticket-panel">
+              <div className="support-ticket-sidebar">
+                <section className="support-ticket-panel">
                 <div className="support-ticket-detail-section">
                   <span className="support-eyebrow">Issue Summary</span>
                   <h4>Description</h4>
@@ -365,7 +381,36 @@ function TechnicianTicketDetail() {
                     </article>
                   </div>
                 )}
-              </section>
+
+                <div className="support-comment-cta-row">
+                  <button
+                    type="button"
+                    className="solid-btn"
+                    onClick={() => {
+                      setError("");
+                      setCommentModalOpen(true);
+                    }}
+                  >
+                    Add Update
+                  </button>
+                </div>
+                </section>
+
+                <section className="support-ticket-panel support-ticket-detail-section support-tech-top-spaced-panel">
+                  <span className="support-eyebrow">Action Panel</span>
+                  <h4>Edit Status</h4>
+                  <button
+                    type="button"
+                    className="solid-btn"
+                    onClick={() => {
+                      setError("");
+                      setStatusModalOpen(true);
+                    }}
+                  >
+                    Edit Status
+                  </button>
+                </section>
+              </div>
 
               <aside className="support-ticket-sidebar">
                 {ticket.attachments?.length ? (
@@ -396,61 +441,7 @@ function TechnicianTicketDetail() {
                   </div>
                 ) : null}
 
-                <div className="support-ticket-panel support-ticket-detail-section">
-                  <span className="support-eyebrow">Action Panel</span>
-                  <h4>Edit Status</h4>
-                  <button
-                    type="button"
-                    className="solid-btn"
-                    onClick={() => setUpdatePanelOpen((current) => !current)}
-                  >
-                    {updatePanelOpen ? "Close Status Panel" : "Edit Status"}
-                  </button>
-                  {updatePanelOpen ? (
-                    <div className="admin-ticket-actions support-comment-form support-action-panel">
-                      <select value={status} onChange={(event) => setStatus(event.target.value)}>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Resolved">Resolved</option>
-                      </select>
-                      <textarea
-                        value={resolutionNote}
-                        onChange={(event) => setResolutionNote(event.target.value)}
-                        placeholder="Add a resolution note"
-                        rows="4"
-                      />
-                      <button className="solid-btn" type="button" disabled={busy} onClick={handleSave}>
-                        {busy ? "Saving..." : "Save Status"}
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="support-ticket-panel support-ticket-detail-section">
-                  <span className="support-eyebrow">Technician Note</span>
-                  <h4>Post Update</h4>
-                  <button
-                    type="button"
-                    className="solid-btn"
-                    onClick={() => setCommentPanelOpen((current) => !current)}
-                  >
-                    {commentPanelOpen ? "Close Update Panel" : "Add Update"}
-                  </button>
-                  {commentPanelOpen ? (
-                    <div className="admin-ticket-actions support-comment-form support-action-panel">
-                      <textarea
-                        value={commentDraft}
-                        onChange={(event) => setCommentDraft(event.target.value)}
-                        placeholder="Add a progress update or note for the student"
-                        rows="3"
-                      />
-                      <button className="solid-btn" type="button" disabled={busy} onClick={handleCommentSave}>
-                        {busy ? "Posting..." : "Post Update"}
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-
-                <div className="support-ticket-panel support-ticket-detail-section">
+                <div className="support-ticket-panel support-ticket-detail-section support-tech-top-spaced-panel">
                   <span className="support-eyebrow">Operational View</span>
                   <h4>Queue Snapshot</h4>
                   <div className="support-health-list">
@@ -472,6 +463,130 @@ function TechnicianTicketDetail() {
             </div>
           </article>
         ) : null}
+
+        {ticket && statusModalOpen
+          ? createPortal(
+              <div
+                className="support-modal-backdrop"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="technician-status-modal-title"
+                onClick={() => {
+                  if (!busy) {
+                    setStatusModalOpen(false);
+                  }
+                }}
+              >
+                <div className="support-modal-card support-admin-ticket-modal" onClick={(event) => event.stopPropagation()}>
+                  <button
+                    className="support-modal-close"
+                    type="button"
+                    aria-label="Close edit status dialog"
+                    onClick={() => setStatusModalOpen(false)}
+                    disabled={busy}
+                  >
+                    X
+                  </button>
+                  <h4 id="technician-status-modal-title">Edit Status</h4>
+                  <p className="helper-text">
+                    {ticket.ticketNumber || ticket.id} - {ticket.title}
+                  </p>
+                  <div className="support-admin-action-card support-admin-action-card-modal">
+                    <SupportDropdown
+                      id="technician-status"
+                      label="Status"
+                      value={status}
+                      onChange={setStatus}
+                      options={[
+                        { value: "In Progress", label: "In Progress" },
+                        { value: "Resolved", label: "Resolved" },
+                      ]}
+                    />
+                    <label className="support-admin-action-field">
+                      <span>Resolution Note</span>
+                      <textarea
+                        value={resolutionNote}
+                        onChange={(event) => setResolutionNote(event.target.value)}
+                        placeholder="Add a resolution note"
+                        rows="4"
+                      />
+                    </label>
+                  </div>
+                  <div className="support-modal-actions">
+                    <button
+                      className="ghost-btn"
+                      type="button"
+                      disabled={busy}
+                      onClick={() => setStatusModalOpen(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button className="solid-btn support-admin-save-btn" type="button" disabled={busy} onClick={handleSave}>
+                      {busy ? "Saving..." : "Save Status"}
+                    </button>
+                  </div>
+                </div>
+              </div>,
+              document.body,
+            )
+          : null}
+
+        {ticket && commentModalOpen
+          ? createPortal(
+              <div
+                className="support-modal-backdrop"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="technician-comment-modal-title"
+                onClick={() => {
+                  if (!busy) {
+                    setCommentModalOpen(false);
+                  }
+                }}
+              >
+                <div className="support-modal-card support-admin-ticket-modal" onClick={(event) => event.stopPropagation()}>
+                  <button
+                    className="support-modal-close"
+                    type="button"
+                    aria-label="Close add update dialog"
+                    onClick={() => setCommentModalOpen(false)}
+                    disabled={busy}
+                  >
+                    X
+                  </button>
+                  <h4 id="technician-comment-modal-title">Add Update</h4>
+                  <p className="helper-text">
+                    {ticket.ticketNumber || ticket.id} - {ticket.title}
+                  </p>
+                  <div className="support-admin-action-card support-admin-action-card-modal">
+                    <label className="support-admin-action-field">
+                      <span>Technician Update</span>
+                      <textarea
+                        value={commentDraft}
+                        onChange={(event) => setCommentDraft(event.target.value)}
+                        placeholder="Add a progress update or note for the student"
+                        rows="4"
+                      />
+                    </label>
+                  </div>
+                  <div className="support-modal-actions">
+                    <button
+                      className="ghost-btn"
+                      type="button"
+                      disabled={busy}
+                      onClick={() => setCommentModalOpen(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button className="solid-btn support-admin-save-btn" type="button" disabled={busy} onClick={handleCommentSave}>
+                      {busy ? "Posting..." : "Post Update"}
+                    </button>
+                  </div>
+                </div>
+              </div>,
+              document.body,
+            )
+          : null}
       </div>
     </PortalLayout>
   );

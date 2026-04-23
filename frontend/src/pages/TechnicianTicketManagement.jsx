@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import PortalLayout from "../components/PortalLayout";
+import SupportDropdown from "../components/SupportDropdown";
 import { readApiError } from "../services/api";
 import { fetchTechnicianSupportTickets } from "../services/support";
 import "./SupportModule.css";
@@ -83,6 +84,18 @@ function TechnicianTicketManagement() {
     });
   }, [tickets, statusFilter, searchText]);
 
+  const formatUpdatedDateTime = (value) => {
+    if (!value) {
+      return { date: "-", time: "" };
+    }
+
+    const date = new Date(value);
+    return {
+      date: date.toLocaleDateString(),
+      time: date.toLocaleTimeString(),
+    };
+  };
+
   return (
     <PortalLayout
       title="Technician Ticket Workspace"
@@ -91,8 +104,15 @@ function TechnicianTicketManagement() {
       heroClassName="support-module-hero support-module-hero-detail"
       contentCardClassName="support-module-surface"
     >
-      <div className="support-module-stack">
+      <section className="admin-user-panel support-admin-panel">
         {error ? <p className="support-inline-alert error-text">{error}</p> : null}
+
+        <div className="admin-section-head">
+          <div>
+            <p className="student-modern-section-label">Technician Workspace</p>
+            <h3 className="admin-section-title">Technician Ticket Workspace</h3>
+          </div>
+        </div>
 
         <section className="support-overview-band support-tech-overview">
           <div className="support-overview-copy">
@@ -115,23 +135,23 @@ function TechnicianTicketManagement() {
           </div>
         </section>
 
-        <section className="stats-grid support-stats-grid">
-          <article className="metric-card support-metric-card">
+        <section className="stats-grid support-stats-grid support-tech-stats-grid">
+          <article className="metric-card support-metric-card support-metric-total">
             <h3>Total</h3>
             <p className="metric-number">{loading ? "--" : counts.total}</p>
             <p className="helper-text">Assigned tickets</p>
           </article>
-          <article className="metric-card support-metric-card">
+          <article className="metric-card support-metric-card support-metric-open">
             <h3>Open</h3>
             <p className="metric-number">{loading ? "--" : counts.open}</p>
             <p className="helper-text">Waiting to start</p>
           </article>
-          <article className="metric-card support-metric-card">
+          <article className="metric-card support-metric-card support-metric-progress">
             <h3>In Progress</h3>
             <p className="metric-number">{loading ? "--" : counts.inProgress}</p>
             <p className="helper-text">Currently being worked on</p>
           </article>
-          <article className="metric-card support-metric-card">
+          <article className="metric-card support-metric-card support-metric-resolved">
             <h3>Resolved</h3>
             <p className="metric-number">{loading ? "--" : counts.resolved}</p>
             <p className="helper-text">Marked complete</p>
@@ -152,27 +172,27 @@ function TechnicianTicketManagement() {
             />
           </label>
 
-          <label className="support-filter-field" htmlFor="technician-status-filter">
-            Status
-            <select
-              id="technician-status-filter"
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
-            >
-              <option value="ALL">All statuses</option>
-              <option value="Open">Open</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Resolved">Resolved</option>
-            </select>
-          </label>
+          <SupportDropdown
+            id="technician-status-filter"
+            label="Status"
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: "ALL", label: "All statuses" },
+              { value: "Open", label: "Open" },
+              { value: "In Progress", label: "In Progress" },
+              { value: "Resolved", label: "Resolved" },
+            ]}
+            align="right"
+          />
 
           <span className="support-count-pill support-count-pill-inline">
             {loading ? "--" : visibleTickets.length} visible of {loading ? "--" : counts.total}
           </span>
         </section>
 
-        <div className="table-wrap support-ticket-table-wrap">
-          <table className="support-ticket-table support-tech-ticket-table">
+        <div className="table-wrap support-ticket-table-wrap support-admin-table-wrap support-admin-table-gap">
+          <table className="support-ticket-table support-tech-ticket-table support-tech-ticket-table-modern">
             <thead>
               <tr>
                 <th>Ticket</th>
@@ -186,6 +206,7 @@ function TechnicianTicketManagement() {
             <tbody>
               {visibleTickets.map((ticket) => {
                 const statusKey = (ticket.status || "").toLowerCase().replace(/\s+/g, "-");
+                const updated = formatUpdatedDateTime(ticket.updatedAt);
 
                 return (
                   <tr key={ticket.id}>
@@ -205,7 +226,12 @@ function TechnicianTicketManagement() {
                     <td>
                       <span className={`status-badge support-status-badge ${statusKey}`}>{ticket.status}</span>
                     </td>
-                    <td>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : "-"}</td>
+                    <td>
+                      <div className="support-admin-datetime">
+                        <span>{updated.date}</span>
+                        {updated.time ? <span>{updated.time}</span> : null}
+                      </div>
+                    </td>
                     <td>
                       <Link className="ghost-btn support-table-action" to={`/technician/tickets/${ticket.id}`}>
                         Open Ticket
@@ -233,7 +259,7 @@ function TechnicianTicketManagement() {
             <p className="helper-text">You currently do not have any tickets assigned.</p>
           </article>
         ) : null}
-      </div>
+      </section>
     </PortalLayout>
   );
 }

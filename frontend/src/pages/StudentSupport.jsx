@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import PortalLayout from "../components/PortalLayout";
+import SupportDropdown from "../components/SupportDropdown";
 import { readApiError } from "../services/api";
 import { fetchMySupportTickets } from "../services/support";
 import "./SupportModule.css";
@@ -94,6 +95,13 @@ function StudentSupport() {
     });
   }, [tickets, statusFilter, searchText]);
 
+  const statusOptions = [
+    { value: "ALL", label: "All statuses" },
+    { value: "Open", label: "Open" },
+    { value: "In Progress", label: "In Progress" },
+    { value: "Resolved", label: "Resolved" },
+  ];
+
   return (
     <PortalLayout
       title="Student Support"
@@ -126,25 +134,25 @@ function StudentSupport() {
         </section>
 
         <section className="stats-grid support-stats-grid">
-          <article className="metric-card support-metric-card">
+          <article className="metric-card support-metric-card support-metric-total">
             <h3>Total</h3>
             <p className="metric-number">{loading ? "--" : counts.total}</p>
             <p className="helper-text">All support tickets</p>
           </article>
 
-          <article className="metric-card support-metric-card">
+          <article className="metric-card support-metric-card support-metric-open">
             <h3>Open</h3>
             <p className="metric-number">{loading ? "--" : counts.open}</p>
             <p className="helper-text">Waiting for first update</p>
           </article>
 
-          <article className="metric-card support-metric-card">
+          <article className="metric-card support-metric-card support-metric-progress">
             <h3>In Progress</h3>
             <p className="metric-number">{loading ? "--" : counts.inProgress}</p>
             <p className="helper-text">Currently being handled</p>
           </article>
 
-          <article className="metric-card support-metric-card">
+          <article className="metric-card support-metric-card support-metric-resolved">
             <h3>Resolved</h3>
             <p className="metric-number">{loading ? "--" : counts.resolved}</p>
             <p className="helper-text">Completed requests</p>
@@ -174,19 +182,14 @@ function StudentSupport() {
               />
             </label>
 
-            <label className="support-filter-field" htmlFor="support-status-filter">
-              Status
-              <select
-                id="support-status-filter"
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-              >
-                <option value="ALL">All statuses</option>
-                <option value="Open">Open</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Resolved">Resolved</option>
-              </select>
-            </label>
+            <SupportDropdown
+              id="support-status-filter"
+              label="Status"
+              value={statusFilter}
+              options={statusOptions}
+              onChange={setStatusFilter}
+              align="right"
+            />
           </div>
 
           {loading ? <p className="helper-text">Loading support tickets...</p> : null}
