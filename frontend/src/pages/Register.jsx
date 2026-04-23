@@ -23,6 +23,7 @@ const CAMPUS_YEAR_OPTIONS = [
 function Register() {
   const navigate = useNavigate();
   const { register, registerWithGoogle, ready, isAuthenticated, user } = useAuth();
+  const registerRoleOptions = ROLE_OPTIONS.filter((role) => role.value !== "technician");
 
   const [form, setForm] = useState({
     role: "student",
@@ -180,7 +181,7 @@ function Register() {
                   value={form.role}
                   onChange={(event) => updateField("role", event.target.value)}
                 >
-                  {ROLE_OPTIONS.map((role) => (
+                  {registerRoleOptions.map((role) => (
                     <option key={role.value} value={role.value}>
                       {role.label}
                     </option>

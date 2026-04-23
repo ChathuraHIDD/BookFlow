@@ -4,7 +4,8 @@ public enum UserRole {
     STUDENT,
     LIBRARIAN,
     ADMIN,
-    STAFF_MEMBER;
+    STAFF_MEMBER,
+    TECHNICIAN;
 
     public static UserRole fromValue(String rawValue) {
         if (rawValue == null || rawValue.isBlank()) {

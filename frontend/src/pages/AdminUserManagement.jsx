@@ -158,6 +158,7 @@ function AdminUserManagement() {
     student: users.filter((user) => normalizeRole(user.role) === "student").length,
     staff_member: users.filter((user) => normalizeRole(user.role) === "staff_member").length,
     admin: users.filter((user) => normalizeRole(user.role) === "admin").length,
+    technician: users.filter((user) => normalizeRole(user.role) === "technician").length,
   };
 
   const studentRatio = useMemo(() => {
@@ -175,18 +176,21 @@ function AdminUserManagement() {
     const students = (roleCounts.student / roleCounts.all) * 360;
     const staff = (roleCounts.staff_member / roleCounts.all) * 360;
     const admins = (roleCounts.admin / roleCounts.all) * 360;
+    const technicians = (roleCounts.technician / roleCounts.all) * 360;
 
     const studentEnd = students;
     const staffEnd = students + staff;
     const adminEnd = students + staff + admins;
+    const technicianEnd = students + staff + admins + technicians;
 
     return `conic-gradient(
       #3565b0 0deg ${studentEnd}deg,
       #6f95d4 ${studentEnd}deg ${staffEnd}deg,
       #1f3f77 ${staffEnd}deg ${adminEnd}deg,
-      #dbe7f7 ${adminEnd}deg 360deg
+      #2f855a ${adminEnd}deg ${technicianEnd}deg,
+      #dbe7f7 ${technicianEnd}deg 360deg
     )`;
-  }, [roleCounts.admin, roleCounts.all, roleCounts.staff_member, roleCounts.student]);
+  }, [roleCounts.admin, roleCounts.all, roleCounts.staff_member, roleCounts.student, roleCounts.technician]);
 
   const loadUsers = async (activeFilters = filters) => {
     setError("");
@@ -594,6 +598,14 @@ function AdminUserManagement() {
               >
                 <Icon name="admin" className="admin-icon-small" />
                 Admins <span>{roleCounts.admin}</span>
+              </button>
+              <button
+                type="button"
+                className={`admin-user-chip${filters.role === "technician" ? " admin-user-chip-active" : ""}`}
+                onClick={() => onRoleChipClick("technician")}
+              >
+                <Icon name="staff" className="admin-icon-small" />
+                Technicians <span>{roleCounts.technician}</span>
               </button>
             </div>
 

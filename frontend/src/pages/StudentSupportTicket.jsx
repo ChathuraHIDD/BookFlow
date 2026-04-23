@@ -1,86 +1,345 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import PortalLayout from "../components/PortalLayout";
-
-const mockTickets = [
-  {
-    id: "TCK-1001",
-    title: "Cannot borrow e-book",
-    category: "Borrowing",
-    description: "The borrow button does not work when I try to borrow the e-book from my account.",
-    priority: "High",
-    status: "Open",
-    date: "2026-04-17",
-  },
-  {
-    id: "TCK-1002",
-    title: "Login error on mobile",
-    category: "Technical",
-    description: "The mobile app shows an error after entering my email and password.",
-    priority: "Medium",
-    status: "In Progress",
-    date: "2026-04-16",
-  },
-  {
-    id: "TCK-1003",
-    title: "Need profile email correction",
-    category: "Account",
-    description: "My profile email needs to be updated to the new university email address.",
-    priority: "Low",
-    status: "Resolved",
-    date: "2026-04-14",
-  },
-  {
-    id: "TCK-1004",
-    title: "Reservation not showing",
-    category: "Technical",
-    description: "A book reservation I placed is not visible in my support and activity history.",
-    priority: "Medium",
-    status: "Open",
-    date: "2026-04-13",
-  },
-  {
-    id: "TCK-1005",
-    title: "Fine amount clarification",
-    category: "Other",
-    description: "I want to confirm why the fine amount on my account changed.",
-    priority: "Low",
-    status: "Resolved",
-    date: "2026-04-12",
-  },
-];
+import { useAuth } from "../context/useAuth";
+import { readApiError } from "../services/api";
+import {
+  addSupportTicketComment,
+  deleteSupportTicketComment,
+  downloadSupportAttachment,
+  fetchMySupportTicket,
+  updateSupportTicketComment,
+} from "../services/support";
+import "./SupportModule.css";
 
 function StudentSupportTicket() {
   const { id } = useParams();
-  const ticket = mockTickets.find((item) => item.id === id);
+  const { user } = useAuth();
+  const [ticket, setTicket] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [commentMessage, setCommentMessage] = useState("");
+  const [commentBusy, setCommentBusy] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState("");
+  const [editingCommentMessage, setEditingCommentMessage] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        const data = await fetchMySupportTicket(id);
+        if (active) {
+          setTicket(data);
+        }
+      } catch (err) {
+        if (active) {
+          setError(readApiError(err));
+          setTicket(null);
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    load();
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  const statusKey = (ticket?.status || "").toLowerCase().replace(/\s+/g, "-");
+
+  const refreshTicket = async () => {
+    const data = await fetchMySupportTicket(id);
+    setTicket(data);
+  };
+
+  const onAddComment = async (event) => {
+    event.preventDefault();
+    if (!commentMessage.trim()) {
+      return;
+    }
+
+    try {
+      setCommentBusy(true);
+      setError("");
+      await addSupportTicketComment(id, { message: commentMessage });
+      setCommentMessage("");
+      await refreshTicket();
+    } catch (err) {
+      setError(readApiError(err));
+    } finally {
+      setCommentBusy(false);
+    }
+  };
+
+  const onStartEditComment = (comment) => {
+    setEditingCommentId(comment.id);
+    setEditingCommentMessage(comment.message || "");
+    setError("");
+  };
+
+  const onCancelEditComment = () => {
+    setEditingCommentId("");
+    setEditingCommentMessage("");
+  };
+
+  const onSaveEditedComment = async (commentId) => {
+    if (!editingCommentMessage.trim()) {
+      setError("Comment message is required.");
+      return;
+    }
+
+    try {
+      setCommentBusy(true);
+      setError("");
+      const updated = await updateSupportTicketComment(id, commentId, { message: editingCommentMessage });
+      setTicket(updated);
+      onCancelEditComment();
+    } catch (err) {
+      setError(readApiError(err));
+    } finally {
+      setCommentBusy(false);
+    }
+  };
+
+  const onDeleteComment = async (commentId) => {
+    try {
+      setCommentBusy(true);
+      setError("");
+      const updated = await deleteSupportTicketComment(id, commentId);
+      setTicket(updated);
+      if (editingCommentId === commentId) {
+        onCancelEditComment();
+      }
+    } catch (err) {
+      setError(readApiError(err));
+    } finally {
+      setCommentBusy(false);
+    }
+  };
+
+  const onOpenAttachment = async (attachment) => {
+    try {
+      setError("");
+      const { blob, fileName } = await downloadSupportAttachment(ticket.id, attachment.id);
+      const objectUrl = URL.createObjectURL(blob);
+      const newWindow = window.open(objectUrl, "_blank", "noreferrer");
+      if (!newWindow) {
+        const anchor = document.createElement("a");
+        anchor.href = objectUrl;
+        anchor.download = fileName;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+      }
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 5000);
+    } catch (err) {
+      setError(readApiError(err));
+    }
+  };
 
   return (
     <PortalLayout
       title="Support Ticket Details"
-      subtitle="This is a simple mock page for viewing one support request."
+      subtitle="View the details, priority, and current status of one support request."
+      pageClassName="support-module-page"
+      heroClassName="support-module-hero support-module-hero-detail"
+      contentCardClassName="support-module-surface"
     >
-      <div className="cta-row" style={{ marginBottom: "14px" }}>
-        <Link className="ghost-btn" to="/student/support">
-          Back to Support
-        </Link>
-      </div>
+      <div className="support-module-stack">
+        <div className="support-breadcrumb-row">
+          <Link className="ghost-btn" to="/student/support">
+            Back to Support
+          </Link>
+        </div>
 
-      {ticket ? (
-        <article className="metric-card">
-          <h3>{ticket.title}</h3>
-          <p><strong>Ticket ID:</strong> {ticket.id}</p>
-          <p><strong>Category:</strong> {ticket.category}</p>
-          <p><strong>Description:</strong> {ticket.description}</p>
-          <p><strong>Priority:</strong> {ticket.priority}</p>
-          <p><strong>Status:</strong> {ticket.status}</p>
-          <p><strong>Date:</strong> {ticket.date}</p>
-        </article>
-      ) : (
-        <article className="metric-card">
-          <h3>Ticket not found</h3>
-          <p className="helper-text">We could not find a mock ticket for this ID.</p>
-        </article>
-      )}
+        {loading ? <p className="helper-text">Loading ticket details...</p> : null}
+        {error ? <p className="support-inline-alert error-text">{error}</p> : null}
+
+        {!loading && ticket ? (
+          <article className="support-ticket-detail-shell">
+            <div className="support-ticket-hero-card">
+              <div className="support-ticket-detail-head">
+                <div>
+                  <span className="support-ticket-id-label">{ticket.ticketNumber || ticket.id}</span>
+                  <h3>{ticket.title}</h3>
+                  <p className="helper-text">
+                    Submitted by {ticket.userName} for {ticket.locationResource || "General request"}
+                  </p>
+                </div>
+                <span className={`status-badge support-status-badge ${statusKey}`}>{ticket.status}</span>
+              </div>
+
+              <div className="support-ticket-detail-grid">
+                <article className="support-detail-stat">
+                  <span>Category</span>
+                  <strong>{ticket.category}</strong>
+                </article>
+                <article className="support-detail-stat">
+                  <span>Priority</span>
+                  <strong>{ticket.priority}</strong>
+                </article>
+                <article className="support-detail-stat">
+                  <span>Created</span>
+                  <strong>{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : "-"}</strong>
+                </article>
+                <article className="support-detail-stat">
+                  <span>Last Updated</span>
+                  <strong>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : "-"}</strong>
+                </article>
+                <article className="support-detail-stat">
+                  <span>Resolved</span>
+                  <strong>{ticket.resolvedAt ? new Date(ticket.resolvedAt).toLocaleString() : "-"}</strong>
+                </article>
+                <article className="support-detail-stat">
+                  <span>Contact</span>
+                  <strong>{ticket.contactDetails || "-"}</strong>
+                </article>
+              </div>
+            </div>
+
+            <div className="support-ticket-detail-columns">
+              <section className="support-ticket-panel">
+                <div className="support-ticket-detail-section">
+                  <span className="support-eyebrow">Issue Summary</span>
+                  <h4>Description</h4>
+                  <p>{ticket.description}</p>
+                </div>
+
+                <div className="support-ticket-detail-section">
+                  <span className="support-eyebrow">Conversation</span>
+                  <h4>Add Comment</h4>
+                  <form className="admin-ticket-actions support-comment-form" onSubmit={onAddComment}>
+                    <textarea
+                      value={commentMessage}
+                      onChange={(event) => setCommentMessage(event.target.value)}
+                      rows="4"
+                      placeholder="Add a follow-up comment"
+                    />
+                    <button className="solid-btn" type="submit" disabled={commentBusy || !commentMessage.trim()}>
+                      {commentBusy ? "Posting..." : "Post Comment"}
+                    </button>
+                  </form>
+                </div>
+
+                {ticket.comments?.length ? (
+                  <div className="support-ticket-detail-section">
+                    <span className="support-eyebrow">Updates</span>
+                    <h4>Comments</h4>
+                    <div className="support-ticket-comment-list">
+                      {ticket.comments.map((comment) => (
+                        <article key={comment.id} className="support-ticket-comment-item">
+                          <div className="support-comment-meta">
+                            <strong>{comment.authorName}</strong>
+                            <span className="helper-text">
+                              {comment.authorRole} | {comment.createdAt ? new Date(comment.createdAt).toLocaleString() : ""}
+                              {comment.updatedAt ? ` | Edited ${new Date(comment.updatedAt).toLocaleString()}` : ""}
+                            </span>
+                          </div>
+                          {editingCommentId === comment.id ? (
+                            <div className="support-comment-editor">
+                              <textarea
+                                value={editingCommentMessage}
+                                onChange={(event) => setEditingCommentMessage(event.target.value)}
+                                rows="3"
+                              />
+                              <div className="support-comment-actions">
+                                <button
+                                  className="solid-btn"
+                                  type="button"
+                                  disabled={commentBusy}
+                                  onClick={() => onSaveEditedComment(comment.id)}
+                                >
+                                  {commentBusy ? "Saving..." : "Save"}
+                                </button>
+                                <button className="ghost-btn" type="button" onClick={onCancelEditComment}>
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <p>{comment.message}</p>
+                          )}
+                          {user?.id === comment.authorUserId ? (
+                            <div className="support-comment-actions support-comment-actions-inline">
+                              {editingCommentId !== comment.id ? (
+                                <button className="ghost-btn" type="button" onClick={() => onStartEditComment(comment)}>
+                                  Edit
+                                </button>
+                              ) : null}
+                              <button
+                                className="ghost-btn"
+                                type="button"
+                                disabled={commentBusy}
+                                onClick={() => onDeleteComment(comment.id)}
+                              >
+                                {commentBusy ? "Working..." : "Delete"}
+                              </button>
+                            </div>
+                          ) : null}
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </section>
+
+              <aside className="support-ticket-sidebar">
+                {ticket.attachments?.length ? (
+                  <div className="support-ticket-panel support-ticket-detail-section">
+                    <span className="support-eyebrow">Files</span>
+                    <h4>Attachments</h4>
+                    <ul className="support-ticket-attachment-list">
+                      {ticket.attachments.map((attachment) => (
+                        <li key={attachment.id} className="support-attachment-card">
+                          <div>
+                            <strong>{attachment.originalFileName}</strong>
+                            <span className="helper-text">
+                              {attachment.uploadedByName} | {attachment.createdAt ? new Date(attachment.createdAt).toLocaleString() : ""}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            className="ghost-btn"
+                            onClick={() => onOpenAttachment(attachment)}
+                            aria-label={`Download ${attachment.originalFileName}`}
+                            title={`Download ${attachment.originalFileName}`}
+                          >
+                            Download
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {ticket.adminNote ? (
+                  <div className="support-ticket-panel support-ticket-detail-section">
+                    <span className="support-eyebrow">Admin Review</span>
+                    <h4>Admin Note</h4>
+                    <p>{ticket.adminNote}</p>
+                  </div>
+                ) : null}
+              </aside>
+            </div>
+          </article>
+        ) : null}
+
+        {!loading && !ticket ? (
+          <article className="metric-card support-not-found-card">
+            <h3>Ticket not found</h3>
+            <p className="helper-text">We could not find a support ticket for this ID.</p>
+          </article>
+        ) : null}
+      </div>
     </PortalLayout>
   );
 }

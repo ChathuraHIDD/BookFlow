@@ -1863,6 +1863,20 @@ th {
   gap: 4px;
 }
 
+.notification-link-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.notification-link-btn:hover {
+  text-decoration: underline;
+}
+
 .notification-panel-item-actions {
   display: flex;
   gap: 8px;
@@ -4217,6 +4231,65 @@ th {
   background: rgba(239, 68, 68, 0.2);
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.status-badge.support-status-badge {
+  text-transform: none;
+  letter-spacing: 0.2px;
+}
+
+.status-badge.support-status-badge.open {
+  background: rgba(75, 121, 192, 0.14);
+  color: var(--navy-700);
+  border: 1px solid rgba(75, 121, 192, 0.22);
+}
+
+.status-badge.support-status-badge.in-progress {
+  background: rgba(43, 91, 168, 0.14);
+  color: var(--navy-800);
+  border: 1px solid rgba(43, 91, 168, 0.24);
+}
+
+.status-badge.support-status-badge.resolved {
+  background: rgba(36, 75, 135, 0.14);
+  color: var(--navy-900);
+  border: 1px solid rgba(36, 75, 135, 0.24);
+}
+
+.support-ticket-detail-card {
+  display: grid;
+  gap: 18px;
+}
+
+.support-ticket-detail-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.support-ticket-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+}
+
+.support-ticket-detail-section {
+  display: grid;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.admin-ticket-actions {
+  display: grid;
+  gap: 8px;
+  min-width: 260px;
+}
+
+.admin-ticket-actions input,
+.admin-ticket-actions select {
+  width: 100%;
 }
 
 .status-icon {
@@ -6823,6 +6896,18 @@ th {
   .student-home-button,
   .student-home-support-media img {
     transition: none;
+  }
+
+  .support-ticket-detail-head {
+    flex-direction: column;
+  }
+
+  .support-ticket-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-ticket-actions {
+    min-width: 0;
   }
 }
 
