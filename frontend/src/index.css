@@ -3158,6 +3158,74 @@ th {
   background: #fbfcff;
 }
 
+.student-booking-pass-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.student-booking-pass-btn {
+  border: 1px solid rgba(71, 102, 214, 0.35);
+  border-radius: 10px;
+  background: #eef2ff;
+  color: #2f4ea2;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.student-booking-pass-btn:hover:not(:disabled) {
+  background: #dfe7ff;
+}
+
+.student-booking-pass-btn-download {
+  border-color: rgba(35, 145, 98, 0.36);
+  background: #ebfbf2;
+  color: #1f7f57;
+}
+
+.student-booking-pass-btn-download:hover:not(:disabled) {
+  background: #d9f6e6;
+}
+
+.student-booking-pass-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.student-booking-pass-panel {
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 219, 245, 0.95);
+  background: #f6f8ff;
+}
+
+.student-booking-pass-qr {
+  width: 130px;
+  height: 130px;
+  border-radius: 10px;
+  border: 1px solid rgba(209, 216, 240, 0.95);
+  background: #ffffff;
+}
+
+.student-booking-pass-details {
+  display: grid;
+  gap: 4px;
+}
+
+.student-booking-pass-details p {
+  margin: 0;
+  color: #4e5984;
+  font-size: 0.84rem;
+}
+
 .student-booking-history-top {
   display: flex;
   align-items: center;

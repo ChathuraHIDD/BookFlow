@@ -145,8 +145,7 @@ public class FacilitiesService {
             validateWholeRoomAvailability(classroom.getId(), request.getBookingDate(), request.getStartTime(), request.getEndTime(), null);
         }
 
-        boolean autoApprove = shouldAutoApprove(classroom, request, selectedSeats);
-        String decisionNote = autoApprove ? "Auto-approved by booking logic" : buildReviewNote(classroom, request);
+        String decisionNote = buildReviewNote(classroom, request);
 
         FacilityBooking booking = new FacilityBooking();
         booking.setBuildingId(classroom.getBuildingId());
@@ -161,9 +160,9 @@ public class FacilitiesService {
         booking.setRequestedByName(user.getFullName());
         booking.setPurpose(normalizeText(request.getPurpose(), "Study session"));
         booking.setPriority(normalizePriority(request.getPriority()));
-        booking.setReviewRequired(!autoApprove);
+        booking.setReviewRequired(true);
         booking.setDecisionNote(decisionNote);
-        booking.setStatus(autoApprove ? BookingStatus.APPROVED : BookingStatus.PENDING);
+        booking.setStatus(BookingStatus.PENDING);
         booking.setSelectedSeats(selectedSeats);
         booking.setCreatedAt(Instant.now());
         FacilityBooking saved = bookingRepository.save(booking);
@@ -180,20 +179,16 @@ public class FacilitiesService {
             "SYSTEM",
             "SYSTEM");
 
-        if (autoApprove) {
-            notificationService.notifyBookingApproved(saved);
-        } else {
-            notificationService.notifyAdmins(
-                    "New Facility Booking Request",
-                    String.format("%s requested %s on %s (%s - %s). Review required.",
-                            saved.getRequestedByName(),
-                            saved.getRoomNumber(),
-                            saved.getBookingDate(),
-                            saved.getStartTime(),
-                            saved.getEndTime()),
-                    "BOOKING_MANAGEMENT",
-                    "/admin/bookings");
-        }
+        notificationService.notifyAdmins(
+            "New Facility Booking Request",
+            String.format("%s requested %s on %s (%s - %s). Review required.",
+                saved.getRequestedByName(),
+                saved.getRoomNumber(),
+                saved.getBookingDate(),
+                saved.getStartTime(),
+                saved.getEndTime()),
+            "BOOKING_MANAGEMENT",
+            "/admin/bookings");
 
         return toBookingResponse(saved);
     }
@@ -421,22 +416,6 @@ public class FacilitiesService {
         }
     }
 
-    private boolean shouldAutoApprove(Classroom classroom, CreateBookingRequest request, List<Integer> selectedSeats) {
-        boolean urgent = isUrgent(request.getPriority());
-        boolean peakTime = isPeakTime(request.getStartTime(), request.getEndTime());
-        long seatDemand = bookingRepository.findByClassroomIdAndBookingDate(classroom.getId(), request.getBookingDate()).stream()
-                .filter(existing -> existing.getStatus() == BookingStatus.PENDING || existing.getStatus() == BookingStatus.APPROVED)
-                .filter(existing -> overlaps(existing, request))
-                .map(FacilityBooking::getSelectedSeats)
-                .filter(seats -> seats != null)
-                .flatMap(List::stream)
-                .distinct()
-                .count();
-
-        return !urgent && !peakTime && seatDemand < Math.max(2, classroom.getCapacity() / 4L)
-                && selectedSeats.size() <= Math.max(2, classroom.getCapacity() / 3);
-    }
-
     private boolean isUrgent(String priority) {
         return StringUtils.hasText(priority) && priority.trim().equalsIgnoreCase("urgent");
     }
@@ -465,11 +444,6 @@ public class FacilitiesService {
             return "Marked for review because this is a large event request";
         }
         return "Marked for review by booking logic";
-    }
-
-    private boolean overlaps(FacilityBooking existing, CreateBookingRequest request) {
-        return request.getStartTime().isBefore(existing.getEndTime())
-                && request.getEndTime().isAfter(existing.getStartTime());
     }
 
     private boolean overlaps(FacilityBooking existing, LocalTime startTime, LocalTime endTime) {

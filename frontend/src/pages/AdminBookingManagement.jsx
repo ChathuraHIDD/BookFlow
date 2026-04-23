@@ -50,18 +50,24 @@ function AdminBookingManagement() {
         floorNumber: ""
       }));
 
+      const getSortTime = (booking) => {
+        const createdAt = booking?.createdAt ? new Date(booking.createdAt).getTime() : Number.NaN;
+        if (!Number.isNaN(createdAt)) {
+          return createdAt;
+        }
+
+        const bookingDate = booking?.bookingDate ? new Date(booking.bookingDate).getTime() : Number.NaN;
+        if (!Number.isNaN(bookingDate)) {
+          return bookingDate;
+        }
+
+        return 0;
+      };
+
       const combined = [...(facilityData || []), ...normalizedResourceData];
-      
-      // Sort review-needed and urgent requests first, then by date descending
-      combined.sort((a, b) => {
-        if (Boolean(a.reviewRequired) && !Boolean(b.reviewRequired)) return -1;
-        if (!Boolean(a.reviewRequired) && Boolean(b.reviewRequired)) return 1;
-        if ((a.priority || "NORMAL") === "URGENT" && (b.priority || "NORMAL") !== "URGENT") return -1;
-        if ((a.priority || "NORMAL") !== "URGENT" && (b.priority || "NORMAL") === "URGENT") return 1;
-        if (a.status === "PENDING" && b.status !== "PENDING") return -1;
-        if (a.status !== "PENDING" && b.status === "PENDING") return 1;
-        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-      });
+
+      // Show the newest student requests first in the admin queue.
+      combined.sort((a, b) => getSortTime(b) - getSortTime(a));
 
       setBookings(combined);
       setSelectedBookingId((current) =>
