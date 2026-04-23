@@ -18,6 +18,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.bookflow.backend.auth.model.User;
+import com.bookflow.backend.bookings.audit.dto.BookingAuditEventResponse;
+import com.bookflow.backend.bookings.audit.model.BookingAuditType;
+import com.bookflow.backend.bookings.audit.service.BookingAuditService;
 import com.bookflow.backend.facilities.dto.BookingResponse;
 import com.bookflow.backend.facilities.dto.BuildingSummaryResponse;
 import com.bookflow.backend.facilities.dto.ClassroomResponse;
@@ -47,16 +50,19 @@ public class FacilitiesService {
     private final ClassroomRepository classroomRepository;
     private final FacilityBookingRepository bookingRepository;
     private final NotificationService notificationService;
+    private final BookingAuditService bookingAuditService;
 
     public FacilitiesService(
             BuildingRepository buildingRepository,
             ClassroomRepository classroomRepository,
             FacilityBookingRepository bookingRepository,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            BookingAuditService bookingAuditService) {
         this.buildingRepository = buildingRepository;
         this.classroomRepository = classroomRepository;
         this.bookingRepository = bookingRepository;
         this.notificationService = notificationService;
+        this.bookingAuditService = bookingAuditService;
     }
 
     public StudentFacilitiesOverviewResponse studentOverview(User user) {
@@ -139,8 +145,7 @@ public class FacilitiesService {
             validateWholeRoomAvailability(classroom.getId(), request.getBookingDate(), request.getStartTime(), request.getEndTime(), null);
         }
 
-        boolean autoApprove = shouldAutoApprove(classroom, request, selectedSeats);
-        String decisionNote = autoApprove ? "Auto-approved by booking logic" : buildReviewNote(classroom, request);
+        String decisionNote = buildReviewNote(classroom, request);
 
         FacilityBooking booking = new FacilityBooking();
         booking.setBuildingId(classroom.getBuildingId());
@@ -155,27 +160,35 @@ public class FacilitiesService {
         booking.setRequestedByName(user.getFullName());
         booking.setPurpose(normalizeText(request.getPurpose(), "Study session"));
         booking.setPriority(normalizePriority(request.getPriority()));
-        booking.setReviewRequired(!autoApprove);
+        booking.setReviewRequired(true);
         booking.setDecisionNote(decisionNote);
-        booking.setStatus(autoApprove ? BookingStatus.APPROVED : BookingStatus.PENDING);
+        booking.setStatus(BookingStatus.PENDING);
         booking.setSelectedSeats(selectedSeats);
         booking.setCreatedAt(Instant.now());
         FacilityBooking saved = bookingRepository.save(booking);
 
-        if (autoApprove) {
-            notificationService.notifyBookingApproved(saved);
-        } else {
-            notificationService.notifyAdmins(
-                    "New Facility Booking Request",
-                    String.format("%s requested %s on %s (%s - %s). Review required.",
-                            saved.getRequestedByName(),
-                            saved.getRoomNumber(),
-                            saved.getBookingDate(),
-                            saved.getStartTime(),
-                            saved.getEndTime()),
-                    "BOOKING_MANAGEMENT",
-                    "/admin/bookings");
-        }
+        bookingAuditService.recordEvent(
+            saved.getId(),
+            BookingAuditType.FACILITY,
+            "CREATED",
+            null,
+            saved.getStatus() != null ? saved.getStatus().name() : "UNKNOWN",
+            user,
+            decisionNote,
+            "SYSTEM",
+            "SYSTEM",
+            "SYSTEM");
+
+        notificationService.notifyAdmins(
+            "New Facility Booking Request",
+            String.format("%s requested %s on %s (%s - %s). Review required.",
+                saved.getRequestedByName(),
+                saved.getRoomNumber(),
+                saved.getBookingDate(),
+                saved.getStartTime(),
+                saved.getEndTime()),
+            "BOOKING_MANAGEMENT",
+            "/admin/bookings");
 
         return toBookingResponse(saved);
     }
@@ -251,7 +264,13 @@ public class FacilitiesService {
                 .toList();
     }
 
-    public BookingResponse updateBookingStatus(String bookingId, UpdateBookingStatusRequest request) {
+    public BookingResponse updateBookingStatus(
+            String bookingId,
+            UpdateBookingStatusRequest request,
+            User actor,
+            String ipAddress,
+            String userAgent,
+            String sessionId) {
         FacilityBooking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
         BookingStatus previousStatus = booking.getStatus();
@@ -272,7 +291,23 @@ public class FacilitiesService {
             notificationService.notifyBookingCancelled(saved);
         }
 
+        bookingAuditService.recordEvent(
+                saved.getId(),
+                BookingAuditType.FACILITY,
+                "STATUS_UPDATED",
+                previousStatus != null ? previousStatus.name() : null,
+                nextStatus.name(),
+                actor,
+                request.getReason(),
+                ipAddress,
+                userAgent,
+                sessionId);
+
         return toBookingResponse(saved);
+    }
+
+    public List<BookingAuditEventResponse> bookingAuditTimeline(String bookingId) {
+        return bookingAuditService.getTimeline(bookingId, BookingAuditType.FACILITY);
     }
 
     public FacilityReportResponse reports() {
@@ -381,22 +416,6 @@ public class FacilitiesService {
         }
     }
 
-    private boolean shouldAutoApprove(Classroom classroom, CreateBookingRequest request, List<Integer> selectedSeats) {
-        boolean urgent = isUrgent(request.getPriority());
-        boolean peakTime = isPeakTime(request.getStartTime(), request.getEndTime());
-        long seatDemand = bookingRepository.findByClassroomIdAndBookingDate(classroom.getId(), request.getBookingDate()).stream()
-                .filter(existing -> existing.getStatus() == BookingStatus.PENDING || existing.getStatus() == BookingStatus.APPROVED)
-                .filter(existing -> overlaps(existing, request))
-                .map(FacilityBooking::getSelectedSeats)
-                .filter(seats -> seats != null)
-                .flatMap(List::stream)
-                .distinct()
-                .count();
-
-        return !urgent && !peakTime && seatDemand < Math.max(2, classroom.getCapacity() / 4L)
-                && selectedSeats.size() <= Math.max(2, classroom.getCapacity() / 3);
-    }
-
     private boolean isUrgent(String priority) {
         return StringUtils.hasText(priority) && priority.trim().equalsIgnoreCase("urgent");
     }
@@ -425,11 +444,6 @@ public class FacilitiesService {
             return "Marked for review because this is a large event request";
         }
         return "Marked for review by booking logic";
-    }
-
-    private boolean overlaps(FacilityBooking existing, CreateBookingRequest request) {
-        return request.getStartTime().isBefore(existing.getEndTime())
-                && request.getEndTime().isAfter(existing.getStartTime());
     }
 
     private boolean overlaps(FacilityBooking existing, LocalTime startTime, LocalTime endTime) {

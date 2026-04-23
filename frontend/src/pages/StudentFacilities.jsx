@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { jsPDF } from "jspdf";
+import QRCode from "qrcode";
 
 import StudentPortalShell from "../components/StudentPortalShell";
 import { fetchStudentFacilitiesOverview } from "../services/facilities";
@@ -11,9 +13,14 @@ function StudentFacilities() {
   const [overview, setOverview] = useState({ buildings: [], myBookings: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [passError, setPassError] = useState("");
   const [monthFilter, setMonthFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [passLoadingBookingId, setPassLoadingBookingId] = useState("");
+  const [passDownloadingBookingId, setPassDownloadingBookingId] = useState("");
+  const [expandedPassBookingId, setExpandedPassBookingId] = useState("");
+  const [bookingPassQrs, setBookingPassQrs] = useState({});
 
   const buildBadge = (building) => {
     const code = building?.code?.trim();
@@ -106,6 +113,117 @@ function StudentFacilities() {
     return "default";
   };
 
+  const isApprovedBooking = (booking) => (booking?.status || "").toUpperCase() === "APPROVED";
+
+  const getBookingLocationLabel = (booking) => {
+    if (booking?.isResource) {
+      return `${booking.buildingName || "Resource"} | ${booking.roomNumber || "-"}`;
+    }
+    return `${booking?.buildingName || "Building"} | Floor ${booking?.floorNumber ?? "-"} | ${booking?.roomNumber || "-"}`;
+  };
+
+  const buildBookingPassQrText = (booking) => {
+    const bookingType = booking?.isResource ? "Resource" : "Facility";
+    const seatText = booking?.selectedSeats?.length ? booking.selectedSeats.join(", ") : "None";
+
+    return [
+      "NNIC Smart Campus Booking Pass",
+      `Booking ID: ${booking?.id || "-"}`,
+      `Type: ${bookingType}`,
+      `Student: ${booking?.requestedByName || "Student"}`,
+      `Location: ${getBookingLocationLabel(booking)}`,
+      `Date: ${booking?.bookingDate || "-"}`,
+      `Time: ${booking?.startTime || "-"} - ${booking?.endTime || "-"}`,
+      `Purpose: ${booking?.purpose || "General"}`,
+      `Priority: ${booking?.priority || "NORMAL"}`,
+      `Seats: ${seatText}`,
+      `Status: ${booking?.status || "-"}`,
+    ].join("\n");
+  };
+
+  const ensureBookingPassQr = async (booking) => {
+    if (bookingPassQrs[booking.id]) {
+      return bookingPassQrs[booking.id];
+    }
+
+    const qrDataUrl = await QRCode.toDataURL(buildBookingPassQrText(booking), {
+      width: 260,
+      margin: 1,
+    });
+
+    setBookingPassQrs((previous) => ({
+      ...previous,
+      [booking.id]: qrDataUrl,
+    }));
+
+    return qrDataUrl;
+  };
+
+  const toggleBookingPassPanel = async (booking) => {
+    if (expandedPassBookingId === booking.id) {
+      setExpandedPassBookingId("");
+      return;
+    }
+
+    try {
+      setPassError("");
+      setPassLoadingBookingId(booking.id);
+      await ensureBookingPassQr(booking);
+      setExpandedPassBookingId(booking.id);
+    } catch (err) {
+      setPassError(err?.message || "Could not generate booking pass QR code.");
+    } finally {
+      setPassLoadingBookingId("");
+    }
+  };
+
+  const downloadBookingPassPdf = async (booking) => {
+    try {
+      setPassError("");
+      setPassDownloadingBookingId(booking.id);
+
+      const qrDataUrl = await ensureBookingPassQr(booking);
+      const locationLabel = getBookingLocationLabel(booking);
+      const seatText = booking?.selectedSeats?.length ? booking.selectedSeats.join(", ") : "None";
+
+      const doc = new jsPDF({ unit: "pt", format: "a4" });
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.text("NNIC Smart Campus Booking Pass", 40, 56);
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      const details = [
+        `Booking ID: ${booking.id || "-"}`,
+        `Booking Type: ${booking?.isResource ? "Resource" : "Facility"}`,
+        `Student: ${booking?.requestedByName || "Student"}`,
+        `Location: ${locationLabel}`,
+        `Date: ${booking?.bookingDate || "-"}`,
+        `Time: ${booking?.startTime || "-"} - ${booking?.endTime || "-"}`,
+        `Purpose: ${booking?.purpose || "General"}`,
+        `Priority: ${booking?.priority || "NORMAL"}`,
+        `Selected Seats: ${seatText}`,
+        `Status: ${booking?.status || "-"}`,
+      ];
+
+      let top = 88;
+      details.forEach((line) => {
+        doc.text(line, 40, top);
+        top += 20;
+      });
+
+      doc.addImage(qrDataUrl, "PNG", 380, 90, 170, 170);
+      doc.setFontSize(10);
+      doc.text("Scan this QR to verify booking details.", 380, 280);
+
+      doc.save(`booking-pass-${booking.id || "ticket"}.pdf`);
+    } catch (err) {
+      setPassError(err?.message || "Could not download booking pass PDF.");
+    } finally {
+      setPassDownloadingBookingId("");
+    }
+  };
+
   return (
     <StudentPortalShell activeKey="facilities">
       <section className="student-modern-hero-card student-facilities-hero">
@@ -119,6 +237,7 @@ function StudentFacilities() {
       </section>
 
       {error ? <p className="error-text">{error}</p> : null}
+  {passError ? <p className="error-text">{passError}</p> : null}
 
       <section className="student-facilities-grid">
         <article className="student-modern-workspace-card student-facilities-wide-card">
@@ -264,6 +383,49 @@ function StudentFacilities() {
                         <p className="student-booking-history-seats">
                           Seats: {booking.selectedSeats.join(", ")}
                         </p>
+                      )}
+
+                      {isApprovedBooking(booking) && (
+                        <div className="student-booking-pass-actions">
+                          <button
+                            className="student-booking-pass-btn"
+                            type="button"
+                            disabled={passLoadingBookingId === booking.id}
+                            onClick={() => toggleBookingPassPanel(booking)}
+                          >
+                            {passLoadingBookingId === booking.id
+                              ? "Generating QR..."
+                              : expandedPassBookingId === booking.id
+                                ? "Hide QR Pass"
+                                : "Show QR Pass"}
+                          </button>
+
+                          <button
+                            className="student-booking-pass-btn student-booking-pass-btn-download"
+                            type="button"
+                            disabled={passDownloadingBookingId === booking.id || passLoadingBookingId === booking.id}
+                            onClick={() => downloadBookingPassPdf(booking)}
+                          >
+                            {passDownloadingBookingId === booking.id ? "Preparing PDF..." : "Download PDF"}
+                          </button>
+                        </div>
+                      )}
+
+                      {expandedPassBookingId === booking.id && bookingPassQrs[booking.id] && (
+                        <div className="student-booking-pass-panel">
+                          <img
+                            className="student-booking-pass-qr"
+                            src={bookingPassQrs[booking.id]}
+                            alt={`QR booking pass for ${booking.id}`}
+                          />
+                          <div className="student-booking-pass-details">
+                            <p><strong>Booking ID:</strong> {booking.id}</p>
+                            <p><strong>Type:</strong> {booking.isResource ? "Resource" : "Facility"}</p>
+                            <p><strong>Location:</strong> {getBookingLocationLabel(booking)}</p>
+                            <p><strong>Date:</strong> {booking.bookingDate}</p>
+                            <p><strong>Time:</strong> {booking.startTime} - {booking.endTime}</p>
+                          </div>
+                        </div>
                       )}
                     </li>
                   ))

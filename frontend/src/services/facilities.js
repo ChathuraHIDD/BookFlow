@@ -75,8 +75,17 @@ export async function fetchAdminFacilityBookings() {
   return data;
 }
 
-export async function updateAdminBookingStatus(bookingId, status) {
-  const { data } = await api.patch(`/admin/facilities/bookings/${bookingId}`, { status });
+export async function updateAdminBookingStatus(bookingId, status, reason) {
+  const payload = {
+    status,
+    ...(reason ? { reason } : {}),
+  };
+  const { data } = await api.patch(`/admin/facilities/bookings/${bookingId}`, payload);
+  return data;
+}
+
+export async function fetchAdminFacilityBookingAudit(bookingId) {
+  const { data } = await api.get(`/admin/facilities/bookings/${bookingId}/audit`);
   return data;
 }
 

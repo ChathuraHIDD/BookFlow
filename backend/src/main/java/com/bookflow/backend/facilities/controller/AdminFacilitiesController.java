@@ -2,6 +2,7 @@ package com.bookflow.backend.facilities.controller;
 
 import java.util.List;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bookflow.backend.auth.model.User;
+import com.bookflow.backend.bookings.audit.dto.BookingAuditEventResponse;
 import com.bookflow.backend.facilities.dto.BookingResponse;
 import com.bookflow.backend.facilities.dto.BuildingSummaryResponse;
 import com.bookflow.backend.facilities.dto.ClassroomResponse;
@@ -26,6 +29,7 @@ import com.bookflow.backend.facilities.dto.UpdateClassroomRequest;
 import com.bookflow.backend.facilities.service.FacilitiesService;
 
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/admin/facilities")
@@ -96,12 +100,33 @@ public class AdminFacilitiesController {
     @PatchMapping("/bookings/{bookingId}")
     public BookingResponse updateBookingStatus(
             @PathVariable String bookingId,
-            @Valid @RequestBody UpdateBookingStatusRequest request) {
-        return facilitiesService.updateBookingStatus(bookingId, request);
+            @Valid @RequestBody UpdateBookingStatusRequest request,
+            @AuthenticationPrincipal User actor,
+            HttpServletRequest httpRequest) {
+        return facilitiesService.updateBookingStatus(
+                bookingId,
+                request,
+                actor,
+                clientIp(httpRequest),
+                httpRequest.getHeader("User-Agent"),
+                httpRequest.getRequestedSessionId());
+    }
+
+    @GetMapping("/bookings/{bookingId}/audit")
+    public List<BookingAuditEventResponse> bookingAuditTimeline(@PathVariable String bookingId) {
+        return facilitiesService.bookingAuditTimeline(bookingId);
     }
 
     @GetMapping("/reports")
     public FacilityReportResponse reports() {
         return facilitiesService.reports();
+    }
+
+    private String clientIp(HttpServletRequest request) {
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (forwardedFor != null && !forwardedFor.isBlank()) {
+            return forwardedFor.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }

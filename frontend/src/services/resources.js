@@ -25,12 +25,21 @@ export async function fetchStudentResourceBookings() {
   return data;
 }
 
-export async function updateAdminResourceBookingStatus(bookingId, status) {
-  const { data } = await api.patch(`/admin/resources/bookings/${bookingId}/status`, { status });
+export async function updateAdminResourceBookingStatus(bookingId, status, reason) {
+  const payload = {
+    status,
+    ...(reason ? { reason } : {}),
+  };
+  const { data } = await api.patch(`/admin/resources/bookings/${bookingId}/status`, payload);
   return data;
 }
 
 export async function fetchAdminResourceBookings() {
   const { data } = await api.get("/admin/resources/bookings");
+  return data;
+}
+
+export async function fetchAdminResourceBookingAudit(bookingId) {
+  const { data } = await api.get(`/admin/resources/bookings/${bookingId}/audit`);
   return data;
 }

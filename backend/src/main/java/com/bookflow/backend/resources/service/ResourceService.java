@@ -1,12 +1,16 @@
 package com.bookflow.backend.resources.service;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import com.bookflow.backend.auth.model.User;
+import com.bookflow.backend.bookings.audit.dto.BookingAuditEventResponse;
+import com.bookflow.backend.bookings.audit.model.BookingAuditType;
+import com.bookflow.backend.bookings.audit.service.BookingAuditService;
 import com.bookflow.backend.resources.dto.CreateResourceBookingRequest;
 import com.bookflow.backend.resources.dto.ResourceBookingResponse;
 import com.bookflow.backend.resources.dto.ResourceResponse;
@@ -24,11 +28,17 @@ public class ResourceService {
     private final ResourceRepository resourceRepository;
     private final ResourceBookingRepository resourceBookingRepository;
     private final com.bookflow.backend.notifications.service.NotificationService notificationService;
+    private final BookingAuditService bookingAuditService;
 
-    public ResourceService(ResourceRepository resourceRepository, ResourceBookingRepository resourceBookingRepository, com.bookflow.backend.notifications.service.NotificationService notificationService) {
+    public ResourceService(
+            ResourceRepository resourceRepository,
+            ResourceBookingRepository resourceBookingRepository,
+            com.bookflow.backend.notifications.service.NotificationService notificationService,
+            BookingAuditService bookingAuditService) {
         this.resourceRepository = resourceRepository;
         this.resourceBookingRepository = resourceBookingRepository;
         this.notificationService = notificationService;
+        this.bookingAuditService = bookingAuditService;
     }
 
     public List<ResourceResponse> getAllResources() {
@@ -88,6 +98,17 @@ public class ResourceService {
         booking.setCreatedAt(Instant.now());
 
         ResourceBooking savedBooking = resourceBookingRepository.save(booking);
+        bookingAuditService.recordEvent(
+            savedBooking.getId(),
+            BookingAuditType.RESOURCE,
+            "CREATED",
+            null,
+            savedBooking.getStatus() != null ? savedBooking.getStatus().name() : "UNKNOWN",
+            user,
+            "Resource booking submitted",
+            "SYSTEM",
+            "SYSTEM",
+            "SYSTEM");
         notificationService.notifyResourceBookingSubmitted(savedBooking);
 
         return toBookingResponse(savedBooking);
@@ -101,13 +122,22 @@ public class ResourceService {
 
     public List<ResourceBookingResponse> getAllBookings() {
         return resourceBookingRepository.findAll().stream()
+                .sorted(Comparator.comparing(ResourceBooking::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
                 .map(this::toBookingResponse)
                 .collect(Collectors.toList());
     }
 
-    public ResourceBookingResponse updateBookingStatus(String bookingId, ResourceBookingStatus status) {
+    public ResourceBookingResponse updateBookingStatus(
+            String bookingId,
+            ResourceBookingStatus status,
+            String reason,
+            User actor,
+            String ipAddress,
+            String userAgent,
+            String sessionId) {
         ResourceBooking booking = resourceBookingRepository.findById(bookingId)
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
+        ResourceBookingStatus previousStatus = booking.getStatus();
 
         if (status == ResourceBookingStatus.APPROVED) {
             validateApprovalConflict(booking);
@@ -121,8 +151,24 @@ public class ResourceService {
         } else if (status == ResourceBookingStatus.REJECTED || status == ResourceBookingStatus.CANCELLED) {
             notificationService.notifyResourceBookingRejected(savedBooking);
         }
+
+        bookingAuditService.recordEvent(
+                savedBooking.getId(),
+                BookingAuditType.RESOURCE,
+                "STATUS_UPDATED",
+                previousStatus != null ? previousStatus.name() : null,
+                status.name(),
+                actor,
+                reason,
+                ipAddress,
+                userAgent,
+                sessionId);
         
         return toBookingResponse(savedBooking);
+    }
+
+    public List<BookingAuditEventResponse> bookingAuditTimeline(String bookingId) {
+        return bookingAuditService.getTimeline(bookingId, BookingAuditType.RESOURCE);
     }
 
     private ResourceResponse toResourceResponse(Resource resource) {

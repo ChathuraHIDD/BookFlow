@@ -145,7 +145,7 @@ public class AdminController {
                 user.setCampusYear(null);
                 user.setSemester(null);
             }
-            case LIBRARIAN, ADMIN -> {
+            case LIBRARIAN, TECHNICIAN, ADMIN -> {
                 user.setTelephone(null);
                 user.setCampusYear(null);
                 user.setSemester(null);
