@@ -18,6 +18,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.bookflow.backend.auth.model.User;
+import com.bookflow.backend.bookings.audit.dto.BookingAuditEventResponse;
+import com.bookflow.backend.bookings.audit.model.BookingAuditType;
+import com.bookflow.backend.bookings.audit.service.BookingAuditService;
 import com.bookflow.backend.facilities.dto.BookingResponse;
 import com.bookflow.backend.facilities.dto.BuildingSummaryResponse;
 import com.bookflow.backend.facilities.dto.ClassroomResponse;
@@ -47,16 +50,19 @@ public class FacilitiesService {
     private final ClassroomRepository classroomRepository;
     private final FacilityBookingRepository bookingRepository;
     private final NotificationService notificationService;
+    private final BookingAuditService bookingAuditService;
 
     public FacilitiesService(
             BuildingRepository buildingRepository,
             ClassroomRepository classroomRepository,
             FacilityBookingRepository bookingRepository,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            BookingAuditService bookingAuditService) {
         this.buildingRepository = buildingRepository;
         this.classroomRepository = classroomRepository;
         this.bookingRepository = bookingRepository;
         this.notificationService = notificationService;
+        this.bookingAuditService = bookingAuditService;
     }
 
     public StudentFacilitiesOverviewResponse studentOverview(User user) {
@@ -162,6 +168,18 @@ public class FacilitiesService {
         booking.setCreatedAt(Instant.now());
         FacilityBooking saved = bookingRepository.save(booking);
 
+        bookingAuditService.recordEvent(
+            saved.getId(),
+            BookingAuditType.FACILITY,
+            "CREATED",
+            null,
+            saved.getStatus() != null ? saved.getStatus().name() : "UNKNOWN",
+            user,
+            decisionNote,
+            "SYSTEM",
+            "SYSTEM",
+            "SYSTEM");
+
         if (autoApprove) {
             notificationService.notifyBookingApproved(saved);
         } else {
@@ -251,7 +269,13 @@ public class FacilitiesService {
                 .toList();
     }
 
-    public BookingResponse updateBookingStatus(String bookingId, UpdateBookingStatusRequest request) {
+    public BookingResponse updateBookingStatus(
+            String bookingId,
+            UpdateBookingStatusRequest request,
+            User actor,
+            String ipAddress,
+            String userAgent,
+            String sessionId) {
         FacilityBooking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
         BookingStatus previousStatus = booking.getStatus();
@@ -272,7 +296,23 @@ public class FacilitiesService {
             notificationService.notifyBookingCancelled(saved);
         }
 
+        bookingAuditService.recordEvent(
+                saved.getId(),
+                BookingAuditType.FACILITY,
+                "STATUS_UPDATED",
+                previousStatus != null ? previousStatus.name() : null,
+                nextStatus.name(),
+                actor,
+                request.getReason(),
+                ipAddress,
+                userAgent,
+                sessionId);
+
         return toBookingResponse(saved);
+    }
+
+    public List<BookingAuditEventResponse> bookingAuditTimeline(String bookingId) {
+        return bookingAuditService.getTimeline(bookingId, BookingAuditType.FACILITY);
     }
 
     public FacilityReportResponse reports() {
