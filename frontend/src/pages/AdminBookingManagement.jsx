@@ -1,17 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { NavLink } from "react-router-dom";
 
 import PortalLayout from "../components/PortalLayout";
-import { useAuth } from "../context/useAuth";
-import { fetchAdminFacilityBookings, updateAdminBookingStatus } from "../services/facilities";
-import { fetchAdminResourceBookings, updateAdminResourceBookingStatus } from "../services/resources";
+import {
+  fetchAdminFacilityBookingAudit,
+  fetchAdminFacilityBookings,
+  updateAdminBookingStatus,
+} from "../services/facilities";
+import {
+  fetchAdminResourceBookingAudit,
+  fetchAdminResourceBookings,
+  updateAdminResourceBookingStatus,
+} from "../services/resources";
 import { readApiError } from "../services/api";
 
-const ADMIN_ACTION_LOG_KEY = "admin_booking_action_log";
 const PAGE_SIZE = 3;
 
 function AdminBookingManagement() {
-  const { user } = useAuth();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -23,14 +28,9 @@ function AdminBookingManagement() {
   const [savingStatus, setSavingStatus] = useState("");
   const [savingBookingId, setSavingBookingId] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [actionLogByBooking, setActionLogByBooking] = useState(() => {
-    try {
-      const raw = sessionStorage.getItem(ADMIN_ACTION_LOG_KEY);
-      return raw ? JSON.parse(raw) : {};
-    } catch {
-      return {};
-    }
-  });
+  const [selectedBookingAudit, setSelectedBookingAudit] = useState([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditError, setAuditError] = useState("");
 
   const loadBookings = async () => {
     try {
@@ -50,18 +50,24 @@ function AdminBookingManagement() {
         floorNumber: ""
       }));
 
+      const getSortTime = (booking) => {
+        const createdAt = booking?.createdAt ? new Date(booking.createdAt).getTime() : Number.NaN;
+        if (!Number.isNaN(createdAt)) {
+          return createdAt;
+        }
+
+        const bookingDate = booking?.bookingDate ? new Date(booking.bookingDate).getTime() : Number.NaN;
+        if (!Number.isNaN(bookingDate)) {
+          return bookingDate;
+        }
+
+        return 0;
+      };
+
       const combined = [...(facilityData || []), ...normalizedResourceData];
-      
-      // Sort review-needed and urgent requests first, then by date descending
-      combined.sort((a, b) => {
-        if (Boolean(a.reviewRequired) && !Boolean(b.reviewRequired)) return -1;
-        if (!Boolean(a.reviewRequired) && Boolean(b.reviewRequired)) return 1;
-        if ((a.priority || "NORMAL") === "URGENT" && (b.priority || "NORMAL") !== "URGENT") return -1;
-        if ((a.priority || "NORMAL") !== "URGENT" && (b.priority || "NORMAL") === "URGENT") return 1;
-        if (a.status === "PENDING" && b.status !== "PENDING") return -1;
-        if (a.status !== "PENDING" && b.status === "PENDING") return 1;
-        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-      });
+
+      // Show the newest student requests first in the admin queue.
+      combined.sort((a, b) => getSortTime(b) - getSortTime(a));
 
       setBookings(combined);
       setSelectedBookingId((current) =>
@@ -77,10 +83,6 @@ function AdminBookingManagement() {
   useEffect(() => {
     loadBookings();
   }, []);
-
-  useEffect(() => {
-    sessionStorage.setItem(ADMIN_ACTION_LOG_KEY, JSON.stringify(actionLogByBooking));
-  }, [actionLogByBooking]);
 
   useEffect(() => {
     if (!selectedBookingId) {
@@ -104,10 +106,36 @@ function AdminBookingManagement() {
     [bookings, selectedBookingId]
   );
 
-  const selectedBookingActionLog = useMemo(
-    () => (selectedBooking ? actionLogByBooking[selectedBooking.id] || null : null),
-    [actionLogByBooking, selectedBooking]
-  );
+  const loadBookingAudit = useCallback(async (booking) => {
+    if (!booking?.id) {
+      setSelectedBookingAudit([]);
+      setAuditError("");
+      return;
+    }
+
+    try {
+      setAuditLoading(true);
+      setAuditError("");
+      const timeline = booking.isResource
+        ? await fetchAdminResourceBookingAudit(booking.id)
+        : await fetchAdminFacilityBookingAudit(booking.id);
+      setSelectedBookingAudit(Array.isArray(timeline) ? timeline : []);
+    } catch (err) {
+      setAuditError(readApiError(err));
+      setSelectedBookingAudit([]);
+    } finally {
+      setAuditLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selectedBooking) {
+      setSelectedBookingAudit([]);
+      setAuditError("");
+      return;
+    }
+    loadBookingAudit(selectedBooking);
+  }, [selectedBooking, loadBookingAudit]);
 
   const dateRangeOptions = [
     { key: "ALL", label: "All time" },
@@ -226,13 +254,6 @@ function AdminBookingManagement() {
     [bookingStatusSummary]
   );
 
-  const getAdminIdentity = () => {
-    const firstName = user?.firstName?.trim() || "";
-    const lastName = user?.lastName?.trim() || "";
-    const fullName = `${firstName} ${lastName}`.trim();
-    return fullName || user?.name || user?.email || "Current admin";
-  };
-
   const formatDateTime = (value) => {
     if (!value) return "Not set";
     const parsed = new Date(value);
@@ -244,6 +265,8 @@ function AdminBookingManagement() {
     setSelectedBookingId("");
     setDecisionNote("");
     setDecisionError("");
+    setSelectedBookingAudit([]);
+    setAuditError("");
   };
 
   const handleStatusUpdate = async (booking, status, options = {}) => {
@@ -259,25 +282,14 @@ function AdminBookingManagement() {
 
     try {
       if (booking.isResource) {
-        await updateAdminResourceBookingStatus(booking.id, status);
+        await updateAdminResourceBookingStatus(booking.id, status, normalizedReason);
       } else {
-        await updateAdminBookingStatus(booking.id, status);
+        await updateAdminBookingStatus(booking.id, status, normalizedReason);
       }
-
-      const auditEntry = {
-        status,
-        actor: getAdminIdentity(),
-        at: new Date().toISOString(),
-        note: normalizedReason || "No additional note",
-      };
-
-      setActionLogByBooking((current) => ({
-        ...current,
-        [booking.id]: auditEntry,
-      }));
 
       setDecisionNote("");
       await loadBookings();
+      await loadBookingAudit(booking);
     } catch (err) {
       setError(readApiError(err));
     } finally {
@@ -698,17 +710,29 @@ function AdminBookingManagement() {
                       </div>
 
                       <div className="admin-booking-detail-section">
-                        <h5>Latest Admin Action</h5>
-                        {selectedBookingActionLog ? (
+                        <h5>Audit Timeline</h5>
+                        {auditError ? <p className="error-text">{auditError}</p> : null}
+                        {auditLoading ? <p className="helper-text">Loading audit timeline...</p> : null}
+                        {!auditLoading && !auditError && selectedBookingAudit.length ? (
                           <div className="admin-booking-action-log">
-                            <p><strong>Status:</strong> {selectedBookingActionLog.status}</p>
-                            <p><strong>By:</strong> {selectedBookingActionLog.actor}</p>
-                            <p><strong>At:</strong> {formatDateTime(selectedBookingActionLog.at)}</p>
-                            <p><strong>Note:</strong> {selectedBookingActionLog.note}</p>
+                            {selectedBookingAudit.map((event) => (
+                              <p key={event.id}>
+                                <strong>{event.action}</strong>
+                                {": "}
+                                {event.previousStatus || "NONE"} -&gt; {event.newStatus || "NONE"}
+                                {" | By: "}
+                                {event.actorName || "System"}
+                                {" | At: "}
+                                {formatDateTime(event.timestamp)}
+                                {" | Reason: "}
+                                {event.reason || "No reason provided"}
+                              </p>
+                            ))}
                           </div>
-                        ) : (
-                          <p className="helper-text">No admin action recorded in this session yet.</p>
-                        )}
+                        ) : null}
+                        {!auditLoading && !auditError && !selectedBookingAudit.length ? (
+                          <p className="helper-text">No audit events available for this booking yet.</p>
+                        ) : null}
                       </div>
 
                       {renderActionButtons(selectedBooking)}
