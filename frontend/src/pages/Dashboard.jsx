@@ -1,6 +1,4 @@
-import { Link, Navigate } from "react-router-dom";
-import { useAuth } from "../context/useAuth";
-import { homePathByRole } from "../utils/role";
+import { Link } from "react-router-dom";
 import "./Dashboard.css";
 
 const storyCards = [
@@ -40,12 +38,6 @@ const progressItems = [
 ];
 
 function Dashboard() {
-  const { user, ready, isAuthenticated } = useAuth();
-
-  if (ready && isAuthenticated) {
-    return <Navigate to={homePathByRole(user.role)} replace />;
-  }
-
   return (
     <div className="dash-shot-page">
       <header className="dash-shot-header" aria-label="Main navigation">

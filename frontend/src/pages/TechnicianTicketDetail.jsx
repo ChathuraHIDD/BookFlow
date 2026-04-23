@@ -184,6 +184,8 @@ function TechnicianTicketDetail() {
   };
 
   const statusKey = (ticket?.status || "").toLowerCase().replace(/\s+/g, "-");
+  const commentCount = ticket?.comments?.length || 0;
+  const attachmentCount = ticket?.attachments?.length || 0;
 
   return (
     <PortalLayout
@@ -225,6 +227,29 @@ function TechnicianTicketDetail() {
                   </p>
                 </div>
                 <span className={`status-badge support-status-badge ${statusKey}`}>{ticket.status}</span>
+              </div>
+
+              <div className="support-ticket-signal-strip support-ticket-signal-strip-tech">
+                <article>
+                  <span className="support-signal-icon support-signal-icon-priority" aria-hidden="true" />
+                  <span>Priority</span>
+                  <strong>{ticket.priority}</strong>
+                </article>
+                <article>
+                  <span className="support-signal-icon support-signal-icon-comments" aria-hidden="true" />
+                  <span>Comments</span>
+                  <strong>{commentCount}</strong>
+                </article>
+                <article>
+                  <span className="support-signal-icon support-signal-icon-attachments" aria-hidden="true" />
+                  <span>Attachments</span>
+                  <strong>{attachmentCount}</strong>
+                </article>
+                <article>
+                  <span className="support-signal-icon support-signal-icon-stage" aria-hidden="true" />
+                  <span>Assigned to</span>
+                  <strong>{ticket.assignedTechnicianName || "Unassigned"}</strong>
+                </article>
               </div>
 
               <div className="support-ticket-detail-grid">
@@ -307,7 +332,7 @@ function TechnicianTicketDetail() {
                               </div>
                             </div>
                           ) : (
-                            <p>{comment.message}</p>
+                            <p className="support-comment-message">{comment.message}</p>
                           )}
                           {user?.id === comment.authorUserId ? (
                             <div className="support-comment-actions support-comment-actions-inline">
@@ -330,7 +355,16 @@ function TechnicianTicketDetail() {
                       ))}
                     </div>
                   </div>
-                ) : null}
+                ) : (
+                  <div className="support-ticket-detail-section">
+                    <span className="support-eyebrow">Timeline</span>
+                    <h4>Comments</h4>
+                    <article className="support-inline-empty-card">
+                      <strong>No updates posted yet</strong>
+                      <p className="helper-text">Add a technician update so the student can follow progress.</p>
+                    </article>
+                  </div>
+                )}
               </section>
 
               <aside className="support-ticket-sidebar">
@@ -364,13 +398,13 @@ function TechnicianTicketDetail() {
 
                 <div className="support-ticket-panel support-ticket-detail-section">
                   <span className="support-eyebrow">Action Panel</span>
-                  <h4>Update Ticket</h4>
+                  <h4>Edit Status</h4>
                   <button
                     type="button"
                     className="solid-btn"
                     onClick={() => setUpdatePanelOpen((current) => !current)}
                   >
-                    {updatePanelOpen ? "Close Update Ticket" : "Update Ticket"}
+                    {updatePanelOpen ? "Close Status Panel" : "Edit Status"}
                   </button>
                   {updatePanelOpen ? (
                     <div className="admin-ticket-actions support-comment-form support-action-panel">
@@ -385,7 +419,7 @@ function TechnicianTicketDetail() {
                         rows="4"
                       />
                       <button className="solid-btn" type="button" disabled={busy} onClick={handleSave}>
-                        {busy ? "Saving..." : "Save Update"}
+                        {busy ? "Saving..." : "Save Status"}
                       </button>
                     </div>
                   ) : null}
@@ -393,13 +427,13 @@ function TechnicianTicketDetail() {
 
                 <div className="support-ticket-panel support-ticket-detail-section">
                   <span className="support-eyebrow">Technician Note</span>
-                  <h4>Add Technician Update</h4>
+                  <h4>Post Update</h4>
                   <button
                     type="button"
                     className="solid-btn"
                     onClick={() => setCommentPanelOpen((current) => !current)}
                   >
-                    {commentPanelOpen ? "Close Technician Update" : "Add Technician Update"}
+                    {commentPanelOpen ? "Close Update Panel" : "Add Update"}
                   </button>
                   {commentPanelOpen ? (
                     <div className="admin-ticket-actions support-comment-form support-action-panel">
@@ -414,6 +448,25 @@ function TechnicianTicketDetail() {
                       </button>
                     </div>
                   ) : null}
+                </div>
+
+                <div className="support-ticket-panel support-ticket-detail-section">
+                  <span className="support-eyebrow">Operational View</span>
+                  <h4>Queue Snapshot</h4>
+                  <div className="support-health-list">
+                    <div>
+                      <span>Created</span>
+                      <strong>{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : "-"}</strong>
+                    </div>
+                    <div>
+                      <span>Latest update</span>
+                      <strong>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : "-"}</strong>
+                    </div>
+                    <div>
+                      <span>Status class</span>
+                      <strong>{ticket.status || "Open"}</strong>
+                    </div>
+                  </div>
                 </div>
               </aside>
             </div>

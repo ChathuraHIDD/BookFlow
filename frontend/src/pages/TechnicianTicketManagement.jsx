@@ -10,6 +10,8 @@ function TechnicianTicketManagement() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [searchText, setSearchText] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -52,6 +54,34 @@ function TechnicianTicketManagement() {
     });
     return summary;
   }, [tickets]);
+
+  const visibleTickets = useMemo(() => {
+    const q = searchText.trim().toLowerCase();
+
+    return tickets.filter((ticket) => {
+      if (statusFilter !== "ALL" && ticket.status !== statusFilter) {
+        return false;
+      }
+
+      if (!q) {
+        return true;
+      }
+
+      const searchable = [
+        ticket.ticketNumber,
+        ticket.userName,
+        ticket.userEmail,
+        ticket.title,
+        ticket.category,
+        ticket.status,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchable.includes(q);
+    });
+  }, [tickets, statusFilter, searchText]);
 
   return (
     <PortalLayout
@@ -110,6 +140,37 @@ function TechnicianTicketManagement() {
 
         {loading ? <p className="helper-text">Loading assigned tickets...</p> : null}
 
+        <section className="support-filter-bar support-filter-bar-slim">
+          <label className="support-filter-field" htmlFor="technician-ticket-search">
+            Search queue
+            <input
+              id="technician-ticket-search"
+              type="text"
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              placeholder="Search by student, ticket, category, or status"
+            />
+          </label>
+
+          <label className="support-filter-field" htmlFor="technician-status-filter">
+            Status
+            <select
+              id="technician-status-filter"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              <option value="ALL">All statuses</option>
+              <option value="Open">Open</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+            </select>
+          </label>
+
+          <span className="support-count-pill support-count-pill-inline">
+            {loading ? "--" : visibleTickets.length} visible of {loading ? "--" : counts.total}
+          </span>
+        </section>
+
         <div className="table-wrap support-ticket-table-wrap">
           <table className="support-ticket-table support-tech-ticket-table">
             <thead>
@@ -123,7 +184,7 @@ function TechnicianTicketManagement() {
               </tr>
             </thead>
             <tbody>
-              {tickets.map((ticket) => {
+              {visibleTickets.map((ticket) => {
                 const statusKey = (ticket.status || "").toLowerCase().replace(/\s+/g, "-");
 
                 return (
@@ -147,7 +208,7 @@ function TechnicianTicketManagement() {
                     <td>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : "-"}</td>
                     <td>
                       <Link className="ghost-btn support-table-action" to={`/technician/tickets/${ticket.id}`}>
-                        View / Update
+                        Open Ticket
                       </Link>
                     </td>
                   </tr>
@@ -156,6 +217,14 @@ function TechnicianTicketManagement() {
             </tbody>
           </table>
         </div>
+
+        {!loading && tickets.length > 0 && !visibleTickets.length ? (
+          <article className="support-empty-state">
+            <div className="support-empty-icon" aria-hidden="true">0</div>
+            <h4>No assigned tickets match this filter</h4>
+            <p className="helper-text">Try changing the status filter or clearing the search text.</p>
+          </article>
+        ) : null}
 
         {!loading && !tickets.length ? (
           <article className="support-empty-state">

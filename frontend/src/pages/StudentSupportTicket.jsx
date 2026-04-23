@@ -55,6 +55,8 @@ function StudentSupportTicket() {
   }, [id]);
 
   const statusKey = (ticket?.status || "").toLowerCase().replace(/\s+/g, "-");
+  const commentCount = ticket?.comments?.length || 0;
+  const attachmentCount = ticket?.attachments?.length || 0;
 
   const refreshTicket = async () => {
     const data = await fetchMySupportTicket(id);
@@ -157,7 +159,7 @@ function StudentSupportTicket() {
       <div className="support-module-stack">
         <div className="support-breadcrumb-row">
           <Link className="ghost-btn" to="/student/support">
-            Back to Support
+            Back to Tickets
           </Link>
         </div>
 
@@ -176,6 +178,29 @@ function StudentSupportTicket() {
                   </p>
                 </div>
                 <span className={`status-badge support-status-badge ${statusKey}`}>{ticket.status}</span>
+              </div>
+
+              <div className="support-ticket-signal-strip">
+                <article>
+                  <span className="support-signal-icon support-signal-icon-priority" aria-hidden="true" />
+                  <span>Priority</span>
+                  <strong>{ticket.priority}</strong>
+                </article>
+                <article>
+                  <span className="support-signal-icon support-signal-icon-comments" aria-hidden="true" />
+                  <span>Comments</span>
+                  <strong>{commentCount}</strong>
+                </article>
+                <article>
+                  <span className="support-signal-icon support-signal-icon-attachments" aria-hidden="true" />
+                  <span>Attachments</span>
+                  <strong>{attachmentCount}</strong>
+                </article>
+                <article>
+                  <span className="support-signal-icon support-signal-icon-stage" aria-hidden="true" />
+                  <span>Current Stage</span>
+                  <strong>{ticket.status || "Open"}</strong>
+                </article>
               </div>
 
               <div className="support-ticket-detail-grid">
@@ -225,7 +250,7 @@ function StudentSupportTicket() {
                       placeholder="Add a follow-up comment"
                     />
                     <button className="solid-btn" type="submit" disabled={commentBusy || !commentMessage.trim()}>
-                      {commentBusy ? "Posting..." : "Post Comment"}
+                      {commentBusy ? "Posting..." : "Post Update"}
                     </button>
                   </form>
                 </div>
@@ -266,7 +291,7 @@ function StudentSupportTicket() {
                               </div>
                             </div>
                           ) : (
-                            <p>{comment.message}</p>
+                            <p className="support-comment-message">{comment.message}</p>
                           )}
                           {user?.id === comment.authorUserId ? (
                             <div className="support-comment-actions support-comment-actions-inline">
@@ -289,7 +314,16 @@ function StudentSupportTicket() {
                       ))}
                     </div>
                   </div>
-                ) : null}
+                ) : (
+                  <div className="support-ticket-detail-section">
+                    <span className="support-eyebrow">Updates</span>
+                    <h4>Comments</h4>
+                    <article className="support-inline-empty-card">
+                      <strong>No conversation yet</strong>
+                      <p className="helper-text">Post a comment above to add context or follow up with the technician.</p>
+                    </article>
+                  </div>
+                )}
               </section>
 
               <aside className="support-ticket-sidebar">
@@ -328,6 +362,25 @@ function StudentSupportTicket() {
                     <p>{ticket.adminNote}</p>
                   </div>
                 ) : null}
+
+                <div className="support-ticket-panel support-ticket-detail-section">
+                  <span className="support-eyebrow">Ticket Health</span>
+                  <h4>Progress Snapshot</h4>
+                  <div className="support-health-list">
+                    <div>
+                      <span>Created</span>
+                      <strong>{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : "-"}</strong>
+                    </div>
+                    <div>
+                      <span>Last activity</span>
+                      <strong>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : "-"}</strong>
+                    </div>
+                    <div>
+                      <span>Resolution</span>
+                      <strong>{ticket.resolvedAt ? "Completed" : "In progress"}</strong>
+                    </div>
+                  </div>
+                </div>
               </aside>
             </div>
           </article>

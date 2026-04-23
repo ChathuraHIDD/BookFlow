@@ -11,6 +11,8 @@ function StudentSupport() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [searchText, setSearchText] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -64,6 +66,33 @@ function StudentSupport() {
 
     return summary;
   }, [tickets]);
+
+  const visibleTickets = useMemo(() => {
+    const q = searchText.trim().toLowerCase();
+
+    return tickets.filter((ticket) => {
+      if (statusFilter !== "ALL" && ticket.status !== statusFilter) {
+        return false;
+      }
+
+      if (!q) {
+        return true;
+      }
+
+      const searchable = [
+        ticket.ticketNumber,
+        ticket.title,
+        ticket.category,
+        ticket.status,
+        ticket.locationResource,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchable.includes(q);
+    });
+  }, [tickets, statusFilter, searchText]);
 
   return (
     <PortalLayout
@@ -129,8 +158,35 @@ function StudentSupport() {
               <h3>My Support Requests</h3>
             </div>
             <span className="support-count-pill">
-              {loading ? "--" : counts.total} active records
+              {loading ? "--" : visibleTickets.length} visible of {loading ? "--" : counts.total}
             </span>
+          </div>
+
+          <div className="support-filter-bar">
+            <label className="support-filter-field" htmlFor="support-search">
+              Search tickets
+              <input
+                id="support-search"
+                type="text"
+                value={searchText}
+                onChange={(event) => setSearchText(event.target.value)}
+                placeholder="Search by title, category, status, or ticket id"
+              />
+            </label>
+
+            <label className="support-filter-field" htmlFor="support-status-filter">
+              Status
+              <select
+                id="support-status-filter"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
+                <option value="ALL">All statuses</option>
+                <option value="Open">Open</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Resolved">Resolved</option>
+              </select>
+            </label>
           </div>
 
           {loading ? <p className="helper-text">Loading support tickets...</p> : null}
@@ -140,12 +196,20 @@ function StudentSupport() {
               <h4>No support tickets yet</h4>
               <p className="helper-text">Raise your first ticket to start tracking updates here.</p>
               <Link className="solid-btn" to="/student/support/raise">
-                Create First Ticket
+                Raise Ticket
               </Link>
             </div>
           ) : null}
 
-          {tickets.length ? (
+          {!loading && tickets.length > 0 && !visibleTickets.length ? (
+            <div className="support-empty-state">
+              <div className="support-empty-icon" aria-hidden="true">0</div>
+              <h4>No tickets match this filter</h4>
+              <p className="helper-text">Try changing the status filter or clearing the search.</p>
+            </div>
+          ) : null}
+
+          {visibleTickets.length ? (
             <div className="table-wrap support-ticket-table-wrap">
               <table className="support-ticket-table">
                 <thead>
@@ -159,7 +223,7 @@ function StudentSupport() {
                   </tr>
                 </thead>
                 <tbody>
-                  {tickets.map((ticket) => {
+                  {visibleTickets.map((ticket) => {
                     const statusKey = (ticket.status || "").toLowerCase().replace(/\s+/g, "-");
 
                     return (
@@ -184,7 +248,7 @@ function StudentSupport() {
                             type="button"
                             onClick={() => navigate(`/student/support/${ticket.id}`)}
                           >
-                            View details
+                            Open Ticket
                           </button>
                         </td>
                       </tr>

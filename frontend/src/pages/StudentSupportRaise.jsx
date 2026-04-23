@@ -105,7 +105,7 @@ function StudentSupportRaise() {
       <div className="support-module-stack">
         <div className="support-breadcrumb-row">
           <Link className="ghost-btn" to="/student/support">
-            Back to Support
+            Back to Tickets
           </Link>
         </div>
 
@@ -266,7 +266,7 @@ function StudentSupportRaise() {
                 Cancel
               </button>
               <button className="solid-btn" type="submit" disabled={busy}>
-                {busy ? "Saving..." : "Create Ticket"}
+                {busy ? "Submitting..." : "Submit Ticket"}
               </button>
             </div>
           </form>
