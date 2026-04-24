@@ -296,14 +296,14 @@ public class SupportTicketService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Closed tickets cannot be reassigned");
         }
 
-        User technician = getTechnician(request.technicianId());
-        ticket.setAssignedTechnicianId(technician.getId());
-        ticket.setAssignedTechnicianName(resolveDisplayName(technician));
+        User assignee = getAssignableAgent(request.technicianId());
+        ticket.setAssignedTechnicianId(assignee.getId());
+        ticket.setAssignedTechnicianName(resolveDisplayName(assignee));
         ticket.setUpdatedAt(Instant.now());
 
         SupportTicket saved = supportTicketRepository.save(ticket);
         notificationService.notifyUser(
-                technician.getId(),
+                assignee.getId(),
                 "Support Ticket Assigned",
                 String.format("Ticket %s has been assigned to you.", saved.getTicketNumber()),
                 "TICKET_MANAGEMENT",
@@ -449,14 +449,15 @@ public class SupportTicketService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Support ticket not found"));
     }
 
-    private User getTechnician(String technicianId) {
-        String resolvedTechnicianId = requireText(technicianId, "Technician ID");
-        User technician = userRepository.findById(resolvedTechnicianId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Technician not found"));
-        if (technician.getRole() != UserRole.TECHNICIAN) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Selected user is not a technician");
+    private User getAssignableAgent(String assigneeId) {
+        String resolvedAssigneeId = requireText(assigneeId, "Assignee ID");
+        User assignee = userRepository.findById(resolvedAssigneeId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignee not found"));
+        if (assignee.getRole() != UserRole.TECHNICIAN && assignee.getRole() != UserRole.STAFF_MEMBER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Selected user must be a technician or staff member");
         }
-        return technician;
+        return assignee;
     }
 
     private void ensureTechnicianTransition(SupportTicketStatus currentStatus, SupportTicketStatus nextStatus) {

@@ -117,13 +117,13 @@ public class SupportTicketController {
     }
 
     @GetMapping("/technician/me")
-    @PreAuthorize("hasRole('TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('TECHNICIAN','STAFF_MEMBER')")
     public List<SupportTicketResponse> technicianTickets(@AuthenticationPrincipal User technician) {
         return supportTicketService.technicianTickets(technician);
     }
 
     @GetMapping("/technician/me/{ticketId}")
-    @PreAuthorize("hasRole('TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('TECHNICIAN','STAFF_MEMBER')")
     public SupportTicketResponse technicianTicket(
             @AuthenticationPrincipal User technician,
             @PathVariable String ticketId) {
@@ -131,7 +131,7 @@ public class SupportTicketController {
     }
 
     @PatchMapping("/technician/me/{ticketId}")
-    @PreAuthorize("hasRole('TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('TECHNICIAN','STAFF_MEMBER')")
     public SupportTicketResponse technicianUpdateTicket(
             @AuthenticationPrincipal User technician,
             @PathVariable String ticketId,

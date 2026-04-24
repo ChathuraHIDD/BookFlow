@@ -211,7 +211,7 @@ function AdminTicketManagement() {
           <div className="support-overview-meta">
             <div className="support-overview-chip">
               <strong>{loading ? "--" : technicians.length}</strong>
-              <span>technicians available</span>
+              <span>assignable staff available</span>
             </div>
             <div className="support-overview-chip">
               <strong>{loading ? "--" : counts.open + counts.inProgress}</strong>
@@ -229,17 +229,17 @@ function AdminTicketManagement() {
           <article className="metric-card support-metric-card support-metric-open">
             <h3>Open</h3>
             <p className="metric-number">{loading ? "--" : counts.open}</p>
-            <p className="helper-text">Awaiting technician action</p>
+            <p className="helper-text">Awaiting assignee action</p>
           </article>
           <article className="metric-card support-metric-card support-metric-progress">
             <h3>In Progress</h3>
             <p className="metric-number">{loading ? "--" : counts.inProgress}</p>
-            <p className="helper-text">Being handled by technician</p>
+            <p className="helper-text">Being handled by assignee</p>
           </article>
           <article className="metric-card support-metric-card support-metric-resolved">
             <h3>Resolved</h3>
             <p className="metric-number">{loading ? "--" : counts.resolved}</p>
-            <p className="helper-text">Resolved by technician</p>
+            <p className="helper-text">Resolved by assignee</p>
           </article>
           <article className="metric-card support-metric-card support-metric-closed">
             <h3>Closed</h3>
@@ -270,7 +270,6 @@ function AdminTicketManagement() {
             </thead>
             <tbody>
               {tickets.map((ticket) => {
-                const draft = drafts[ticket.id] || {};
                 const statusKey = (ticket.status || "").toLowerCase().replace(/\s+/g, "-");
                 const updated = formatUpdatedDateTime(ticket.updatedAt);
 
@@ -360,7 +359,7 @@ function AdminTicketManagement() {
                   <div className="support-admin-action-card support-admin-action-card-modal">
                     <SupportDropdown
                       id="admin-ticket-technician"
-                      label="Assign Technician"
+                      label="Assign Technician / Staff"
                       value={selectedDraft.assignedTechnicianId || selectedTicket.assignedTechnicianId || ""}
                       onChange={(value) => handleChange(selectedTicket.id, "assignedTechnicianId", value)}
                       options={[

@@ -70,8 +70,14 @@ export async function fetchAllSupportTickets() {
 }
 
 export async function fetchTechnicians() {
-  const { data } = await api.get("/admin/users", { params: { role: "technician" } });
-  return data;
+  const [techniciansResponse, staffResponse] = await Promise.all([
+    api.get("/admin/users", { params: { role: "technician" } }),
+    api.get("/admin/users", { params: { role: "staff_member" } }),
+  ]);
+
+  const technicians = techniciansResponse.data || [];
+  const staffMembers = staffResponse.data || [];
+  return [...technicians, ...staffMembers];
 }
 
 export async function assignSupportTechnician(ticketId, payload) {
