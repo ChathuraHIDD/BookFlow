@@ -10,6 +10,7 @@ import {
   deleteSupportTicketComment,
   downloadSupportAttachment,
   fetchMySupportTicket,
+  submitSupportTicketFeedback,
   updateSupportTicketComment,
 } from "../services/support";
 import "./SupportModule.css";
@@ -25,6 +26,11 @@ function StudentSupportTicket() {
   const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState("");
   const [editingCommentMessage, setEditingCommentMessage] = useState("");
+  const [feedbackRating, setFeedbackRating] = useState(0);
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [feedbackBusy, setFeedbackBusy] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -36,6 +42,8 @@ function StudentSupportTicket() {
         const data = await fetchMySupportTicket(id);
         if (active) {
           setTicket(data);
+          setFeedbackRating(data?.feedbackRating || 0);
+          setFeedbackComment(data?.feedbackComment || "");
         }
       } catch (err) {
         if (active) {
@@ -68,6 +76,19 @@ function StudentSupportTicket() {
       document.body.style.overflow = previousOverflow;
     };
   }, [commentModalOpen]);
+
+  useEffect(() => {
+    if (!feedbackModalOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [feedbackModalOpen]);
 
   const statusKey = (ticket?.status || "").toLowerCase().replace(/\s+/g, "-");
   const commentCount = ticket?.comments?.length || 0;
@@ -184,6 +205,53 @@ function StudentSupportTicket() {
     }
   };
 
+  const onSubmitFeedback = async () => {
+    if (!feedbackRating) {
+      setError("Please choose a rating before submitting feedback.");
+      return;
+    }
+
+    if (!feedbackComment.trim()) {
+      setError("Feedback comment is required.");
+      return;
+    }
+
+    try {
+      setFeedbackBusy(true);
+      setError("");
+      setFeedbackMessage("");
+      const updated = await submitSupportTicketFeedback(ticket.id, {
+        rating: feedbackRating,
+        comment: feedbackComment,
+      });
+      setTicket(updated);
+      setFeedbackRating(updated?.feedbackRating || 0);
+      setFeedbackComment(updated?.feedbackComment || "");
+      setFeedbackModalOpen(false);
+      setFeedbackMessage("Thank you. Your feedback has been submitted.");
+    } catch (err) {
+      setError(readApiError(err));
+    } finally {
+      setFeedbackBusy(false);
+    }
+  };
+
+  const renderStars = (value) =>
+    Array.from({ length: 5 }, (_, index) => {
+      const starValue = index + 1;
+      return (
+        <button
+          key={starValue}
+          type="button"
+          className={`support-feedback-star ${starValue <= value ? "is-selected" : ""}`}
+          onClick={() => setFeedbackRating(starValue)}
+          aria-label={`${starValue} star${starValue > 1 ? "s" : ""}`}
+        >
+          ★
+        </button>
+      );
+    });
+
   return (
     <PortalLayout
       title="Support Ticket Details"
@@ -201,6 +269,7 @@ function StudentSupportTicket() {
 
         {loading ? <p className="helper-text">Loading ticket details...</p> : null}
         {error ? <p className="support-inline-alert error-text">{error}</p> : null}
+        {feedbackMessage ? <p className="support-inline-alert support-inline-note helper-text">{feedbackMessage}</p> : null}
 
         {!loading && ticket ? (
           <article className="support-ticket-detail-shell">
@@ -365,6 +434,46 @@ function StudentSupportTicket() {
                     <p>{ticket.adminNote}</p>
                   </section>
                 ) : null}
+
+                {ticket.status === "Resolved" && !ticket.feedbackAt ? (
+                  <section className="support-ticket-panel support-ticket-detail-section support-feedback-card">
+                    <span className="support-eyebrow">Feedback</span>
+                    <h4>Rate your technician</h4>
+                    <p className="helper-text">Your feedback helps us measure service quality. This is required before you submit.</p>
+                    <button
+                      className="solid-btn"
+                      type="button"
+                      onClick={() => {
+                        setError("");
+                        setFeedbackRating(0);
+                        setFeedbackComment("");
+                        setFeedbackModalOpen(true);
+                      }}
+                    >
+                      Add Feedback
+                    </button>
+                  </section>
+                ) : null}
+
+                {ticket.feedbackAt ? (
+                  <section className="support-ticket-panel support-ticket-detail-section support-feedback-card">
+                    <span className="support-eyebrow">Feedback Submitted</span>
+                    <h4>Your rating</h4>
+                    <div className="support-feedback-summary">
+                      <div className="support-feedback-stars" aria-label={`${ticket.feedbackRating || 0} out of 5 stars`}>
+                        {Array.from({ length: 5 }, (_, index) => (
+                          <span key={index} className={index < (ticket.feedbackRating || 0) ? "is-selected" : ""}>
+                            ★
+                          </span>
+                        ))}
+                      </div>
+                      <p>{ticket.feedbackComment || "-"}</p>
+                      <p className="helper-text">
+                        Submitted {ticket.feedbackAt ? new Date(ticket.feedbackAt).toLocaleString() : ""}
+                      </p>
+                    </div>
+                  </section>
+                ) : null}
               </div>
 
               <aside className="support-ticket-sidebar">
@@ -481,6 +590,67 @@ function StudentSupportTicket() {
                       onClick={onAddComment}
                     >
                       {commentBusy ? "Posting..." : "Save Comment"}
+                    </button>
+                  </div>
+                </div>
+              </div>,
+              document.body,
+            )
+          : null}
+
+        {feedbackModalOpen
+          ? createPortal(
+              <div
+                className="support-modal-backdrop"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="student-feedback-modal-title"
+                onClick={() => {
+                  if (!feedbackBusy) {
+                    setFeedbackModalOpen(false);
+                  }
+                }}
+              >
+                <div className="support-modal-card support-feedback-modal" onClick={(event) => event.stopPropagation()}>
+                  <button
+                    className="support-modal-close"
+                    type="button"
+                    aria-label="Close feedback dialog"
+                    onClick={() => setFeedbackModalOpen(false)}
+                    disabled={feedbackBusy}
+                  >
+                    ×
+                  </button>
+                  <h4 id="student-feedback-modal-title">Add Feedback</h4>
+                  <p className="helper-text">Please rate your technician and leave a comment about the service.</p>
+
+                  <div className="support-feedback-modal-stars" aria-label="Star rating selector">
+                    {renderStars(feedbackRating)}
+                  </div>
+
+                  <textarea
+                    value={feedbackComment}
+                    onChange={(event) => setFeedbackComment(event.target.value)}
+                    rows="5"
+                    placeholder="Write your feedback comment"
+                  />
+
+                  <div className="support-modal-actions">
+                    <button
+                      className="ghost-btn"
+                      type="button"
+                      disabled={feedbackBusy}
+                      onClick={() => setFeedbackModalOpen(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="solid-btn"
+                      type="button"
+                      disabled={feedbackBusy || !feedbackRating || !feedbackComment.trim()}
+                      onClick={onSubmitFeedback}
+                    >
+                      {feedbackBusy ? "Submitting..." : "Submit Feedback"}
                     </button>
                   </div>
                 </div>

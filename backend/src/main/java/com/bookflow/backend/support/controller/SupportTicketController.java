@@ -23,6 +23,7 @@ import com.bookflow.backend.support.dto.AddSupportTicketCommentRequest;
 import com.bookflow.backend.support.dto.AssignSupportTechnicianRequest;
 import com.bookflow.backend.support.dto.CreateSupportTicketRequest;
 import com.bookflow.backend.support.dto.SupportTicketResponse;
+import com.bookflow.backend.support.dto.SubmitSupportTicketFeedbackRequest;
 import com.bookflow.backend.support.dto.TechnicianUpdateSupportTicketRequest;
 import com.bookflow.backend.support.dto.UpdateSupportTicketStatusRequest;
 import com.bookflow.backend.support.service.SupportTicketService;
@@ -68,6 +69,15 @@ public class SupportTicketController {
             @AuthenticationPrincipal User user,
             @PathVariable String ticketId) {
         return supportTicketService.myTicket(user, ticketId);
+    }
+
+    @PostMapping("/me/{ticketId}/feedback")
+    @PreAuthorize("hasRole('STUDENT')")
+    public SupportTicketResponse submitFeedback(
+            @AuthenticationPrincipal User user,
+            @PathVariable String ticketId,
+            @RequestBody SubmitSupportTicketFeedbackRequest request) {
+        return supportTicketService.submitFeedback(user, ticketId, request);
     }
 
     @PostMapping("/me/{ticketId}/comments")

@@ -10,6 +10,11 @@ export async function fetchMySupportTicket(ticketId) {
   return data;
 }
 
+export async function submitSupportTicketFeedback(ticketId, payload) {
+  const { data } = await api.post(`/support/me/${ticketId}/feedback`, payload);
+  return data;
+}
+
 export async function createSupportTicket(payload, attachments = []) {
   if (attachments?.length) {
     const formData = new FormData();

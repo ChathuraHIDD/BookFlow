@@ -35,6 +35,7 @@ import com.bookflow.backend.support.dto.CreateSupportTicketRequest;
 import com.bookflow.backend.support.dto.SupportTicketAttachmentResponse;
 import com.bookflow.backend.support.dto.SupportTicketCommentResponse;
 import com.bookflow.backend.support.dto.SupportTicketResponse;
+import com.bookflow.backend.support.dto.SubmitSupportTicketFeedbackRequest;
 import com.bookflow.backend.support.dto.TechnicianUpdateSupportTicketRequest;
 import com.bookflow.backend.support.dto.UpdateSupportTicketStatusRequest;
 import com.bookflow.backend.support.model.SupportTicket;
@@ -97,6 +98,10 @@ public class SupportTicketService {
         ticket.setUpdatedAt(ticket.getCreatedAt());
         ticket.setFirstResponseAt(null);
         ticket.setResolvedAt(null);
+        ticket.setFeedbackRating(null);
+        ticket.setFeedbackComment(null);
+        ticket.setFeedbackByUserId(null);
+        ticket.setFeedbackAt(null);
 
         SupportTicket saved = supportTicketRepository.save(ticket);
 
@@ -128,6 +133,50 @@ public class SupportTicketService {
 
     public SupportTicketResponse myTicket(User user, String ticketId) {
         return toResponse(getOwnedTicket(user, ticketId));
+    }
+
+    public SupportTicketResponse submitFeedback(User user, String ticketId, SubmitSupportTicketFeedbackRequest request) {
+        SupportTicket ticket = getOwnedTicket(user, ticketId);
+        if (ticket.getStatus() != SupportTicketStatus.RESOLVED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Feedback can only be submitted for resolved tickets");
+        }
+        if (ticket.getFeedbackAt() != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Feedback has already been submitted for this ticket");
+        }
+
+        Integer rating = request != null ? request.rating() : null;
+        String comment = request != null ? request.comment() : null;
+        if (rating == null || rating < 1 || rating > 5) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rating must be between 1 and 5");
+        }
+
+        String normalizedComment = requireText(comment, "Feedback comment");
+
+        ticket.setFeedbackRating(rating);
+        ticket.setFeedbackComment(normalizedComment);
+        ticket.setFeedbackByUserId(user.getId());
+        ticket.setFeedbackAt(Instant.now());
+        ticket.setUpdatedAt(ticket.getFeedbackAt());
+
+        SupportTicket saved = supportTicketRepository.save(ticket);
+
+        if (StringUtils.hasText(saved.getAssignedTechnicianId())) {
+            String commentPreview = normalizedComment.length() > 140
+                    ? normalizedComment.substring(0, 140) + "..."
+                    : normalizedComment;
+            notificationService.notifyUser(
+                    saved.getAssignedTechnicianId(),
+                    "New Ticket Feedback",
+                    String.format("%s rated ticket %s %d/5: %s",
+                            saved.getUserName(),
+                            saved.getTicketNumber(),
+                            rating,
+                            commentPreview),
+                    "TICKET_MANAGEMENT",
+                    "/technician/tickets/" + saved.getId());
+        }
+
+        return toResponse(saved);
     }
 
     public SupportTicketResponse addComment(User user, String ticketId, AddSupportTicketCommentRequest request) {
@@ -671,6 +720,10 @@ public class SupportTicketService {
                 firstResponseAt != null ? firstResponseAt.toString() : "",
                 ticket.getResolvedAt() != null ? ticket.getResolvedAt().toString() : "",
                 ticket.getFinalizedAt() != null ? ticket.getFinalizedAt().toString() : "",
+                ticket.getFeedbackRating(),
+                ticket.getFeedbackComment(),
+                ticket.getFeedbackByUserId(),
+                ticket.getFeedbackAt() != null ? ticket.getFeedbackAt().toString() : "",
                 durationSeconds(createdAt, firstResponseAt),
                 durationSeconds(createdAt, resolutionEndAt),
                 commentResponses,

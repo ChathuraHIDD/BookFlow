@@ -1535,6 +1535,59 @@
   flex-wrap: wrap;
 }
 
+.support-feedback-modal {
+  width: min(560px, 100%);
+  gap: 14px;
+}
+
+.support-feedback-modal-stars {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.support-feedback-star {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #c8d3e8;
+  font-size: 2rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 140ms ease, color 140ms ease;
+}
+
+.support-feedback-star:hover,
+.support-feedback-star.is-selected {
+  color: #f1b400;
+}
+
+.support-feedback-star:hover {
+  transform: translateY(-1px) scale(1.04);
+}
+
+.support-feedback-card {
+  display: grid;
+  gap: 10px;
+}
+
+.support-feedback-summary {
+  display: grid;
+  gap: 8px;
+}
+
+.support-feedback-stars {
+  display: flex;
+  gap: 4px;
+  color: #d5deeb;
+  font-size: 1.2rem;
+}
+
+.support-feedback-stars .is-selected {
+  color: #f1b400;
+}
+
 .support-health-list {
   display: grid;
   gap: 10px;

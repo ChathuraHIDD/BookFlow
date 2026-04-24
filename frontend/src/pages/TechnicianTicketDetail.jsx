@@ -455,6 +455,26 @@ function TechnicianTicketDetail() {
                   </div>
                 ) : null}
 
+                {ticket.feedbackAt ? (
+                  <div className="support-ticket-panel support-ticket-detail-section support-feedback-card">
+                    <span className="support-eyebrow">Student Feedback</span>
+                    <h4>Service Rating</h4>
+                    <div className="support-feedback-summary">
+                      <div className="support-feedback-stars" aria-label={`${ticket.feedbackRating || 0} out of 5 stars`}>
+                        {Array.from({ length: 5 }, (_, index) => (
+                          <span key={index} className={index < (ticket.feedbackRating || 0) ? "is-selected" : ""}>
+                            ★
+                          </span>
+                        ))}
+                      </div>
+                      <p>{ticket.feedbackComment || "-"}</p>
+                      <p className="helper-text">
+                        Submitted {ticket.feedbackAt ? new Date(ticket.feedbackAt).toLocaleString() : ""}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+
                 <div className="support-ticket-panel support-ticket-detail-section support-tech-top-spaced-panel">
                   <span className="support-eyebrow">Operational View</span>
                   <h4>Queue Snapshot</h4>
