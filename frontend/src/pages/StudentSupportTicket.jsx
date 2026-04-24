@@ -224,11 +224,19 @@ function StudentSupportTicket() {
         rating: feedbackRating,
         comment: feedbackComment,
       });
-      setTicket(updated);
+      setTicket((currentTicket) => (
+        currentTicket
+          ? {
+              ...currentTicket,
+              ...updated,
+            }
+          : updated
+      ));
       setFeedbackRating(updated?.feedbackRating || 0);
       setFeedbackComment(updated?.feedbackComment || "");
       setFeedbackModalOpen(false);
       setFeedbackMessage("Thank you. Your feedback has been submitted.");
+      refreshTicket().catch(() => {});
     } catch (err) {
       setError(readApiError(err));
     } finally {
