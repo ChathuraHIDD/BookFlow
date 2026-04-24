@@ -636,47 +636,64 @@
 }
 
 .support-admin-ticket-table {
-  min-width: 1180px;
+  min-width: 1380px;
+  width: 100%;
+  table-layout: fixed;
 }
 
 .support-admin-ticket-table th,
 .support-admin-ticket-table td {
-  padding: 18px 18px;
+  padding: 16px 14px;
+  overflow-wrap: anywhere;
 }
 
 .support-admin-ticket-table th:nth-child(1),
 .support-admin-ticket-table td:nth-child(1) {
-  width: 11%;
+  width: 11.11%;
 }
 
 .support-admin-ticket-table th:nth-child(2),
 .support-admin-ticket-table td:nth-child(2) {
-  width: 15%;
+  width: 11.11%;
 }
 
 .support-admin-ticket-table th:nth-child(3),
 .support-admin-ticket-table td:nth-child(3) {
-  width: 23%;
+  width: 11.11%;
 }
 
 .support-admin-ticket-table th:nth-child(4),
 .support-admin-ticket-table td:nth-child(4) {
-  width: 10%;
+  width: 11.11%;
 }
 
 .support-admin-ticket-table th:nth-child(5),
 .support-admin-ticket-table td:nth-child(5) {
-  width: 11%;
+  width: 11.11%;
 }
 
 .support-admin-ticket-table th:nth-child(6),
 .support-admin-ticket-table td:nth-child(6) {
-  width: 14%;
+  width: 11.11%;
 }
 
 .support-admin-ticket-table th:nth-child(7),
 .support-admin-ticket-table td:nth-child(7) {
-  width: 11%;
+  width: 11.11%;
+}
+
+.support-admin-ticket-table th:nth-child(8),
+.support-admin-ticket-table td:nth-child(8) {
+  width: 11.11%;
+}
+
+.support-admin-ticket-table th:nth-child(9),
+.support-admin-ticket-table td:nth-child(9) {
+  width: 11.11%;
+}
+
+.support-admin-ticket-table th:nth-child(9) {
+  text-align: left;
 }
 
 .support-tech-ticket-table-modern {
@@ -728,14 +745,19 @@
 }
 
 .support-admin-actions {
-  min-width: 180px;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
 }
 
 .support-admin-actions .support-table-action {
-  min-width: 98px;
-  padding-inline: 12px;
+  min-width: 0;
+  width: 120px;
+  padding-inline: 6px;
+  box-sizing: border-box;
+  white-space: normal;
+  line-height: 1.15;
+  text-align: center;
 }
 
 .support-admin-datetime {

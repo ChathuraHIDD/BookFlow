@@ -95,6 +95,7 @@ public class SupportTicketService {
         ticket.setAttachments(new ArrayList<>());
         ticket.setCreatedAt(Instant.now());
         ticket.setUpdatedAt(ticket.getCreatedAt());
+        ticket.setFirstResponseAt(null);
         ticket.setResolvedAt(null);
 
         SupportTicket saved = supportTicketRepository.save(ticket);
@@ -145,6 +146,9 @@ public class SupportTicketService {
 
         ticket.getComments().add(comment);
         ticket.setUpdatedAt(comment.getCreatedAt());
+        if (ticket.getFirstResponseAt() == null && user.getRole() != UserRole.STUDENT) {
+            ticket.setFirstResponseAt(comment.getCreatedAt());
+        }
 
         SupportTicket saved = supportTicketRepository.save(ticket);
 
@@ -264,6 +268,9 @@ public class SupportTicketService {
         ticket.setStatus(nextStatus);
         ticket.setResolutionNote(trimToNull(request.resolutionNote()));
         ticket.setUpdatedAt(Instant.now());
+        if (ticket.getFirstResponseAt() == null) {
+            ticket.setFirstResponseAt(ticket.getUpdatedAt());
+        }
         if (nextStatus == SupportTicketStatus.RESOLVED) {
             ticket.setResolvedAt(ticket.getUpdatedAt());
             ticket.setFinalizedAt(ticket.getUpdatedAt());
@@ -300,6 +307,9 @@ public class SupportTicketService {
         ticket.setAssignedTechnicianId(assignee.getId());
         ticket.setAssignedTechnicianName(resolveDisplayName(assignee));
         ticket.setUpdatedAt(Instant.now());
+        if (ticket.getFirstResponseAt() == null) {
+            ticket.setFirstResponseAt(ticket.getUpdatedAt());
+        }
 
         SupportTicket saved = supportTicketRepository.save(ticket);
         notificationService.notifyUser(
@@ -336,6 +346,9 @@ public class SupportTicketService {
         ticket.setStatus(status);
         ticket.setAdminNote(adminNote);
         ticket.setUpdatedAt(Instant.now());
+        if (ticket.getFirstResponseAt() == null) {
+            ticket.setFirstResponseAt(ticket.getUpdatedAt());
+        }
 
         if (status == SupportTicketStatus.CLOSED || status == SupportTicketStatus.REJECTED) {
             ticket.setFinalizedAt(ticket.getUpdatedAt());
@@ -595,8 +608,22 @@ public class SupportTicketService {
         return sanitized.replaceAll("[^a-zA-Z0-9._-]", "_");
     }
 
+    private long durationSeconds(Instant start, Instant end) {
+        if (start == null) {
+            return 0;
+        }
+
+        Instant effectiveEnd = end != null ? end : Instant.now();
+        long seconds = java.time.Duration.between(start, effectiveEnd).getSeconds();
+        return Math.max(seconds, 0);
+    }
+
     private SupportTicketResponse toResponse(SupportTicket ticket) {
         ensureCollections(ticket);
+
+        Instant createdAt = ticket.getCreatedAt();
+        Instant firstResponseAt = ticket.getFirstResponseAt();
+        Instant resolutionEndAt = ticket.getResolvedAt() != null ? ticket.getResolvedAt() : ticket.getFinalizedAt();
 
         List<SupportTicketCommentResponse> commentResponses = ticket.getComments().stream()
                 .filter(Objects::nonNull)
@@ -641,8 +668,11 @@ public class SupportTicketService {
                 ticket.getUserEmail(),
                 ticket.getCreatedAt() != null ? ticket.getCreatedAt().toString() : "",
                 ticket.getUpdatedAt() != null ? ticket.getUpdatedAt().toString() : "",
+                firstResponseAt != null ? firstResponseAt.toString() : "",
                 ticket.getResolvedAt() != null ? ticket.getResolvedAt().toString() : "",
                 ticket.getFinalizedAt() != null ? ticket.getFinalizedAt().toString() : "",
+                durationSeconds(createdAt, firstResponseAt),
+                durationSeconds(createdAt, resolutionEndAt),
                 commentResponses,
                 attachmentResponses);
     }

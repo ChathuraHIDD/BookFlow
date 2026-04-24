@@ -56,6 +56,8 @@ public class SupportTicket {
 
     private Instant updatedAt;
 
+    private Instant firstResponseAt;
+
     private Instant resolvedAt;
 
     public String getId() {
@@ -224,6 +226,14 @@ public class SupportTicket {
 
     public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Instant getFirstResponseAt() {
+        return firstResponseAt;
+    }
+
+    public void setFirstResponseAt(Instant firstResponseAt) {
+        this.firstResponseAt = firstResponseAt;
     }
 
     public Instant getResolvedAt() {

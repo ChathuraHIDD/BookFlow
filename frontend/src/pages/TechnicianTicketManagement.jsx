@@ -84,6 +84,21 @@ function TechnicianTicketManagement() {
     });
   }, [tickets, statusFilter, searchText]);
 
+  const formatDuration = (totalSeconds) => {
+    const safeSeconds = Number.isFinite(totalSeconds) ? Math.max(0, Math.floor(totalSeconds)) : 0;
+    const days = Math.floor(safeSeconds / 86400);
+    const hours = Math.floor((safeSeconds % 86400) / 3600);
+    const minutes = Math.floor((safeSeconds % 3600) / 60);
+
+    if (days > 0) {
+      return `${days}d ${hours}h ${minutes}m`;
+    }
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
+
   const formatUpdatedDateTime = (value) => {
     if (!value) {
       return { date: "-", time: "" };
@@ -199,6 +214,8 @@ function TechnicianTicketManagement() {
                 <th>Student</th>
                 <th>Title</th>
                 <th>Status</th>
+                <th>First Response</th>
+                <th>Resolution</th>
                 <th>Updated</th>
                 <th>Action</th>
               </tr>
@@ -226,6 +243,8 @@ function TechnicianTicketManagement() {
                     <td>
                       <span className={`status-badge support-status-badge ${statusKey}`}>{ticket.status}</span>
                     </td>
+                    <td>{formatDuration(ticket.timeToFirstResponseSeconds)}</td>
+                    <td>{formatDuration(ticket.timeToResolutionSeconds)}</td>
                     <td>
                       <div className="support-admin-datetime">
                         <span>{updated.date}</span>

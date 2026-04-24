@@ -73,6 +73,20 @@ function StudentSupportTicket() {
   const commentCount = ticket?.comments?.length || 0;
   const attachmentCount = ticket?.attachments?.length || 0;
   const normalizedStatus = (ticket?.status || "").trim().toLowerCase();
+  const formatDuration = (totalSeconds) => {
+    const safeSeconds = Number.isFinite(totalSeconds) ? Math.max(0, Math.floor(totalSeconds)) : 0;
+    const days = Math.floor(safeSeconds / 86400);
+    const hours = Math.floor((safeSeconds % 86400) / 3600);
+    const minutes = Math.floor((safeSeconds % 3600) / 60);
+
+    if (days > 0) {
+      return `${days}d ${hours}h ${minutes}m`;
+    }
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
   const resolutionLabel =
     normalizedStatus === "resolved" || normalizedStatus === "closed"
       ? "Completed"
@@ -393,6 +407,14 @@ function StudentSupportTicket() {
                     <div>
                       <span>Last activity</span>
                       <strong>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : "-"}</strong>
+                    </div>
+                    <div>
+                      <span>Time to first response</span>
+                      <strong>{formatDuration(ticket.timeToFirstResponseSeconds)}</strong>
+                    </div>
+                    <div>
+                      <span>Time to resolution</span>
+                      <strong>{formatDuration(ticket.timeToResolutionSeconds)}</strong>
                     </div>
                     <div>
                       <span>Resolution</span>

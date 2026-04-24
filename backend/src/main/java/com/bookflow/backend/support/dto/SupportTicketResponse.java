@@ -18,8 +18,11 @@ public record SupportTicketResponse(
         String userEmail,
         String createdAt,
         String updatedAt,
+        String firstResponseAt,
         String resolvedAt,
         String finalizedAt,
+        Long timeToFirstResponseSeconds,
+        Long timeToResolutionSeconds,
         java.util.List<SupportTicketCommentResponse> comments,
         java.util.List<SupportTicketAttachmentResponse> attachments) {
 }

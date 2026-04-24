@@ -169,6 +169,20 @@ function AdminTicketManagement() {
 
   const selectedTicket = tickets.find((ticket) => ticket.id === actionModalTicketId) || null;
   const selectedDraft = selectedTicket ? drafts[selectedTicket.id] || {} : {};
+  const formatDuration = (totalSeconds) => {
+    const safeSeconds = Number.isFinite(totalSeconds) ? Math.max(0, Math.floor(totalSeconds)) : 0;
+    const days = Math.floor(safeSeconds / 86400);
+    const hours = Math.floor((safeSeconds % 86400) / 3600);
+    const minutes = Math.floor((safeSeconds % 3600) / 60);
+
+    if (days > 0) {
+      return `${days}d ${hours}h ${minutes}m`;
+    }
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
   const formatUpdatedDateTime = (value) => {
     if (!value) {
       return { date: "-", time: "" };
@@ -264,6 +278,8 @@ function AdminTicketManagement() {
                 <th>Title</th>
                 <th>Category</th>
                 <th>Status</th>
+                <th>First Response</th>
+                <th>Resolution</th>
                 <th>Updated</th>
                 <th>Actions</th>
               </tr>
@@ -294,6 +310,8 @@ function AdminTicketManagement() {
                         {ticket.status}
                       </span>
                     </td>
+                    <td>{formatDuration(ticket.timeToFirstResponseSeconds)}</td>
+                    <td>{formatDuration(ticket.timeToResolutionSeconds)}</td>
                     <td>
                       <div className="support-admin-datetime">
                         <span>{updated.date}</span>
