@@ -54,7 +54,7 @@ function Dashboard() {
             </nav>
 
             <div className="dash-shot-auth-actions">
-              <Link className="dash-shot-login" to="/login">
+              <Link className="dash-shot-login" to="/login?switch=true">
                 Login
               </Link>
               <Link className="dash-shot-plan" to="/register">
@@ -104,7 +104,7 @@ function Dashboard() {
       <footer className="dash-shot-footer" id="contact">
         <p>NNIC Smart Resource and Management Platform</p>
         <div>
-          <Link to="/login">Login</Link>
+          <Link to="/login?switch=true">Login</Link>
           <Link to="/register">Register</Link>
         </div>
       </footer>

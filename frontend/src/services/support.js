@@ -57,7 +57,7 @@ export async function downloadSupportAttachment(ticketId, attachmentId) {
   });
 
   const contentDisposition = response.headers?.["content-disposition"] || "";
-  const fileNameMatch = contentDisposition.match(/filename=\"?([^\";]+)\"?/i);
+  const fileNameMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
   const fileName = fileNameMatch?.[1] || `attachment-${attachmentId}`;
   const blob = new Blob([response.data], { type: response.headers?.["content-type"] || "application/octet-stream" });
 

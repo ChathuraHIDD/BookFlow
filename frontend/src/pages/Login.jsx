@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import GoogleSignInButton from "../components/GoogleSignInButton";
 import { useAuth } from "../context/useAuth";
 import { homePathByRole } from "../utils/role";
@@ -7,6 +7,7 @@ import "./Login.css";
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, loginWithGoogle, ready, isAuthenticated, user } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -47,7 +48,9 @@ function Login() {
     }
   };
 
-  if (ready && isAuthenticated) {
+  const allowAccountSwitch = new URLSearchParams(location.search).get("switch") === "true";
+
+  if (ready && isAuthenticated && !allowAccountSwitch) {
     return <Navigate to={homePathByRole(user.role)} replace />;
   }
 

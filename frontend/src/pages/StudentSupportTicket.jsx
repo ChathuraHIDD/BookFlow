@@ -72,6 +72,13 @@ function StudentSupportTicket() {
   const statusKey = (ticket?.status || "").toLowerCase().replace(/\s+/g, "-");
   const commentCount = ticket?.comments?.length || 0;
   const attachmentCount = ticket?.attachments?.length || 0;
+  const normalizedStatus = (ticket?.status || "").trim().toLowerCase();
+  const resolutionLabel =
+    normalizedStatus === "resolved" || normalizedStatus === "closed"
+      ? "Completed"
+      : normalizedStatus === "rejected"
+        ? "Rejected"
+        : "In progress";
 
   const refreshTicket = async () => {
     const data = await fetchMySupportTicket(id);
@@ -389,7 +396,7 @@ function StudentSupportTicket() {
                     </div>
                     <div>
                       <span>Resolution</span>
-                      <strong>{ticket.resolvedAt ? "Completed" : "In progress"}</strong>
+                      <strong>{resolutionLabel}</strong>
                     </div>
                   </div>
                 </div>

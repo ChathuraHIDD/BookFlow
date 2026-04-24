@@ -145,8 +145,15 @@ function StudentSupportRaise() {
                   onChange={(value) => setForm((current) => ({ ...current, category: value }))}
                   options={[
                     { value: "Technical", label: "Technical" },
+                    { value: "Network", label: "Network" },
+                    { value: "Software", label: "Software" },
+                    { value: "Hardware", label: "Hardware" },
                     { value: "Borrowing", label: "Borrowing" },
+                    { value: "Library", label: "Library" },
                     { value: "Account", label: "Account" },
+                    { value: "Billing", label: "Billing" },
+                    { value: "Facilities", label: "Facilities" },
+                    { value: "Access Card", label: "Access Card" },
                     { value: "Other", label: "Other" },
                   ]}
                 />
