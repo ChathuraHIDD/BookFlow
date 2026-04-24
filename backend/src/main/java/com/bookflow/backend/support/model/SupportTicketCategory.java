@@ -2,8 +2,15 @@ package com.bookflow.backend.support.model;
 
 public enum SupportTicketCategory {
     TECHNICAL("Technical"),
+    NETWORK("Network"),
+    SOFTWARE("Software"),
+    HARDWARE("Hardware"),
     BORROWING("Borrowing"),
+    LIBRARY("Library"),
     ACCOUNT("Account"),
+    BILLING("Billing"),
+    FACILITIES("Facilities"),
+    ACCESS_CARD("Access Card"),
     OTHER("Other");
 
     private final String displayName;

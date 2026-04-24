@@ -223,7 +223,7 @@ function App() {
       <Route
         path="/technician/tickets"
         element={
-          <ProtectedRoute allowedRoles={["technician"]}>
+          <ProtectedRoute allowedRoles={["technician", "staff_member"]}>
             <TechnicianTicketManagement />
           </ProtectedRoute>
         }
@@ -232,7 +232,7 @@ function App() {
       <Route
         path="/technician/tickets/:ticketId"
         element={
-          <ProtectedRoute allowedRoles={["technician"]}>
+          <ProtectedRoute allowedRoles={["technician", "staff_member"]}>
             <TechnicianTicketDetail />
           </ProtectedRoute>
         }

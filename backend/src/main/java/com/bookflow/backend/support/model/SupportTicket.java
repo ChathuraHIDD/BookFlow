@@ -56,7 +56,17 @@ public class SupportTicket {
 
     private Instant updatedAt;
 
+    private Instant firstResponseAt;
+
     private Instant resolvedAt;
+
+    private Integer feedbackRating;
+
+    private String feedbackComment;
+
+    private String feedbackByUserId;
+
+    private Instant feedbackAt;
 
     public String getId() {
         return id;
@@ -226,11 +236,51 @@ public class SupportTicket {
         this.updatedAt = updatedAt;
     }
 
+    public Instant getFirstResponseAt() {
+        return firstResponseAt;
+    }
+
+    public void setFirstResponseAt(Instant firstResponseAt) {
+        this.firstResponseAt = firstResponseAt;
+    }
+
     public Instant getResolvedAt() {
         return resolvedAt;
     }
 
     public void setResolvedAt(Instant resolvedAt) {
         this.resolvedAt = resolvedAt;
+    }
+
+    public Integer getFeedbackRating() {
+        return feedbackRating;
+    }
+
+    public void setFeedbackRating(Integer feedbackRating) {
+        this.feedbackRating = feedbackRating;
+    }
+
+    public String getFeedbackComment() {
+        return feedbackComment;
+    }
+
+    public void setFeedbackComment(String feedbackComment) {
+        this.feedbackComment = feedbackComment;
+    }
+
+    public String getFeedbackByUserId() {
+        return feedbackByUserId;
+    }
+
+    public void setFeedbackByUserId(String feedbackByUserId) {
+        this.feedbackByUserId = feedbackByUserId;
+    }
+
+    public Instant getFeedbackAt() {
+        return feedbackAt;
+    }
+
+    public void setFeedbackAt(Instant feedbackAt) {
+        this.feedbackAt = feedbackAt;
     }
 }

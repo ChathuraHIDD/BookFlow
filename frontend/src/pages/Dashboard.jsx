@@ -1,6 +1,4 @@
-import { Link, Navigate } from "react-router-dom";
-import { useAuth } from "../context/useAuth";
-import { homePathByRole } from "../utils/role";
+import { Link } from "react-router-dom";
 import "./Dashboard.css";
 
 const storyCards = [
@@ -40,12 +38,6 @@ const progressItems = [
 ];
 
 function Dashboard() {
-  const { user, ready, isAuthenticated } = useAuth();
-
-  if (ready && isAuthenticated) {
-    return <Navigate to={homePathByRole(user.role)} replace />;
-  }
-
   return (
     <div className="dash-shot-page">
       <header className="dash-shot-header" aria-label="Main navigation">
@@ -62,7 +54,7 @@ function Dashboard() {
             </nav>
 
             <div className="dash-shot-auth-actions">
-              <Link className="dash-shot-login" to="/login">
+              <Link className="dash-shot-login" to="/login?switch=true">
                 Login
               </Link>
               <Link className="dash-shot-plan" to="/register">
@@ -112,7 +104,7 @@ function Dashboard() {
       <footer className="dash-shot-footer" id="contact">
         <p>NNIC Smart Resource and Management Platform</p>
         <div>
-          <Link to="/login">Login</Link>
+          <Link to="/login?switch=true">Login</Link>
           <Link to="/register">Register</Link>
         </div>
       </footer>

@@ -10,6 +10,11 @@ export async function fetchMySupportTicket(ticketId) {
   return data;
 }
 
+export async function submitSupportTicketFeedback(ticketId, payload) {
+  const { data } = await api.post(`/support/me/${ticketId}/feedback`, payload);
+  return data;
+}
+
 export async function createSupportTicket(payload, attachments = []) {
   if (attachments?.length) {
     const formData = new FormData();
@@ -57,7 +62,7 @@ export async function downloadSupportAttachment(ticketId, attachmentId) {
   });
 
   const contentDisposition = response.headers?.["content-disposition"] || "";
-  const fileNameMatch = contentDisposition.match(/filename=\"?([^\";]+)\"?/i);
+  const fileNameMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
   const fileName = fileNameMatch?.[1] || `attachment-${attachmentId}`;
   const blob = new Blob([response.data], { type: response.headers?.["content-type"] || "application/octet-stream" });
 
@@ -70,8 +75,14 @@ export async function fetchAllSupportTickets() {
 }
 
 export async function fetchTechnicians() {
-  const { data } = await api.get("/admin/users", { params: { role: "technician" } });
-  return data;
+  const [techniciansResponse, staffResponse] = await Promise.all([
+    api.get("/admin/users", { params: { role: "technician" } }),
+    api.get("/admin/users", { params: { role: "staff_member" } }),
+  ]);
+
+  const technicians = techniciansResponse.data || [];
+  const staffMembers = staffResponse.data || [];
+  return [...technicians, ...staffMembers];
 }
 
 export async function assignSupportTechnician(ticketId, payload) {
