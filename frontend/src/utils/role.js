@@ -1,8 +1,8 @@
 export const ROLE_OPTIONS = [
   { value: "student", label: "Student" },
-  { value: "librarian", label: "Librarian" },
   { value: "admin", label: "Admin" },
   { value: "staff_member", label: "Staff Member" },
+  { value: "technician", label: "Technician" },
 ];
 
 export const roleLabel = (role) => {
@@ -10,9 +10,9 @@ export const roleLabel = (role) => {
   return (
     {
       student: "Student",
-      librarian: "Librarian",
       admin: "Admin",
       staff_member: "Staff Member",
+      technician: "Technician",
     }[normalized] || "User"
   );
 };
@@ -30,8 +30,8 @@ export const profilePathByRole = (role) => {
       return "/staff/profile";
     case "admin":
       return "/admin/profile";
-    case "librarian":
-      return "/librarian/profile";
+    case "technician":
+      return "/technician/tickets";
     default:
       return "/login";
   }
@@ -45,8 +45,8 @@ export const homePathByRole = (role) => {
       return "/staff/profile";
     case "admin":
       return "/admin/users";
-    case "librarian":
-      return "/librarian/profile";
+    case "technician":
+      return "/technician/tickets";
     default:
       return "/login";
   }
@@ -59,7 +59,7 @@ export const isStudentLikeRole = (role) => {
 
 export const isPrivilegedRole = (role) => {
   const normalized = normalizeRole(role);
-  return normalized === "admin" || normalized === "librarian";
+  return normalized === "admin";
 };
 
 export const formatEnumText = (value) => {

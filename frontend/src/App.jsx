@@ -4,18 +4,23 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/useAuth";
 import AdminProfile from "./pages/AdminProfile";
 import AdminFacilities from "./pages/AdminFacilities";
+import AdminNotifications from "./pages/AdminNotifications";
+import AdminBookingManagement from "./pages/AdminBookingManagement";
+import AdminTicketManagement from "./pages/AdminTicketManagement";
 import AdminUserManagement from "./pages/AdminUserManagement";
 import Dashboard from "./pages/Dashboard";
-import LibrarianProfile from "./pages/LibrarianProfile";
 import Login from "./pages/Login";
 import NotificationPanel from "./pages/NotificationPanel";
 import Register from "./pages/Register";
+import TechnicianTicketDetail from "./pages/TechnicianTicketDetail";
+import TechnicianTicketManagement from "./pages/TechnicianTicketManagement";
 import StudentDashboard from "./pages/StudentDashboard";
 import StudentFacilityBookingBoard from "./pages/StudentFacilityBookingBoard";
 import StudentFacilityCatalogDetail from "./pages/StudentFacilityCatalogDetail";
 import StudentFacilityCategoryDetail from "./pages/StudentFacilityCategoryDetail";
 import StudentFacilityFloors from "./pages/StudentFacilityFloors";
 import StudentFacilities from "./pages/StudentFacilities";
+import StudentResourceBooking from "./pages/StudentResourceBooking";
 import StudentSupport from "./pages/StudentSupport";
 import StudentSupportRaise from "./pages/StudentSupportRaise";
 import StudentSupportTicket from "./pages/StudentSupportTicket";
@@ -108,6 +113,15 @@ function App() {
       />
 
       <Route
+        path="/student/resources/:slug"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentResourceBooking />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/staff/profile"
         element={
           <ProtectedRoute allowedRoles={["staff_member"]}>
@@ -119,7 +133,7 @@ function App() {
       <Route
         path="/notifications"
         element={
-          <ProtectedRoute allowedRoles={["student", "staff_member"]}>
+          <ProtectedRoute allowedRoles={["student", "staff_member", "technician"]}>
             <NotificationPanel />
           </ProtectedRoute>
         }
@@ -180,10 +194,46 @@ function App() {
       />
 
       <Route
-        path="/librarian/profile"
+        path="/admin/tickets"
         element={
-          <ProtectedRoute allowedRoles={["librarian"]}>
-            <LibrarianProfile />
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminTicketManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/bookings"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminBookingManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/notifications"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminNotifications />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/technician/tickets"
+        element={
+          <ProtectedRoute allowedRoles={["technician", "staff_member"]}>
+            <TechnicianTicketManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/technician/tickets/:ticketId"
+        element={
+          <ProtectedRoute allowedRoles={["technician", "staff_member"]}>
+            <TechnicianTicketDetail />
           </ProtectedRoute>
         }
       />

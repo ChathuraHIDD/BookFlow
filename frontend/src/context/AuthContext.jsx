@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api, { readApiError, setAuthorizationToken } from "../services/api";
 import { normalizeRole } from "../utils/role";
 import AuthContext from "./auth-context";
@@ -54,9 +54,22 @@ export function AuthProvider({ children }) {
     return normalizedUser;
   };
 
-  const login = async (email, password) => {
+  const refreshUser = useCallback(async () => {
+    try {
+      const { data } = await api.get("/auth/me");
+      setUser(normalizeUser(data));
+      return normalizeUser(data);
+    } catch (error) {
+      throw new Error(readApiError(error));
+    }
+  }, []);
+
+  const login = async (email, password, expectedRole = null) => {
     try {
       const { data } = await api.post("/auth/login", { email, password });
+      if (expectedRole && normalizeRole(data?.user?.role) !== normalizeRole(expectedRole)) {
+        throw new Error(`This login is only for ${normalizeRole(expectedRole).replace(/_/g, " ")} accounts.`);
+      }
       return persistAuth(data.token, data.user);
     } catch (error) {
       throw new Error(readApiError(error));
@@ -66,6 +79,27 @@ export function AuthProvider({ children }) {
   const register = async (payload) => {
     try {
       const { data } = await api.post("/auth/register", payload);
+      return persistAuth(data.token, data.user);
+    } catch (error) {
+      throw new Error(readApiError(error));
+    }
+  };
+
+  const loginWithGoogle = async (idToken, expectedRole = null) => {
+    try {
+      const { data } = await api.post("/auth/google/login", { idToken });
+      if (expectedRole && normalizeRole(data?.user?.role) !== normalizeRole(expectedRole)) {
+        throw new Error(`This login is only for ${normalizeRole(expectedRole).replace(/_/g, " ")} accounts.`);
+      }
+      return persistAuth(data.token, data.user);
+    } catch (error) {
+      throw new Error(readApiError(error));
+    }
+  };
+
+  const registerWithGoogle = async (payload) => {
+    try {
+      const { data } = await api.post("/auth/google/register", payload);
       return persistAuth(data.token, data.user);
     } catch (error) {
       throw new Error(readApiError(error));
@@ -86,6 +120,9 @@ export function AuthProvider({ children }) {
     isAuthenticated: Boolean(user && token),
     login,
     register,
+    loginWithGoogle,
+    registerWithGoogle,
+    refreshUser,
     logout,
   };
 
