@@ -70,6 +70,11 @@ function PortalLayout({
               </NavLink>
             ) : null}
             {role === "admin" ? (
+              <NavLink className={topLinkClassName} to="/admin/facilities/maintenance" end>
+                Maintenance
+              </NavLink>
+            ) : null}
+            {role === "admin" ? (
               <NavLink className={topLinkClassName} to="/admin/tickets" end>
                 Ticket Management
               </NavLink>

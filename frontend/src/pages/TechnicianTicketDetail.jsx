@@ -1,7 +1,9 @@
+import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import PortalLayout from "../components/PortalLayout";
+import SupportDropdown from "../components/SupportDropdown";
 import { useAuth } from "../context/useAuth";
 import { readApiError } from "../services/api";
 import {
@@ -22,8 +24,8 @@ function TechnicianTicketDetail() {
   const [status, setStatus] = useState("In Progress");
   const [resolutionNote, setResolutionNote] = useState("");
   const [commentDraft, setCommentDraft] = useState("");
-  const [updatePanelOpen, setUpdatePanelOpen] = useState(false);
-  const [commentPanelOpen, setCommentPanelOpen] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -45,8 +47,8 @@ function TechnicianTicketDetail() {
         setStatus(data.status === "Resolved" ? "Resolved" : "In Progress");
         setResolutionNote("");
         setCommentDraft("");
-        setUpdatePanelOpen(false);
-        setCommentPanelOpen(false);
+        setStatusModalOpen(false);
+        setCommentModalOpen(false);
       } catch (err) {
         if (active) {
           setError(readApiError(err));
@@ -66,6 +68,19 @@ function TechnicianTicketDetail() {
     };
   }, [ticketId]);
 
+  useEffect(() => {
+    if (!statusModalOpen && !commentModalOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [statusModalOpen, commentModalOpen]);
+
   const handleSave = async () => {
     if (!ticket) {
       return;
@@ -80,7 +95,7 @@ function TechnicianTicketDetail() {
       setTicket(updated);
       setStatus(updated.status === "Resolved" ? "Resolved" : "In Progress");
       setResolutionNote("");
-      setUpdatePanelOpen(false);
+      setStatusModalOpen(false);
     } catch (err) {
       setError(readApiError(err));
     } finally {
@@ -106,7 +121,7 @@ function TechnicianTicketDetail() {
       setStatus(updated.status === "Resolved" ? "Resolved" : "In Progress");
       setResolutionNote("");
       setCommentDraft("");
-      setCommentPanelOpen(false);
+      setCommentModalOpen(false);
     } catch (err) {
       setError(readApiError(err));
     } finally {
@@ -184,6 +199,22 @@ function TechnicianTicketDetail() {
   };
 
   const statusKey = (ticket?.status || "").toLowerCase().replace(/\s+/g, "-");
+  const commentCount = ticket?.comments?.length || 0;
+  const attachmentCount = ticket?.attachments?.length || 0;
+  const formatDuration = (totalSeconds) => {
+    const safeSeconds = Number.isFinite(totalSeconds) ? Math.max(0, Math.floor(totalSeconds)) : 0;
+    const days = Math.floor(safeSeconds / 86400);
+    const hours = Math.floor((safeSeconds % 86400) / 3600);
+    const minutes = Math.floor((safeSeconds % 3600) / 60);
+
+    if (days > 0) {
+      return `${days}d ${hours}h ${minutes}m`;
+    }
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
 
   return (
     <PortalLayout
@@ -227,6 +258,29 @@ function TechnicianTicketDetail() {
                 <span className={`status-badge support-status-badge ${statusKey}`}>{ticket.status}</span>
               </div>
 
+              <div className="support-ticket-signal-strip support-ticket-signal-strip-tech">
+                <article>
+                  <span className="support-signal-icon support-signal-icon-priority" aria-hidden="true" />
+                  <span>Priority</span>
+                  <strong>{ticket.priority}</strong>
+                </article>
+                <article>
+                  <span className="support-signal-icon support-signal-icon-comments" aria-hidden="true" />
+                  <span>Comments</span>
+                  <strong>{commentCount}</strong>
+                </article>
+                <article>
+                  <span className="support-signal-icon support-signal-icon-attachments" aria-hidden="true" />
+                  <span>Attachments</span>
+                  <strong>{attachmentCount}</strong>
+                </article>
+                <article>
+                  <span className="support-signal-icon support-signal-icon-stage" aria-hidden="true" />
+                  <span>Assigned to</span>
+                  <strong>{ticket.assignedTechnicianName || "Unassigned"}</strong>
+                </article>
+              </div>
+
               <div className="support-ticket-detail-grid">
                 <article className="support-detail-stat">
                   <span>Category</span>
@@ -256,7 +310,8 @@ function TechnicianTicketDetail() {
             </div>
 
             <div className="support-ticket-detail-columns">
-              <section className="support-ticket-panel">
+              <div className="support-ticket-sidebar">
+                <section className="support-ticket-panel">
                 <div className="support-ticket-detail-section">
                   <span className="support-eyebrow">Issue Summary</span>
                   <h4>Description</h4>
@@ -307,7 +362,7 @@ function TechnicianTicketDetail() {
                               </div>
                             </div>
                           ) : (
-                            <p>{comment.message}</p>
+                            <p className="support-comment-message">{comment.message}</p>
                           )}
                           {user?.id === comment.authorUserId ? (
                             <div className="support-comment-actions support-comment-actions-inline">
@@ -330,8 +385,46 @@ function TechnicianTicketDetail() {
                       ))}
                     </div>
                   </div>
-                ) : null}
-              </section>
+                ) : (
+                  <div className="support-ticket-detail-section">
+                    <span className="support-eyebrow">Timeline</span>
+                    <h4>Comments</h4>
+                    <article className="support-inline-empty-card">
+                      <strong>No updates posted yet</strong>
+                      <p className="helper-text">Add a technician update so the student can follow progress.</p>
+                    </article>
+                  </div>
+                )}
+
+                <div className="support-comment-cta-row">
+                  <button
+                    type="button"
+                    className="solid-btn"
+                    onClick={() => {
+                      setError("");
+                      setCommentModalOpen(true);
+                    }}
+                  >
+                    Add Update
+                  </button>
+                </div>
+                </section>
+
+                <section className="support-ticket-panel support-ticket-detail-section support-tech-top-spaced-panel">
+                  <span className="support-eyebrow">Action Panel</span>
+                  <h4>Edit Status</h4>
+                  <button
+                    type="button"
+                    className="solid-btn"
+                    onClick={() => {
+                      setError("");
+                      setStatusModalOpen(true);
+                    }}
+                  >
+                    Edit Status
+                  </button>
+                </section>
+              </div>
 
               <aside className="support-ticket-sidebar">
                 {ticket.attachments?.length ? (
@@ -362,63 +455,180 @@ function TechnicianTicketDetail() {
                   </div>
                 ) : null}
 
-                <div className="support-ticket-panel support-ticket-detail-section">
-                  <span className="support-eyebrow">Action Panel</span>
-                  <h4>Update Ticket</h4>
+                {ticket.feedbackAt ? (
+                  <div className="support-ticket-panel support-ticket-detail-section support-feedback-card">
+                    <span className="support-eyebrow">Student Feedback</span>
+                    <h4>Service Rating</h4>
+                    <div className="support-feedback-summary">
+                      <div className="support-feedback-stars" aria-label={`${ticket.feedbackRating || 0} out of 5 stars`}>
+                        {Array.from({ length: 5 }, (_, index) => (
+                          <span key={index} className={index < (ticket.feedbackRating || 0) ? "is-selected" : ""}>
+                            ★
+                          </span>
+                        ))}
+                      </div>
+                      <p>{ticket.feedbackComment || "-"}</p>
+                      <p className="helper-text">
+                        Submitted {ticket.feedbackAt ? new Date(ticket.feedbackAt).toLocaleString() : ""}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+
+                <div className="support-ticket-panel support-ticket-detail-section support-tech-top-spaced-panel">
+                  <span className="support-eyebrow">Operational View</span>
+                  <h4>Queue Snapshot</h4>
+                  <div className="support-health-list">
+                    <div>
+                      <span>Created</span>
+                      <strong>{ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : "-"}</strong>
+                    </div>
+                    <div>
+                      <span>Latest update</span>
+                      <strong>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleString() : "-"}</strong>
+                    </div>
+                    <div>
+                      <span>Time to first response</span>
+                      <strong>{formatDuration(ticket.timeToFirstResponseSeconds)}</strong>
+                    </div>
+                    <div>
+                      <span>Time to resolution</span>
+                      <strong>{formatDuration(ticket.timeToResolutionSeconds)}</strong>
+                    </div>
+                    <div>
+                      <span>Status class</span>
+                      <strong>{ticket.status || "Open"}</strong>
+                    </div>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </article>
+        ) : null}
+
+        {ticket && statusModalOpen
+          ? createPortal(
+              <div
+                className="support-modal-backdrop"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="technician-status-modal-title"
+                onClick={() => {
+                  if (!busy) {
+                    setStatusModalOpen(false);
+                  }
+                }}
+              >
+                <div className="support-modal-card support-admin-ticket-modal" onClick={(event) => event.stopPropagation()}>
                   <button
+                    className="support-modal-close"
                     type="button"
-                    className="solid-btn"
-                    onClick={() => setUpdatePanelOpen((current) => !current)}
+                    aria-label="Close edit status dialog"
+                    onClick={() => setStatusModalOpen(false)}
+                    disabled={busy}
                   >
-                    {updatePanelOpen ? "Close Update Ticket" : "Update Ticket"}
+                    X
                   </button>
-                  {updatePanelOpen ? (
-                    <div className="admin-ticket-actions support-comment-form support-action-panel">
-                      <select value={status} onChange={(event) => setStatus(event.target.value)}>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Resolved">Resolved</option>
-                      </select>
+                  <h4 id="technician-status-modal-title">Edit Status</h4>
+                  <p className="helper-text">
+                    {ticket.ticketNumber || ticket.id} - {ticket.title}
+                  </p>
+                  <div className="support-admin-action-card support-admin-action-card-modal">
+                    <SupportDropdown
+                      id="technician-status"
+                      label="Status"
+                      value={status}
+                      onChange={setStatus}
+                      options={[
+                        { value: "In Progress", label: "In Progress" },
+                        { value: "Resolved", label: "Resolved" },
+                      ]}
+                    />
+                    <label className="support-admin-action-field">
+                      <span>Resolution Note</span>
                       <textarea
                         value={resolutionNote}
                         onChange={(event) => setResolutionNote(event.target.value)}
                         placeholder="Add a resolution note"
                         rows="4"
                       />
-                      <button className="solid-btn" type="button" disabled={busy} onClick={handleSave}>
-                        {busy ? "Saving..." : "Save Update"}
-                      </button>
-                    </div>
-                  ) : null}
+                    </label>
+                  </div>
+                  <div className="support-modal-actions">
+                    <button
+                      className="ghost-btn"
+                      type="button"
+                      disabled={busy}
+                      onClick={() => setStatusModalOpen(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button className="solid-btn support-admin-save-btn" type="button" disabled={busy} onClick={handleSave}>
+                      {busy ? "Saving..." : "Save Status"}
+                    </button>
+                  </div>
                 </div>
+              </div>,
+              document.body,
+            )
+          : null}
 
-                <div className="support-ticket-panel support-ticket-detail-section">
-                  <span className="support-eyebrow">Technician Note</span>
-                  <h4>Add Technician Update</h4>
+        {ticket && commentModalOpen
+          ? createPortal(
+              <div
+                className="support-modal-backdrop"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="technician-comment-modal-title"
+                onClick={() => {
+                  if (!busy) {
+                    setCommentModalOpen(false);
+                  }
+                }}
+              >
+                <div className="support-modal-card support-admin-ticket-modal" onClick={(event) => event.stopPropagation()}>
                   <button
+                    className="support-modal-close"
                     type="button"
-                    className="solid-btn"
-                    onClick={() => setCommentPanelOpen((current) => !current)}
+                    aria-label="Close add update dialog"
+                    onClick={() => setCommentModalOpen(false)}
+                    disabled={busy}
                   >
-                    {commentPanelOpen ? "Close Technician Update" : "Add Technician Update"}
+                    X
                   </button>
-                  {commentPanelOpen ? (
-                    <div className="admin-ticket-actions support-comment-form support-action-panel">
+                  <h4 id="technician-comment-modal-title">Add Update</h4>
+                  <p className="helper-text">
+                    {ticket.ticketNumber || ticket.id} - {ticket.title}
+                  </p>
+                  <div className="support-admin-action-card support-admin-action-card-modal">
+                    <label className="support-admin-action-field">
+                      <span>Technician Update</span>
                       <textarea
                         value={commentDraft}
                         onChange={(event) => setCommentDraft(event.target.value)}
                         placeholder="Add a progress update or note for the student"
-                        rows="3"
+                        rows="4"
                       />
-                      <button className="solid-btn" type="button" disabled={busy} onClick={handleCommentSave}>
-                        {busy ? "Posting..." : "Post Update"}
-                      </button>
-                    </div>
-                  ) : null}
+                    </label>
+                  </div>
+                  <div className="support-modal-actions">
+                    <button
+                      className="ghost-btn"
+                      type="button"
+                      disabled={busy}
+                      onClick={() => setCommentModalOpen(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button className="solid-btn support-admin-save-btn" type="button" disabled={busy} onClick={handleCommentSave}>
+                      {busy ? "Posting..." : "Post Update"}
+                    </button>
+                  </div>
                 </div>
-              </aside>
-            </div>
-          </article>
-        ) : null}
+              </div>,
+              document.body,
+            )
+          : null}
       </div>
     </PortalLayout>
   );

@@ -4,6 +4,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/useAuth";
 import AdminProfile from "./pages/AdminProfile";
 import AdminFacilities from "./pages/AdminFacilities";
+import AdminFacilityMaintenance from "./pages/AdminFacilityMaintenance";
 import AdminNotifications from "./pages/AdminNotifications";
 import AdminBookingManagement from "./pages/AdminBookingManagement";
 import AdminTicketManagement from "./pages/AdminTicketManagement";
@@ -194,6 +195,15 @@ function App() {
       />
 
       <Route
+        path="/admin/facilities/maintenance"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminFacilityMaintenance />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/admin/tickets"
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
@@ -223,7 +233,7 @@ function App() {
       <Route
         path="/technician/tickets"
         element={
-          <ProtectedRoute allowedRoles={["technician"]}>
+          <ProtectedRoute allowedRoles={["technician", "staff_member"]}>
             <TechnicianTicketManagement />
           </ProtectedRoute>
         }
@@ -232,7 +242,7 @@ function App() {
       <Route
         path="/technician/tickets/:ticketId"
         element={
-          <ProtectedRoute allowedRoles={["technician"]}>
+          <ProtectedRoute allowedRoles={["technician", "staff_member"]}>
             <TechnicianTicketDetail />
           </ProtectedRoute>
         }

@@ -35,6 +35,7 @@ import com.bookflow.backend.support.dto.CreateSupportTicketRequest;
 import com.bookflow.backend.support.dto.SupportTicketAttachmentResponse;
 import com.bookflow.backend.support.dto.SupportTicketCommentResponse;
 import com.bookflow.backend.support.dto.SupportTicketResponse;
+import com.bookflow.backend.support.dto.SubmitSupportTicketFeedbackRequest;
 import com.bookflow.backend.support.dto.TechnicianUpdateSupportTicketRequest;
 import com.bookflow.backend.support.dto.UpdateSupportTicketStatusRequest;
 import com.bookflow.backend.support.model.SupportTicket;
@@ -95,7 +96,12 @@ public class SupportTicketService {
         ticket.setAttachments(new ArrayList<>());
         ticket.setCreatedAt(Instant.now());
         ticket.setUpdatedAt(ticket.getCreatedAt());
+        ticket.setFirstResponseAt(null);
         ticket.setResolvedAt(null);
+        ticket.setFeedbackRating(null);
+        ticket.setFeedbackComment(null);
+        ticket.setFeedbackByUserId(null);
+        ticket.setFeedbackAt(null);
 
         SupportTicket saved = supportTicketRepository.save(ticket);
 
@@ -129,6 +135,50 @@ public class SupportTicketService {
         return toResponse(getOwnedTicket(user, ticketId));
     }
 
+    public SupportTicketResponse submitFeedback(User user, String ticketId, SubmitSupportTicketFeedbackRequest request) {
+        SupportTicket ticket = getOwnedTicket(user, ticketId);
+        if (ticket.getStatus() != SupportTicketStatus.RESOLVED) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Feedback can only be submitted for resolved tickets");
+        }
+        if (ticket.getFeedbackAt() != null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Feedback has already been submitted for this ticket");
+        }
+
+        Integer rating = request != null ? request.rating() : null;
+        String comment = request != null ? request.comment() : null;
+        if (rating == null || rating < 1 || rating > 5) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rating must be between 1 and 5");
+        }
+
+        String normalizedComment = requireText(comment, "Feedback comment");
+
+        ticket.setFeedbackRating(rating);
+        ticket.setFeedbackComment(normalizedComment);
+        ticket.setFeedbackByUserId(user.getId());
+        ticket.setFeedbackAt(Instant.now());
+        ticket.setUpdatedAt(ticket.getFeedbackAt());
+
+        SupportTicket saved = supportTicketRepository.save(ticket);
+
+        if (StringUtils.hasText(saved.getAssignedTechnicianId())) {
+            String commentPreview = normalizedComment.length() > 140
+                    ? normalizedComment.substring(0, 140) + "..."
+                    : normalizedComment;
+            notificationService.notifyUser(
+                    saved.getAssignedTechnicianId(),
+                    "New Ticket Feedback",
+                    String.format("%s rated ticket %s %d/5: %s",
+                            saved.getUserName(),
+                            saved.getTicketNumber(),
+                            rating,
+                            commentPreview),
+                    "TICKET_MANAGEMENT",
+                    "/technician/tickets/" + saved.getId());
+        }
+
+        return toResponse(saved);
+    }
+
     public SupportTicketResponse addComment(User user, String ticketId, AddSupportTicketCommentRequest request) {
         SupportTicket ticket = getCommentableTicket(user, ticketId);
         String message = requireText(request.message(), "Comment message");
@@ -145,6 +195,9 @@ public class SupportTicketService {
 
         ticket.getComments().add(comment);
         ticket.setUpdatedAt(comment.getCreatedAt());
+        if (ticket.getFirstResponseAt() == null && user.getRole() != UserRole.STUDENT) {
+            ticket.setFirstResponseAt(comment.getCreatedAt());
+        }
 
         SupportTicket saved = supportTicketRepository.save(ticket);
 
@@ -264,6 +317,9 @@ public class SupportTicketService {
         ticket.setStatus(nextStatus);
         ticket.setResolutionNote(trimToNull(request.resolutionNote()));
         ticket.setUpdatedAt(Instant.now());
+        if (ticket.getFirstResponseAt() == null) {
+            ticket.setFirstResponseAt(ticket.getUpdatedAt());
+        }
         if (nextStatus == SupportTicketStatus.RESOLVED) {
             ticket.setResolvedAt(ticket.getUpdatedAt());
             ticket.setFinalizedAt(ticket.getUpdatedAt());
@@ -296,14 +352,17 @@ public class SupportTicketService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Closed tickets cannot be reassigned");
         }
 
-        User technician = getTechnician(request.technicianId());
-        ticket.setAssignedTechnicianId(technician.getId());
-        ticket.setAssignedTechnicianName(resolveDisplayName(technician));
+        User assignee = getAssignableAgent(request.technicianId());
+        ticket.setAssignedTechnicianId(assignee.getId());
+        ticket.setAssignedTechnicianName(resolveDisplayName(assignee));
         ticket.setUpdatedAt(Instant.now());
+        if (ticket.getFirstResponseAt() == null) {
+            ticket.setFirstResponseAt(ticket.getUpdatedAt());
+        }
 
         SupportTicket saved = supportTicketRepository.save(ticket);
         notificationService.notifyUser(
-                technician.getId(),
+                assignee.getId(),
                 "Support Ticket Assigned",
                 String.format("Ticket %s has been assigned to you.", saved.getTicketNumber()),
                 "TICKET_MANAGEMENT",
@@ -336,6 +395,9 @@ public class SupportTicketService {
         ticket.setStatus(status);
         ticket.setAdminNote(adminNote);
         ticket.setUpdatedAt(Instant.now());
+        if (ticket.getFirstResponseAt() == null) {
+            ticket.setFirstResponseAt(ticket.getUpdatedAt());
+        }
 
         if (status == SupportTicketStatus.CLOSED || status == SupportTicketStatus.REJECTED) {
             ticket.setFinalizedAt(ticket.getUpdatedAt());
@@ -449,14 +511,15 @@ public class SupportTicketService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Support ticket not found"));
     }
 
-    private User getTechnician(String technicianId) {
-        String resolvedTechnicianId = requireText(technicianId, "Technician ID");
-        User technician = userRepository.findById(resolvedTechnicianId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Technician not found"));
-        if (technician.getRole() != UserRole.TECHNICIAN) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Selected user is not a technician");
+    private User getAssignableAgent(String assigneeId) {
+        String resolvedAssigneeId = requireText(assigneeId, "Assignee ID");
+        User assignee = userRepository.findById(resolvedAssigneeId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignee not found"));
+        if (assignee.getRole() != UserRole.TECHNICIAN && assignee.getRole() != UserRole.STAFF_MEMBER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Selected user must be a technician or staff member");
         }
-        return technician;
+        return assignee;
     }
 
     private void ensureTechnicianTransition(SupportTicketStatus currentStatus, SupportTicketStatus nextStatus) {
@@ -594,8 +657,22 @@ public class SupportTicketService {
         return sanitized.replaceAll("[^a-zA-Z0-9._-]", "_");
     }
 
+    private long durationSeconds(Instant start, Instant end) {
+        if (start == null) {
+            return 0;
+        }
+
+        Instant effectiveEnd = end != null ? end : Instant.now();
+        long seconds = java.time.Duration.between(start, effectiveEnd).getSeconds();
+        return Math.max(seconds, 0);
+    }
+
     private SupportTicketResponse toResponse(SupportTicket ticket) {
         ensureCollections(ticket);
+
+        Instant createdAt = ticket.getCreatedAt();
+        Instant firstResponseAt = ticket.getFirstResponseAt();
+        Instant resolutionEndAt = ticket.getResolvedAt() != null ? ticket.getResolvedAt() : ticket.getFinalizedAt();
 
         List<SupportTicketCommentResponse> commentResponses = ticket.getComments().stream()
                 .filter(Objects::nonNull)
@@ -640,8 +717,15 @@ public class SupportTicketService {
                 ticket.getUserEmail(),
                 ticket.getCreatedAt() != null ? ticket.getCreatedAt().toString() : "",
                 ticket.getUpdatedAt() != null ? ticket.getUpdatedAt().toString() : "",
+                firstResponseAt != null ? firstResponseAt.toString() : "",
                 ticket.getResolvedAt() != null ? ticket.getResolvedAt().toString() : "",
                 ticket.getFinalizedAt() != null ? ticket.getFinalizedAt().toString() : "",
+                ticket.getFeedbackRating(),
+                ticket.getFeedbackComment(),
+                ticket.getFeedbackByUserId(),
+                ticket.getFeedbackAt() != null ? ticket.getFeedbackAt().toString() : "",
+                durationSeconds(createdAt, firstResponseAt),
+                durationSeconds(createdAt, resolutionEndAt),
                 commentResponses,
                 attachmentResponses);
     }

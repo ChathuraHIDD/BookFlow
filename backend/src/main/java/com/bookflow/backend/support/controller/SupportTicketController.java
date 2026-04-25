@@ -23,6 +23,7 @@ import com.bookflow.backend.support.dto.AddSupportTicketCommentRequest;
 import com.bookflow.backend.support.dto.AssignSupportTechnicianRequest;
 import com.bookflow.backend.support.dto.CreateSupportTicketRequest;
 import com.bookflow.backend.support.dto.SupportTicketResponse;
+import com.bookflow.backend.support.dto.SubmitSupportTicketFeedbackRequest;
 import com.bookflow.backend.support.dto.TechnicianUpdateSupportTicketRequest;
 import com.bookflow.backend.support.dto.UpdateSupportTicketStatusRequest;
 import com.bookflow.backend.support.service.SupportTicketService;
@@ -68,6 +69,15 @@ public class SupportTicketController {
             @AuthenticationPrincipal User user,
             @PathVariable String ticketId) {
         return supportTicketService.myTicket(user, ticketId);
+    }
+
+    @PostMapping("/me/{ticketId}/feedback")
+    @PreAuthorize("hasRole('STUDENT')")
+    public SupportTicketResponse submitFeedback(
+            @AuthenticationPrincipal User user,
+            @PathVariable String ticketId,
+            @RequestBody SubmitSupportTicketFeedbackRequest request) {
+        return supportTicketService.submitFeedback(user, ticketId, request);
     }
 
     @PostMapping("/me/{ticketId}/comments")
@@ -117,13 +127,13 @@ public class SupportTicketController {
     }
 
     @GetMapping("/technician/me")
-    @PreAuthorize("hasRole('TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('TECHNICIAN','STAFF_MEMBER')")
     public List<SupportTicketResponse> technicianTickets(@AuthenticationPrincipal User technician) {
         return supportTicketService.technicianTickets(technician);
     }
 
     @GetMapping("/technician/me/{ticketId}")
-    @PreAuthorize("hasRole('TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('TECHNICIAN','STAFF_MEMBER')")
     public SupportTicketResponse technicianTicket(
             @AuthenticationPrincipal User technician,
             @PathVariable String ticketId) {
@@ -131,7 +141,7 @@ public class SupportTicketController {
     }
 
     @PatchMapping("/technician/me/{ticketId}")
-    @PreAuthorize("hasRole('TECHNICIAN')")
+    @PreAuthorize("hasAnyRole('TECHNICIAN','STAFF_MEMBER')")
     public SupportTicketResponse technicianUpdateTicket(
             @AuthenticationPrincipal User technician,
             @PathVariable String ticketId,
