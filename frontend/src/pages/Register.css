@@ -306,6 +306,13 @@
   font-size: 0.9rem;
 }
 
+.register-inline-error {
+  margin: 0;
+  color: #b93a4f;
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+
 .register-submit-btn {
   margin-top: 4px;
   width: 100%;
