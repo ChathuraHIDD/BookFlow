@@ -320,6 +320,9 @@ public class FacilitiesService {
     }
 
         private ClassroomResponse toClassroomResponse(Classroom classroom, LocalDate date, LocalTime startTime, LocalTime endTime) {
+            String operationalStatus = classroom.getOperationalStatus() != null
+                    ? classroom.getOperationalStatus().name()
+                    : "AVAILABLE";
         String status = classroom.getOperationalStatus() == FacilityOperationalStatus.UNAVAILABLE
             ? "UNAVAILABLE"
             : effectiveBookingState(classroom, date, startTime, endTime);
@@ -330,6 +333,7 @@ public class FacilitiesService {
                 classroom.getType(),
                 classroom.getEquipment(),
                 status,
+                operationalStatus,
             classroom.isSeatSelectionEnabled(),
             bookedSeatsForSlot(classroom, date, startTime, endTime));
     }

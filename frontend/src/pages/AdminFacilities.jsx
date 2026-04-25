@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Bar,
   BarChart,
@@ -24,7 +25,6 @@ import {
   fetchAdminFacilityBookings,
   fetchAdminFacilityReports,
   fetchAdminFloorClassrooms,
-  updateAdminBookingStatus,
   updateAdminBuildingFloors,
   updateAdminClassroomStatus,
 } from "../services/facilities";
@@ -69,40 +69,8 @@ function formatDisplayLabel(value) {
     .join(" ");
 }
 
-function formatDate(value) {
-  if (!value) {
-    return "Not set";
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  return parsed.toLocaleDateString([], {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function formatTime(value) {
-  if (!value) {
-    return "Not set";
-  }
-
-  const parsed = new Date(`1970-01-01T${value}`);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  return parsed.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 function AdminFacilities() {
+  const navigate = useNavigate();
   const [reports, setReports] = useState(null);
   const [buildings, setBuildings] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -110,7 +78,6 @@ function AdminFacilities() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [setupExpanded, setSetupExpanded] = useState(false);
-  const [bookingActionId, setBookingActionId] = useState("");
   const [facilityActionId, setFacilityActionId] = useState("");
   const [facilityOverrides, setFacilityOverrides] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -498,23 +465,6 @@ function AdminFacilities() {
     }
   };
 
-  const handleBookingDecision = async (bookingId, status) => {
-    try {
-      setError("");
-      setBookingActionId(bookingId);
-      await updateAdminBookingStatus(
-        bookingId,
-        status,
-        status === "REJECTED" ? "Rejected from the facility control panel" : "Approved from the facility control panel"
-      );
-      await loadFacilities();
-    } catch (err) {
-      setError(readApiError(err));
-    } finally {
-      setBookingActionId("");
-    }
-  };
-
   const handleFacilityStatus = async (facility, nextStatus) => {
     try {
       setError("");
@@ -563,6 +513,9 @@ function AdminFacilities() {
             <div className="admin-facility-banner-actions">
               <button type="button" className="solid-btn" onClick={() => setSetupExpanded((current) => !current)}>
                 {setupExpanded ? "Hide Facility Setup" : "Add New Facility"}
+              </button>
+              <button type="button" className="ghost-btn" onClick={() => navigate("/admin/facilities/maintenance")}>
+                Open Maintenance Console
               </button>
               <button type="button" className="ghost-btn" onClick={loadFacilities}>
                 Refresh Data
@@ -1063,132 +1016,6 @@ function AdminFacilities() {
               </div>
             )}
           </section>
-
-          <aside className="admin-facilities-stack">
-            <article className="admin-facility-panel">
-              <div className="admin-facility-panel-head">
-                <div>
-                  <p className="student-modern-section-label">Pending Requests</p>
-                  <h3>Review booking approvals</h3>
-                </div>
-              </div>
-
-              <div className="admin-facility-pending-list">
-                {pendingBookings.length ? (
-                  pendingBookings.map((booking) => {
-                    const isBusy = bookingActionId === booking.id;
-
-                    return (
-                      <article key={booking.id} className="admin-facility-request-card">
-                        <div className="admin-facility-request-head">
-                          <div>
-                            <strong>{booking.roomNumber}</strong>
-                            <div className="admin-facility-request-meta">
-                              {booking.buildingName} · Floor {booking.floorNumber}
-                            </div>
-                          </div>
-                          <span className="admin-facility-status-badge admin-facility-status-booked">Pending</span>
-                        </div>
-
-                        <div className="admin-facility-request-meta">
-                          <div>{booking.requestedByName || "Unknown requester"}</div>
-                          <div>
-                            {formatDate(booking.bookingDate)} · {formatTime(booking.startTime)} to {formatTime(booking.endTime)}
-                          </div>
-                          <div>Purpose: {booking.purpose || "General booking"}</div>
-                          <div>Priority: {formatDisplayLabel(booking.priority || "NORMAL")}</div>
-                          {booking.decisionNote ? <div>Note: {booking.decisionNote}</div> : null}
-                        </div>
-
-                        <div className="admin-facility-request-actions">
-                          <button
-                            type="button"
-                            className="solid-btn"
-                            disabled={isBusy}
-                            onClick={() => handleBookingDecision(booking.id, "APPROVED")}
-                          >
-                            {isBusy ? "Approving..." : "Approve"}
-                          </button>
-                          <button
-                            type="button"
-                            className="ghost-btn"
-                            disabled={isBusy}
-                            onClick={() => handleBookingDecision(booking.id, "REJECTED")}
-                          >
-                            {isBusy ? "Rejecting..." : "Reject"}
-                          </button>
-                        </div>
-                      </article>
-                    );
-                  })
-                ) : (
-                  <div className="admin-facility-empty-state">
-                    <p>No pending booking requests at the moment.</p>
-                  </div>
-                )}
-              </div>
-            </article>
-
-            <article className="admin-facility-panel">
-              <div className="admin-facility-panel-head">
-                <div>
-                  <p className="student-modern-section-label">Maintenance</p>
-                  <h3>Maintenance management</h3>
-                </div>
-              </div>
-
-              <div className="admin-facility-maintenance-list">
-                {maintenanceFacilities.length ? (
-                  maintenanceFacilities.map((facility) => {
-                    const isBusy = facilityActionId === facility.id;
-
-                    return (
-                      <article key={facility.id} className="admin-facility-maintenance-card">
-                        <div className="admin-facility-maintenance-head">
-                          <div>
-                            <strong>{facility.name}</strong>
-                            <div className="admin-facility-maintenance-meta">
-                              {facility.buildingName} · Floor {facility.floorNumber} · {facility.category}
-                            </div>
-                          </div>
-                          <span className={`admin-facility-status-badge admin-facility-status-${facility.displayStatus.toLowerCase()}`}>
-                            {formatDisplayLabel(facility.displayStatus)}
-                          </span>
-                        </div>
-
-                        <div className="admin-facility-maintenance-meta">
-                          Capacity: {facility.capacity} seats
-                        </div>
-
-                        <div className="admin-facility-maintenance-actions">
-                          <button
-                            type="button"
-                            className="solid-btn"
-                            disabled={isBusy}
-                            onClick={() => handleFacilityStatus(facility, "AVAILABLE")}
-                          >
-                            {isBusy ? "Saving..." : "Mark Available"}
-                          </button>
-                          <button
-                            type="button"
-                            className="ghost-btn"
-                            disabled={isBusy}
-                            onClick={() => handleFacilityStatus(facility, "CLOSED")}
-                          >
-                            {isBusy ? "Saving..." : "Close Facility"}
-                          </button>
-                        </div>
-                      </article>
-                    );
-                  })
-                ) : (
-                  <div className="admin-facility-empty-state">
-                    <p>No facilities are currently marked for maintenance.</p>
-                  </div>
-                )}
-              </div>
-            </article>
-          </aside>
         </div>
 
         {loading ? <p className="helper-text">Refreshing admin facility data...</p> : null}
