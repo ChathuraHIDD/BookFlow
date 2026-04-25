@@ -4,6 +4,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/useAuth";
 import AdminProfile from "./pages/AdminProfile";
 import AdminFacilities from "./pages/AdminFacilities";
+import AdminFacilityMaintenance from "./pages/AdminFacilityMaintenance";
 import AdminNotifications from "./pages/AdminNotifications";
 import AdminBookingManagement from "./pages/AdminBookingManagement";
 import AdminTicketManagement from "./pages/AdminTicketManagement";
@@ -189,6 +190,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <AdminFacilities />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/facilities/maintenance"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminFacilityMaintenance />
           </ProtectedRoute>
         }
       />

@@ -9,6 +9,7 @@ public record ClassroomResponse(
         String type,
         List<String> equipment,
         String status,
+        String operationalStatus,
         boolean seatSelectionEnabled,
         List<Integer> bookedSeats) {
 }
