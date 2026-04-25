@@ -544,6 +544,250 @@
     grid-template-columns: 1fr;
   }
 }
+
+.admin-facility-chart-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.admin-facility-chart-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f6;
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(59, 78, 119, 0.08);
+}
+
+.admin-facility-chart-card-wide {
+  grid-column: span 2;
+}
+
+.admin-facility-chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #edf2fb;
+  padding-bottom: 8px;
+}
+
+.admin-facility-chart-head h4 {
+  margin: 0;
+  color: #24416e;
+  font-size: 1.08rem;
+  line-height: 1.2;
+}
+
+.admin-facility-chart-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-facility-chart-meta-row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f6f8fc;
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: #4a5f82;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.admin-facility-chart-meta-row strong {
+  color: #203a64;
+}
+
+.admin-facility-chart-body {
+  min-height: 210px;
+}
+
+.admin-facility-chart-body-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 0.9fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.admin-facility-chart-canvas {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.admin-facility-chart-ring-value {
+  position: absolute;
+  margin: 0;
+  color: #2e486f;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.admin-facility-chart-kpi-list {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-facility-chart-kpi-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 4px;
+  color: #496389;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.admin-facility-chart-kpi-item strong {
+  color: #243e68;
+}
+
+@media (max-width: 1280px) {
+  .admin-facility-chart-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-facility-chart-card-wide {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-facility-chart-board {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-facility-chart-card-wide {
+    grid-column: auto;
+  }
+
+  .admin-facility-chart-body-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Final override for compact analytics cards */
+.admin-facility-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(170px, 1fr));
+  gap: 14px;
+}
+
+.admin-facility-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-radius: 14px;
+  padding: 14px 16px;
+  border: 0;
+  min-height: 96px;
+  box-shadow: 0 10px 24px rgba(45, 61, 104, 0.14);
+  background: linear-gradient(135deg, var(--facility-card-from, #5c8dea), var(--facility-card-to, #8fb2ff));
+}
+
+.admin-facility-stat-card::after {
+  display: none;
+}
+
+.admin-facility-stat-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(2px);
+}
+
+.admin-facility-stat-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-facility-stat-card .metric-number {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.8rem;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.admin-facility-stat-card h3 {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.admin-facility-stat-card-total {
+  --facility-card-from: #7f63dd;
+  --facility-card-to: #a58de9;
+}
+
+.admin-facility-stat-card-available {
+  --facility-card-from: #2c7ae8;
+  --facility-card-to: #4f97ff;
+}
+
+.admin-facility-stat-card-booked {
+  --facility-card-from: #f1606b;
+  --facility-card-to: #f58e96;
+}
+
+.admin-facility-stat-card-pending {
+  --facility-card-from: #f08d48;
+  --facility-card-to: #f3ad6f;
+}
+
+.admin-facility-stat-card-maintenance {
+  --facility-card-from: #9d5ca8;
+  --facility-card-to: #c88fcf;
+}
+
+@media (max-width: 1180px) {
+  .admin-facility-stats-grid {
+    grid-template-columns: repeat(3, minmax(170px, 1fr));
+  }
+}
+
+@media (max-width: 780px) {
+  .admin-facility-stats-grid {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+    gap: 10px;
+  }
+
+  .admin-facility-stat-card {
+    min-height: 84px;
+    padding: 12px;
+  }
+
+  .admin-facility-stat-card .metric-number {
+    font-size: 1.4rem;
+  }
+
+  .admin-facility-stat-card h3 {
+    font-size: 0.76rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .admin-facility-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
 /* Scoped admin facilities dashboard styles */
 
 .admin-facilities-page .app-surface-card {
