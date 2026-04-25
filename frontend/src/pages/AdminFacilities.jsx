@@ -102,30 +102,6 @@ function formatTime(value) {
   });
 }
 
-function parseHoursBetween(startTime, endTime) {
-  if (!startTime || !endTime) {
-    return 1;
-  }
-
-  const [startHour = 0, startMinute = 0] = String(startTime).split(":").map(Number);
-  const [endHour = 0, endMinute = 0] = String(endTime).split(":").map(Number);
-
-  const startTotalMinutes = startHour * 60 + startMinute;
-  const endTotalMinutes = endHour * 60 + endMinute;
-  const diffMinutes = Math.max(endTotalMinutes - startTotalMinutes, 30);
-
-  return Number((diffMinutes / 60).toFixed(2));
-}
-
-function toMonthKey(value) {
-  const date = value ? new Date(value) : new Date();
-  if (Number.isNaN(date.getTime())) {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  }
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-
 function AdminFacilities() {
   const [reports, setReports] = useState(null);
   const [buildings, setBuildings] = useState([]);
@@ -341,16 +317,6 @@ function AdminFacilities() {
     mint: "#A9DFC9",
   };
 
-  const bookingStatusCounts = useMemo(
-    () =>
-      bookings.reduce((accumulator, booking) => {
-        const status = String(booking.status || "PENDING").toUpperCase();
-        accumulator[status] = (accumulator[status] || 0) + 1;
-        return accumulator;
-      }, {}),
-    [bookings]
-  );
-
   const pmStatusChartData = useMemo(() => {
     const totalClassrooms = Number(reports?.totalClassrooms || facilityRows.length || 0);
     const available = Number(facilityStatusCounts.AVAILABLE || 0);
@@ -375,128 +341,93 @@ function AdminFacilities() {
         { label: "Available", value: available, tint: "#d9efc8" },
         { label: "Booked", value: booked, tint: "#dfe7fc" },
         { label: "Maintenance", value: maintenance, tint: "#fce6d2" },
-        { label: "Pending Bookings", value: Number(reports?.pendingBookings || pendingBookings.length), tint: "#d7f0ec" },
+        { label: "Unavailable", value: Number(reports?.unavailableClassrooms || maintenance + closed), tint: "#d7f0ec" },
         { label: "Closed", value: closed, tint: "#f2dde9" },
       ],
     };
-  }, [facilityRows.length, facilityStatusCounts, pendingBookings.length, reports]);
+  }, [facilityRows.length, facilityStatusCounts, reports]);
 
-  const bookingStatusShareData = useMemo(() => {
-    const statuses = ["APPROVED", "PENDING", "REJECTED", "CANCELLED"];
-    const colors = {
-      APPROVED: chartPalette.blue,
-      PENDING: chartPalette.amber,
-      REJECTED: chartPalette.coral,
-      CANCELLED: chartPalette.slate,
-    };
-
-    return statuses
-      .map((status) => ({
-        name: formatDisplayLabel(status),
-        value: Number(bookingStatusCounts[status] || 0),
-        color: colors[status],
-      }))
-      .filter((item) => item.value > 0);
-  }, [bookingStatusCounts]);
-
-  const monthlyTrendData = useMemo(() => {
-    const formatter = new Intl.DateTimeFormat([], { month: "short" });
-    const months = Array.from({ length: 8 }, (_, index) => {
-      const date = new Date();
-      date.setMonth(date.getMonth() - (7 - index));
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      return {
-        key,
-        month: formatter.format(date),
-        approved: 0,
-        pending: 0,
-      };
-    });
-
-    const monthMap = new Map(months.map((entry) => [entry.key, entry]));
-
-    bookings.forEach((booking) => {
-      const key = toMonthKey(booking.createdAt || booking.bookingDate);
-      const target = monthMap.get(key);
-      if (!target) {
-        return;
-      }
-
-      const status = String(booking.status || "").toUpperCase();
-      if (status === "APPROVED") {
-        target.approved += 1;
-      }
-      if (status === "PENDING") {
-        target.pending += 1;
-      }
-    });
-
-    return months;
-  }, [bookings]);
-
-  const breakdownStatusData = useMemo(() => {
-    const formatter = new Intl.DateTimeFormat([], { month: "short" });
-    const months = Array.from({ length: 8 }, (_, index) => {
-      const date = new Date();
-      date.setMonth(date.getMonth() - (7 - index));
-      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-      return {
-        key,
-        month: formatter.format(date),
-        under1: 0,
-        under2: 0,
-        over2: 0,
-        total: 0,
-      };
-    });
-
-    const monthMap = new Map(months.map((entry) => [entry.key, entry]));
-
-    bookings.forEach((booking) => {
-      const key = toMonthKey(booking.createdAt || booking.bookingDate);
-      const target = monthMap.get(key);
-      if (!target) {
-        return;
-      }
-
-      const duration = parseHoursBetween(booking.startTime, booking.endTime);
-      if (duration < 1) {
-        target.under1 += 1;
-      } else if (duration < 2) {
-        target.under2 += 1;
-      } else {
-        target.over2 += 1;
-      }
-
-      target.total += 1;
-    });
-
-    return months;
-  }, [bookings]);
-
-  const contributionData = useMemo(() => {
-    const byBuilding = bookings.reduce((accumulator, booking) => {
-      const key = booking.buildingName || "Unknown";
-      const nextValue = accumulator[key] || { building: key, breakdownHours: 0, requests: 0 };
-      nextValue.breakdownHours += parseHoursBetween(booking.startTime, booking.endTime);
-      nextValue.requests += 1;
-      accumulator[key] = nextValue;
+  const facilitiesByBuildingData = useMemo(() => {
+    const byBuilding = facilityRows.reduce((accumulator, facility) => {
+      const key = facility.buildingName || "Unknown";
+      accumulator[key] = (accumulator[key] || 0) + 1;
       return accumulator;
     }, {});
 
-    const rows = Object.values(byBuilding)
-      .sort((left, right) => right.breakdownHours - left.breakdownHours)
+    const colors = [chartPalette.blue, chartPalette.aqua, chartPalette.violet, chartPalette.amber, chartPalette.coral, chartPalette.slate];
+    return Object.entries(byBuilding)
+      .map(([name, value], index) => ({
+        name,
+        value,
+        color: colors[index % colors.length],
+      }))
+      .sort((left, right) => right.value - left.value);
+  }, [facilityRows]);
+
+  const typeCapacityData = useMemo(() => {
+    const byType = facilityRows.reduce((accumulator, facility) => {
+      const key = facility.category || "Facility";
+      if (!accumulator[key]) {
+        accumulator[key] = { type: key, rooms: 0, capacity: 0 };
+      }
+
+      accumulator[key].rooms += 1;
+      accumulator[key].capacity += Number(facility.capacity || 0);
+      return accumulator;
+    }, {});
+
+    return Object.values(byType)
+      .sort((left, right) => right.rooms - left.rooms)
       .slice(0, 8);
+  }, [facilityRows]);
 
-    const totalRequests = rows.reduce((sum, row) => sum + row.requests, 0) || 1;
+  const floorDistributionData = useMemo(() => {
+    const byFloor = facilityRows.reduce((accumulator, facility) => {
+      const key = `${facility.buildingCode || facility.buildingName || "BLD"}-F${facility.floorNumber}`;
+      if (!accumulator[key]) {
+        accumulator[key] = {
+          floor: key,
+          rooms: 0,
+          totalCapacity: 0,
+        };
+      }
 
-    return rows.map((row, index) => ({
-      line: row.building,
-      breakdownHours: Number(row.breakdownHours.toFixed(1)),
-      contribution: Number(((row.requests / totalRequests) * 100).toFixed(1)),
-      building: row.building,
+      accumulator[key].rooms += 1;
+      accumulator[key].totalCapacity += Number(facility.capacity || 0);
+      return accumulator;
+    }, {});
+
+    return Object.values(byFloor)
+      .map((row) => ({
+        ...row,
+        avgCapacity: row.rooms ? Number((row.totalCapacity / row.rooms).toFixed(1)) : 0,
+      }))
+      .sort((left, right) => right.rooms - left.rooms)
+      .slice(0, 10);
+  }, [facilityRows]);
+
+  const capacityBandData = useMemo(() => {
+    const bands = [
+      { label: "0-30", min: 0, max: 30, count: 0 },
+      { label: "31-60", min: 31, max: 60, count: 0 },
+      { label: "61-120", min: 61, max: 120, count: 0 },
+      { label: "121+", min: 121, max: Number.POSITIVE_INFINITY, count: 0 },
+    ];
+
+    facilityRows.forEach((facility) => {
+      const capacity = Number(facility.capacity || 0);
+      const matchedBand = bands.find((band) => capacity >= band.min && capacity <= band.max);
+      if (matchedBand) {
+        matchedBand.count += 1;
+      }
+    });
+
+    const total = facilityRows.length || 1;
+    return bands.map((band) => ({
+      ...band,
+      percentage: Number(((band.count / total) * 100).toFixed(1)),
     }));
-  }, [bookings]);
+  }, [facilityRows]);
 
   const totalVisibleFacilities = filteredFacilities.length;
   const activeFiltersCount = [searchTerm, buildingFilter, typeFilter, statusFilter, floorFilter].filter((value) => value && value !== "ALL").length;
@@ -722,24 +653,24 @@ function AdminFacilities() {
 
           <article className="admin-facility-chart-card">
             <div className="admin-facility-chart-head">
-              <h4>Booking Status Share</h4>
+              <h4>Facilities by Building</h4>
             </div>
             <div className="admin-facility-chart-meta-row">
-              <span>Total Bookings <strong>{reports?.totalBookings ?? bookings.length}</strong></span>
-              <span>Pending Bookings <strong>{reports?.pendingBookings ?? pendingBookings.length}</strong></span>
+              <span>Total Buildings <strong>{reports?.totalBuildings ?? buildings.length}</strong></span>
+              <span>Active Buildings <strong>{facilitiesByBuildingData.length}</strong></span>
             </div>
             <div className="admin-facility-chart-body">
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie
-                    data={bookingStatusShareData}
+                    data={facilitiesByBuildingData}
                     dataKey="value"
                     nameKey="name"
                     cx="42%"
                     cy="52%"
                     outerRadius={84}
                   >
-                    {bookingStatusShareData.map((entry) => (
+                    {facilitiesByBuildingData.map((entry) => (
                       <Cell key={entry.name} fill={entry.color} />
                     ))}
                   </Pie>
@@ -752,18 +683,18 @@ function AdminFacilities() {
 
           <article className="admin-facility-chart-card">
             <div className="admin-facility-chart-head">
-              <h4>Monthly Booking Trend</h4>
+              <h4>Capacity by Facility Type</h4>
             </div>
             <div className="admin-facility-chart-body">
               <ResponsiveContainer width="100%" height={230}>
-                <BarChart data={monthlyTrendData} barGap={6}>
+                <BarChart data={typeCapacityData} barGap={6}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5ebf7" />
-                  <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                  <XAxis dataKey="type" tickLine={false} axisLine={false} />
                   <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="approved" name="Approved" fill={chartPalette.aqua} radius={[5, 5, 0, 0]} />
-                  <Bar dataKey="pending" name="Pending" fill={chartPalette.violet} radius={[5, 5, 0, 0]} />
+                  <Bar dataKey="rooms" name="Rooms" fill={chartPalette.aqua} radius={[5, 5, 0, 0]} />
+                  <Bar dataKey="capacity" name="Seats" fill={chartPalette.violet} radius={[5, 5, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -771,20 +702,19 @@ function AdminFacilities() {
 
           <article className="admin-facility-chart-card admin-facility-chart-card-wide">
             <div className="admin-facility-chart-head">
-              <h4>Breakdown Status</h4>
+              <h4>Floor Distribution</h4>
             </div>
             <div className="admin-facility-chart-body">
               <ResponsiveContainer width="100%" height={250}>
-                <ComposedChart data={breakdownStatusData}>
+                <ComposedChart data={floorDistributionData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7edf8" />
-                  <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                  <XAxis dataKey="floor" tickLine={false} axisLine={false} />
                   <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
+                  <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} allowDecimals={false} />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="under1" name="< 1" stackId="a" fill="#9ad9cb" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="under2" name="< 2" stackId="a" fill="#b987dc" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="over2" name="> 2" stackId="a" fill="#f1bb4c" radius={[4, 4, 0, 0]} />
-                  <Line type="monotone" dataKey="total" name="Total" stroke="#c74f4f" strokeWidth={2} dot={{ r: 2 }} />
+                  <Bar dataKey="rooms" name="Rooms" fill="#9ad9cb" radius={[4, 4, 0, 0]} />
+                  <Line yAxisId="right" type="monotone" dataKey="avgCapacity" name="Avg Capacity" stroke="#c74f4f" strokeWidth={2} dot={{ r: 2 }} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
@@ -792,19 +722,19 @@ function AdminFacilities() {
 
           <article className="admin-facility-chart-card admin-facility-chart-card-wide">
             <div className="admin-facility-chart-head">
-              <h4>Contribution</h4>
+              <h4>Capacity Bands</h4>
             </div>
             <div className="admin-facility-chart-body">
               <ResponsiveContainer width="100%" height={250}>
-                <ComposedChart data={contributionData}>
+                <ComposedChart data={capacityBandData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7edf8" />
-                  <XAxis dataKey="line" tickLine={false} axisLine={false} />
+                  <XAxis dataKey="label" tickLine={false} axisLine={false} />
                   <YAxis yAxisId="left" tickLine={false} axisLine={false} allowDecimals={false} />
                   <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} domain={[0, 100]} />
-                  <Tooltip formatter={(value, name, item) => (name === "Breakdown hrs" ? value : `${value}%`)} labelFormatter={(_, payload) => payload?.[0]?.payload?.building || ""} />
+                  <Tooltip formatter={(value, name) => (name === "Share" ? `${value}%` : value)} />
                   <Legend />
-                  <Bar yAxisId="left" dataKey="breakdownHours" name="Breakdown hrs" fill="#f03f80" radius={[5, 5, 0, 0]} />
-                  <Line yAxisId="right" type="monotone" dataKey="contribution" name="% Contribution" stroke="#3f77d2" strokeWidth={2} dot={{ r: 3 }} />
+                  <Bar yAxisId="left" dataKey="count" name="Rooms" fill="#f03f80" radius={[5, 5, 0, 0]} />
+                  <Line yAxisId="right" type="monotone" dataKey="percentage" name="Share" stroke="#3f77d2" strokeWidth={2} dot={{ r: 3 }} />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
