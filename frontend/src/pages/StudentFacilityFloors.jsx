@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
 import StudentPortalShell from "../components/StudentPortalShell";
@@ -32,13 +32,46 @@ function StudentFacilityFloors() {
     loadFloors();
   }, [buildingId]);
 
+  const totalClassrooms = useMemo(
+    () => floors.reduce((sum, floor) => sum + (floor.classroomCount || 0), 0),
+    [floors]
+  );
+
+  const busiestFloorNumber = useMemo(() => {
+    if (!floors.length) {
+      return null;
+    }
+
+    return floors.reduce((bestFloor, currentFloor) => {
+      if ((currentFloor.classroomCount || 0) > (bestFloor.classroomCount || 0)) {
+        return currentFloor;
+      }
+      return bestFloor;
+    }, floors[0]).floorNumber;
+  }, [floors]);
+
   return (
     <StudentPortalShell activeKey="facilities">
-      <section className="student-modern-hero-card student-facilities-hero">
+      <section className="student-modern-hero-card student-facilities-hero student-floor-page-hero">
         <div className="student-modern-hero-copy">
           <p className="student-modern-section-label">Floors</p>
           <h2>{buildingName}</h2>
-          <p>Select a floor to see all classrooms available for booking.</p>
+          <p>Select a floor to open the available classrooms for booking. The layout below highlights where to start and how many rooms are available on each level.</p>
+        </div>
+
+        <div className="student-floor-page-hero-stats" aria-label="Building floor summary">
+          <article className="student-floor-page-stat">
+            <span>Total floors</span>
+            <strong>{floors.length}</strong>
+          </article>
+          <article className="student-floor-page-stat">
+            <span>Total classrooms</span>
+            <strong>{totalClassrooms}</strong>
+          </article>
+          <article className="student-floor-page-stat">
+            <span>Recommended start</span>
+            <strong>{busiestFloorNumber === null ? "Not available" : `Floor ${busiestFloorNumber}`}</strong>
+          </article>
         </div>
       </section>
 
@@ -54,21 +87,59 @@ function StudentFacilityFloors() {
             <div>
               <p className="student-modern-section-label">Floors</p>
               <h3>Choose a Floor</h3>
+              <p className="helper-text student-floor-page-intro">
+                Pick the floor that matches your classroom needs. Floors with more rooms are easier starting points when you want faster booking.
+              </p>
             </div>
           </div>
 
           {loading ? (
             <p className="helper-text">Loading floors...</p>
+          ) : floors.length === 0 ? (
+            <div className="student-floor-page-empty">
+              <strong>No floors are available for this building yet.</strong>
+              <p>Try another building or ask an administrator to add floor and classroom details.</p>
+              <Link className="solid-btn" to="/student/facilities">Browse Buildings</Link>
+            </div>
           ) : (
             <div className="student-floor-card-grid">
-              {floors.map((floor) => (
+              {floors.map((floor, index) => (
                 <Link
                   key={floor.floorNumber}
-                  className="student-floor-card"
+                  className="student-floor-card student-floor-card-pro"
                   to={`/student/facilities/buildings/${buildingId}/floors/${floor.floorNumber}`}
                 >
-                  <strong>{floor.label}</strong>
-                  <span>{floor.classroomCount} classrooms</span>
+                  <div className="student-floor-card-topline">
+                    <span className="student-floor-card-badge">Floor {floor.floorNumber}</span>
+                    {floor.floorNumber === busiestFloorNumber ? (
+                      <span className="student-floor-card-chip">Recommended</span>
+                    ) : null}
+                  </div>
+
+                  <div className="student-floor-card-headline">
+                    <strong>{floor.label}</strong>
+                    <p>
+                      {floor.classroomCount > 0
+                        ? "Open this floor to view classroom availability and continue to booking."
+                        : "This floor is listed, but no classrooms are available yet."}
+                    </p>
+                  </div>
+
+                  <div className="student-floor-card-metrics">
+                    <div>
+                      <span>Classrooms</span>
+                      <strong>{floor.classroomCount}</strong>
+                    </div>
+                    <div>
+                      <span>Priority</span>
+                      <strong>{index === 0 ? "Quick access" : "Standard"}</strong>
+                    </div>
+                  </div>
+
+                  <div className="student-floor-card-footer">
+                    <span>{floor.classroomCount > 0 ? "View classrooms" : "Details only"}</span>
+                    <span aria-hidden="true">→</span>
+                  </div>
                 </Link>
               ))}
             </div>

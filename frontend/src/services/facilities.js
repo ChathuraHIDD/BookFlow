@@ -10,9 +10,13 @@ export async function fetchBuildingFloors(buildingId) {
   return data;
 }
 
-export async function fetchFloorClassrooms(buildingId, floorNumber, date) {
+export async function fetchFloorClassrooms(buildingId, floorNumber, date, startTime, endTime) {
   const { data } = await api.get(`/student/facilities/buildings/${buildingId}/floors/${floorNumber}/classrooms`, {
-    params: date ? { date } : {},
+    params: {
+      ...(date ? { date } : {}),
+      ...(startTime ? { startTime } : {}),
+      ...(endTime ? { endTime } : {}),
+    },
   });
   return data;
 }
@@ -71,8 +75,17 @@ export async function fetchAdminFacilityBookings() {
   return data;
 }
 
-export async function updateAdminBookingStatus(bookingId, status) {
-  const { data } = await api.patch(`/admin/facilities/bookings/${bookingId}`, { status });
+export async function updateAdminBookingStatus(bookingId, status, reason) {
+  const payload = {
+    status,
+    ...(reason ? { reason } : {}),
+  };
+  const { data } = await api.patch(`/admin/facilities/bookings/${bookingId}`, payload);
+  return data;
+}
+
+export async function fetchAdminFacilityBookingAudit(bookingId) {
+  const { data } = await api.get(`/admin/facilities/bookings/${bookingId}/audit`);
   return data;
 }
 

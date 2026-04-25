@@ -11,6 +11,8 @@ import com.bookflow.backend.facilities.model.FacilityBooking;
 public interface FacilityBookingRepository extends MongoRepository<FacilityBooking, String> {
     List<FacilityBooking> findByUserIdOrderByCreatedAtDesc(String userId);
 
+    long countByUserIdAndBookingDateBetween(String userId, LocalDate startDate, LocalDate endDate);
+
     List<FacilityBooking> findByClassroomIdAndBookingDate(String classroomId, LocalDate bookingDate);
 
     List<FacilityBooking> findByStatusInOrderByCreatedAtDesc(List<BookingStatus> statuses);

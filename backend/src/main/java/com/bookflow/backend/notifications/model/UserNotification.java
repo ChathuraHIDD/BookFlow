@@ -21,6 +21,8 @@ public class UserNotification {
 
     private String category;
 
+    private String actionUrl;
+
     private boolean read;
 
     private Instant readAt;
@@ -65,6 +67,14 @@ public class UserNotification {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public String getActionUrl() {
+        return actionUrl;
+    }
+
+    public void setActionUrl(String actionUrl) {
+        this.actionUrl = actionUrl;
     }
 
     public boolean isRead() {

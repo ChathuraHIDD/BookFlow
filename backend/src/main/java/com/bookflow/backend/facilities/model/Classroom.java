@@ -29,6 +29,8 @@ public class Classroom {
 
     private List<String> equipment = new ArrayList<>();
 
+    private boolean seatSelectionEnabled = true;
+
     private FacilityOperationalStatus operationalStatus = FacilityOperationalStatus.AVAILABLE;
 
     private Instant createdAt;
@@ -95,6 +97,14 @@ public class Classroom {
 
     public void setEquipment(List<String> equipment) {
         this.equipment = equipment;
+    }
+
+    public boolean isSeatSelectionEnabled() {
+        return seatSelectionEnabled;
+    }
+
+    public void setSeatSelectionEnabled(boolean seatSelectionEnabled) {
+        this.seatSelectionEnabled = seatSelectionEnabled;
     }
 
     public FacilityOperationalStatus getOperationalStatus() {

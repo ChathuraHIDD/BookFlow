@@ -28,19 +28,19 @@ public class NotificationController {
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasAnyRole('STUDENT','STAFF_MEMBER','ADMIN')")
+    @PreAuthorize("hasAnyRole('STUDENT','STAFF_MEMBER','ADMIN','TECHNICIAN')")
     public List<NotificationResponse> myNotifications(@AuthenticationPrincipal User user) {
         return notificationService.myNotifications(user);
     }
 
     @GetMapping("/me/unread-count")
-    @PreAuthorize("hasAnyRole('STUDENT','STAFF_MEMBER','ADMIN')")
+    @PreAuthorize("hasAnyRole('STUDENT','STAFF_MEMBER','ADMIN','TECHNICIAN')")
     public Map<String, Long> myUnreadCount(@AuthenticationPrincipal User user) {
         return Map.of("count", notificationService.myUnreadCount(user));
     }
 
     @PatchMapping("/me/{notificationId}/read")
-    @PreAuthorize("hasAnyRole('STUDENT','STAFF_MEMBER','ADMIN')")
+    @PreAuthorize("hasAnyRole('STUDENT','STAFF_MEMBER','ADMIN','TECHNICIAN')")
     public NotificationResponse markAsRead(
             @AuthenticationPrincipal User user,
             @PathVariable String notificationId) {
@@ -48,7 +48,7 @@ public class NotificationController {
     }
 
     @DeleteMapping("/me/{notificationId}")
-    @PreAuthorize("hasAnyRole('STUDENT','STAFF_MEMBER','ADMIN')")
+    @PreAuthorize("hasAnyRole('STUDENT','STAFF_MEMBER','ADMIN','TECHNICIAN')")
     public MessageResponse deleteNotification(
             @AuthenticationPrincipal User user,
             @PathVariable String notificationId) {
@@ -56,7 +56,7 @@ public class NotificationController {
     }
 
     @DeleteMapping("/me")
-    @PreAuthorize("hasAnyRole('STUDENT','STAFF_MEMBER','ADMIN')")
+    @PreAuthorize("hasAnyRole('STUDENT','STAFF_MEMBER','ADMIN','TECHNICIAN')")
     public MessageResponse clearMyNotifications(@AuthenticationPrincipal User user) {
         return notificationService.clearAll(user);
     }

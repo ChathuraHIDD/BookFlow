@@ -1,17 +1,37 @@
+import { useEffect, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 
 import StudentPortalShell from "../components/StudentPortalShell";
-import { facilityCatalog, facilityCategoryGrid } from "../data/facilityCatalog";
+import { facilityCategoryGrid } from "../data/facilityCatalog";
+import { fetchAllResources } from "../services/resources";
 
 function StudentFacilityCategoryDetail() {
   const { categorySlug } = useParams();
+  const [facilities, setFacilities] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   const category = facilityCategoryGrid.find((item) => item.slug === categorySlug);
+
+  useEffect(() => {
+    const loadResources = async () => {
+      try {
+        const allResources = await fetchAllResources();
+        if (category) {
+          const filtered = allResources.filter((item) => category.sourceCategories.includes(item.category));
+          setFacilities(filtered);
+        }
+      } catch (err) {
+        console.error("Failed to load resources:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadResources();
+  }, [category]);
 
   if (!category) {
     return <Navigate to="/student/facilities" replace />;
   }
-
-  const facilities = facilityCatalog.filter((item) => category.sourceCategories.includes(item.category));
 
   return (
     <StudentPortalShell activeKey="facilities">
@@ -37,16 +57,22 @@ function StudentFacilityCategoryDetail() {
           </div>
 
           <div className="student-facility-catalog-grid">
-            {facilities.map((facility) => (
-              <Link
-                key={facility.slug}
-                className="student-facility-catalog-card"
-                style={{ "--facility-accent": facility.accent }}
-                to={`/student/facilities/catalog/${facility.slug}`}
-              >
-                <strong>{facility.name}</strong>
-              </Link>
-            ))}
+            {loading ? (
+              <p className="helper-text">Loading resources...</p>
+            ) : facilities.length === 0 ? (
+              <p className="helper-text">No resources found in this category.</p>
+            ) : (
+              facilities.map((facility) => (
+                <Link
+                  key={facility.slug}
+                  className="student-facility-catalog-card"
+                  style={{ "--facility-accent": category.accent }}
+                  to={`/student/resources/${facility.slug}`}
+                >
+                  <strong>{facility.name}</strong>
+                </Link>
+              ))
+            )}
           </div>
         </article>
       </section>

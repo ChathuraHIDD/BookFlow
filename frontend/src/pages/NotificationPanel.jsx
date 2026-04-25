@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import { Link } from "react-router-dom";
 import PortalLayout from "../components/PortalLayout";
 import { readApiError } from "../services/api";
 import {
@@ -94,7 +94,7 @@ function NotificationPanel() {
   return (
     <PortalLayout
       title="Notification Panel"
-      subtitle="Stay updated with lending reminders and reservation updates."
+      subtitle="Stay updated with ticket, booking, and account notifications."
     >
       {error ? <p className="error-text">{error}</p> : null}
 
@@ -111,7 +111,11 @@ function NotificationPanel() {
           ? notifications.map((note) => (
             <li key={note.id} className={`notification-panel-item${note.read ? "" : " notification-panel-item-unread"}`}>
               <div className="notification-panel-copy">
-                <strong>{note.title}</strong>
+                {note.actionUrl ? (
+                  <strong><Link to={note.actionUrl} className="notification-link">{note.title}</Link></strong>
+                ) : (
+                  <strong>{note.title}</strong>
+                )}
                 <span>{note.message}</span>
               </div>
               <div className="notification-panel-item-actions">

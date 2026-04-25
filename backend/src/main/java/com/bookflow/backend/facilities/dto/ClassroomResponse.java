@@ -8,5 +8,8 @@ public record ClassroomResponse(
         int capacity,
         String type,
         List<String> equipment,
-        String status) {
+        String status,
+        String operationalStatus,
+        boolean seatSelectionEnabled,
+        List<Integer> bookedSeats) {
 }
