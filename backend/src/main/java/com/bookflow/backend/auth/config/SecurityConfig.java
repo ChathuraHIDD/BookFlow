@@ -40,6 +40,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/", "/index.html", "/assets/**", "/*.png", "/*.ico", "/*.svg").permitAll()
+                        .requestMatchers("/login", "/dashboard", "/admin/**", "/student/**", "/technician/**").permitAll()
+                        .requestMatchers("/kuppi-sessions", "/software-hub", "/group-chat", "/ai-notes", "/verify/booking/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(httpBasic -> httpBasic.disable())

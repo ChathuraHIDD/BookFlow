@@ -1,7 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { NavLink } from "react-router-dom";
+import { createPortal } from "react-dom";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ComposedChart,
+  Legend,
+  Line,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import PortalLayout from "../components/PortalLayout";
+import "./AdminBookingManagement.css";
 import {
   fetchAdminFacilityBookingAudit,
   fetchAdminFacilityBookings,
@@ -14,20 +30,20 @@ import {
 } from "../services/resources";
 import { readApiError } from "../services/api";
 
-const PAGE_SIZE = 3;
-
 function AdminBookingManagement() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [dateRangeFilter, setDateRangeFilter] = useState("ALL");
+  const [searchTerm, setSearchTerm] = useState("");
+
   const [selectedBookingId, setSelectedBookingId] = useState("");
   const [decisionNote, setDecisionNote] = useState("");
   const [decisionError, setDecisionError] = useState("");
   const [savingStatus, setSavingStatus] = useState("");
   const [savingBookingId, setSavingBookingId] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+
   const [selectedBookingAudit, setSelectedBookingAudit] = useState([]);
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState("");
@@ -36,43 +52,34 @@ function AdminBookingManagement() {
     try {
       setLoading(true);
       setError("");
-      
+
       const [facilityData, resourceData] = await Promise.all([
         fetchAdminFacilityBookings(),
-        fetchAdminResourceBookings()
+        fetchAdminResourceBookings(),
       ]);
 
-      const normalizedResourceData = (resourceData || []).map(b => ({
+      const normalizedResourceData = (resourceData || []).map((b) => ({
         ...b,
         isResource: true,
-        buildingName: b.resourceCategory,
-        roomNumber: b.resourceName,
-        floorNumber: ""
+        buildingName: b.resourceCategory || "Resource",
+        roomNumber: b.resourceName || "Generic",
+        floorNumber: "",
+        priority: "NORMAL",
+        purpose: "General Resource Usage",
       }));
 
       const getSortTime = (booking) => {
         const createdAt = booking?.createdAt ? new Date(booking.createdAt).getTime() : Number.NaN;
-        if (!Number.isNaN(createdAt)) {
-          return createdAt;
-        }
-
+        if (!Number.isNaN(createdAt)) return createdAt;
         const bookingDate = booking?.bookingDate ? new Date(booking.bookingDate).getTime() : Number.NaN;
-        if (!Number.isNaN(bookingDate)) {
-          return bookingDate;
-        }
-
+        if (!Number.isNaN(bookingDate)) return bookingDate;
         return 0;
       };
 
       const combined = [...(facilityData || []), ...normalizedResourceData];
-
-      // Show the newest student requests first in the admin queue.
       combined.sort((a, b) => getSortTime(b) - getSortTime(a));
 
       setBookings(combined);
-      setSelectedBookingId((current) =>
-        current && combined.some((booking) => booking.id === current) ? current : ""
-      );
     } catch (err) {
       setError(readApiError(err));
     } finally {
@@ -84,35 +91,8 @@ function AdminBookingManagement() {
     loadBookings();
   }, []);
 
-  useEffect(() => {
-    if (!selectedBookingId) {
-      return;
-    }
-
-    const onEscape = (event) => {
-      if (event.key === "Escape") {
-        setSelectedBookingId("");
-        setDecisionNote("");
-        setDecisionError("");
-      }
-    };
-
-    window.addEventListener("keydown", onEscape);
-    return () => window.removeEventListener("keydown", onEscape);
-  }, [selectedBookingId]);
-
-  const selectedBooking = useMemo(
-    () => bookings.find((booking) => booking.id === selectedBookingId) || null,
-    [bookings, selectedBookingId]
-  );
-
   const loadBookingAudit = useCallback(async (booking) => {
-    if (!booking?.id) {
-      setSelectedBookingAudit([]);
-      setAuditError("");
-      return;
-    }
-
+    if (!booking?.id) return;
     try {
       setAuditLoading(true);
       setAuditError("");
@@ -122,19 +102,18 @@ function AdminBookingManagement() {
       setSelectedBookingAudit(Array.isArray(timeline) ? timeline : []);
     } catch (err) {
       setAuditError(readApiError(err));
-      setSelectedBookingAudit([]);
     } finally {
       setAuditLoading(false);
     }
   }, []);
 
+  const selectedBooking = useMemo(
+    () => bookings.find((b) => b.id === selectedBookingId) || null,
+    [bookings, selectedBookingId]
+  );
+
   useEffect(() => {
-    if (!selectedBooking) {
-      setSelectedBookingAudit([]);
-      setAuditError("");
-      return;
-    }
-    loadBookingAudit(selectedBooking);
+    if (selectedBooking) loadBookingAudit(selectedBooking);
   }, [selectedBooking, loadBookingAudit]);
 
   const dateRangeOptions = [
@@ -144,26 +123,15 @@ function AdminBookingManagement() {
     { key: "MONTH", label: "This month" },
   ];
 
-  const getBookingTimestamp = (booking) => {
-    const base = booking?.bookingDate || booking?.createdAt;
-    if (!base) return null;
-    const parsed = new Date(base);
-    if (Number.isNaN(parsed.getTime())) return null;
-    return parsed;
-  };
-
   const matchesDateRange = (booking, rangeKey) => {
     if (rangeKey === "ALL") return true;
-
-    const bookingTime = getBookingTimestamp(booking);
-    if (!bookingTime) return false;
+    const base = booking?.bookingDate || booking?.createdAt;
+    if (!base) return false;
+    const bookingTime = new Date(base);
+    if (Number.isNaN(bookingTime.getTime())) return false;
 
     const now = new Date();
-
-    if (rangeKey === "TODAY") {
-      return bookingTime.toDateString() === now.toDateString();
-    }
-
+    if (rangeKey === "TODAY") return bookingTime.toDateString() === now.toDateString();
     if (rangeKey === "WEEK") {
       const currentDay = now.getDay();
       const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
@@ -174,122 +142,79 @@ function AdminBookingManagement() {
       weekEnd.setDate(weekStart.getDate() + 7);
       return bookingTime >= weekStart && bookingTime < weekEnd;
     }
-
     if (rangeKey === "MONTH") {
-      return (
-        bookingTime.getFullYear() === now.getFullYear() &&
-        bookingTime.getMonth() === now.getMonth()
-      );
+      return bookingTime.getFullYear() === now.getFullYear() && bookingTime.getMonth() === now.getMonth();
     }
-
     return true;
   };
 
-  const timeFilteredBookings = useMemo(
-    () => bookings.filter((booking) => matchesDateRange(booking, dateRangeFilter)),
-    [bookings, dateRangeFilter]
-  );
-
   const filteredBookings = useMemo(() => {
-    if (statusFilter === "ALL") {
-      return timeFilteredBookings;
-    }
-    return timeFilteredBookings.filter(
-      (booking) => (booking.status || "").toUpperCase() === statusFilter
-    );
-  }, [timeFilteredBookings, statusFilter]);
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    return bookings.filter((booking) => {
+      const searchableText = [
+        booking.requestedByName,
+        booking.buildingName,
+        booking.roomNumber,
+        booking.status,
+        booking.purpose,
+        booking.id,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [statusFilter, dateRangeFilter]);
-
-  const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(filteredBookings.length / PAGE_SIZE)),
-    [filteredBookings.length]
-  );
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
-
-  const paginatedBookings = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredBookings.slice(start, start + PAGE_SIZE);
-  }, [filteredBookings, currentPage]);
-
-  const pageStart = filteredBookings.length ? (currentPage - 1) * PAGE_SIZE + 1 : 0;
-  const pageEnd = filteredBookings.length ? Math.min(currentPage * PAGE_SIZE, filteredBookings.length) : 0;
-
-  useEffect(() => {
-    if (selectedBookingId && !filteredBookings.some((booking) => booking.id === selectedBookingId)) {
-      closeBookingDetails();
-    }
-  }, [filteredBookings, selectedBookingId]);
-
-  const bookingStatusSummary = useMemo(() => {
-    const counters = {
-      APPROVED: 0,
-      REJECTED: 0,
-      PENDING: 0,
-    };
-
-    timeFilteredBookings.forEach((booking) => {
-      const normalized = (booking.status || "").toUpperCase();
-      if (Object.prototype.hasOwnProperty.call(counters, normalized)) {
-        counters[normalized] += 1;
-      }
+      if (normalizedSearch && !searchableText.includes(normalizedSearch)) return false;
+      if (statusFilter !== "ALL" && (booking.status || "").toUpperCase() !== statusFilter) return false;
+      if (!matchesDateRange(booking, dateRangeFilter)) return false;
+      return true;
     });
+  }, [bookings, searchTerm, statusFilter, dateRangeFilter]);
 
-    return [
-      { key: "APPROVED", label: "Approved", tone: "approved", count: counters.APPROVED },
-      { key: "REJECTED", label: "Rejected", tone: "rejected", count: counters.REJECTED },
-      { key: "PENDING", label: "Pending", tone: "pending", count: counters.PENDING },
-    ];
-  }, [timeFilteredBookings]);
+  const stats = useMemo(() => {
+    const counters = { PENDING: 0, APPROVED: 0, REJECTED: 0, CANCELLED: 0, URGENT: 0, FACILITY: 0, RESOURCE: 0 };
+    bookings.forEach((b) => {
+      const status = (b.status || "").toUpperCase();
+      if (counters[status] !== undefined) counters[status]++;
+      if ((b.priority || "").toUpperCase() === "URGENT") counters.URGENT++;
+      if (b.isResource) counters.RESOURCE++; else counters.FACILITY++;
+    });
+    return counters;
+  }, [bookings]);
 
-  const maxBookingStatusCount = useMemo(
-    () => Math.max(1, ...bookingStatusSummary.map((item) => item.count)),
-    [bookingStatusSummary]
-  );
+  const statusPieData = useMemo(() => [
+    { name: "Pending", value: stats.PENDING, color: "#F2AE42" },
+    { name: "Approved", value: stats.APPROVED, color: "#58C1B8" },
+    { name: "Rejected", value: stats.REJECTED, color: "#EB5D86" },
+    { name: "Cancelled", value: stats.CANCELLED, color: "#7F8EA8" },
+  ].filter(d => d.value > 0), [stats]);
 
-  const formatDateTime = (value) => {
-    if (!value) return "Not set";
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) return value;
-    return parsed.toLocaleString();
-  };
+  const categoryBarData = useMemo(() => {
+    const categories = {};
+    bookings.forEach(b => {
+      const cat = b.isResource ? b.resourceCategory : (b.buildingName || "Facility");
+      categories[cat] = (categories[cat] || 0) + 1;
+    });
+    return Object.entries(categories).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value).slice(0, 6);
+  }, [bookings]);
 
-  const closeBookingDetails = () => {
-    setSelectedBookingId("");
-    setDecisionNote("");
-    setDecisionError("");
-    setSelectedBookingAudit([]);
-    setAuditError("");
-  };
-
-  const handleStatusUpdate = async (booking, status, options = {}) => {
-    const normalizedReason = (options.note ?? decisionNote).trim();
-    if (status === "REJECTED" && !normalizedReason && !options.allowEmptyRejectReason) {
-      setDecisionError("Please provide a rejection reason so the requester understands the decision.");
+  const handleStatusUpdate = async (booking, status, note = "") => {
+    const finalNote = (note || decisionNote).trim();
+    if (status === "REJECTED" && !finalNote) {
+      setDecisionError("Please provide a rejection reason.");
       return;
     }
-
     setDecisionError("");
     setSavingStatus(status);
     setSavingBookingId(booking.id);
-
     try {
       if (booking.isResource) {
-        await updateAdminResourceBookingStatus(booking.id, status, normalizedReason);
+        await updateAdminResourceBookingStatus(booking.id, status, finalNote);
       } else {
-        await updateAdminBookingStatus(booking.id, status, normalizedReason);
+        await updateAdminBookingStatus(booking.id, status, finalNote);
       }
-
       setDecisionNote("");
+      setSelectedBookingId("");
       await loadBookings();
-      await loadBookingAudit(booking);
     } catch (err) {
       setError(readApiError(err));
     } finally {
@@ -298,452 +223,239 @@ function AdminBookingManagement() {
     }
   };
 
-  const handleQuickAction = async (event, booking, status) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    if (status === "REJECTED") {
-      await handleStatusUpdate(booking, status, {
-        allowEmptyRejectReason: true,
-        note: "Rejected via quick action",
-      });
-      return;
-    }
-
-    await handleStatusUpdate(booking, status);
-  };
-
-  const formatLabel = (value) => (value ? value : "Not set");
-
-  const getBookingKindLabel = (booking) => (booking?.isResource ? "Resource booking" : "Facility booking");
-
-  const getStatusTone = (status) => {
-    const normalized = (status || "").toUpperCase();
-    if (normalized === "APPROVED") return "approved";
-    if (normalized === "PENDING") return "pending";
-    if (normalized === "REJECTED") return "rejected";
-    if (normalized === "CANCELLED") return "cancelled";
-    return "default";
-  };
-
-  const renderActionButtons = (booking) => {
-    if (!booking?.status) {
-      return <span className="helper-text">No actions available</span>;
-    }
-
-    return (
-      <div className="admin-booking-actions admin-booking-actions-modal">
-        {booking.status === "PENDING" ? (
-          <>
-            <label className="admin-booking-decision-label" htmlFor="admin-decision-note">
-              Admin decision note (required for reject)
-            </label>
-            <textarea
-              id="admin-decision-note"
-              className="admin-booking-decision-note"
-              value={decisionNote}
-              onChange={(event) => {
-                setDecisionNote(event.target.value);
-                if (decisionError) {
-                  setDecisionError("");
-                }
-              }}
-              placeholder="Explain why this request is rejected or add context for approval"
-              rows={3}
-            />
-
-            {decisionError ? <p className="error-text admin-booking-decision-error">{decisionError}</p> : null}
-
-            <div className="admin-booking-modal-actions-row">
-              <button
-                type="button"
-                className="solid-btn"
-                disabled={savingStatus === "APPROVED" || savingStatus === "REJECTED"}
-                onClick={() => handleStatusUpdate(booking, "APPROVED")}
-              >
-                {savingStatus === "APPROVED" ? "Approving..." : "Approve"}
-              </button>
-              <button
-                type="button"
-                className="ghost-btn"
-                disabled={savingStatus === "APPROVED" || savingStatus === "REJECTED"}
-                onClick={() => handleStatusUpdate(booking, "REJECTED")}
-              >
-                {savingStatus === "REJECTED" ? "Rejecting..." : "Reject with reason"}
-              </button>
-            </div>
-          </>
-        ) : null}
-
-        {booking.status === "APPROVED" ? (
-          <button
-            type="button"
-            className="ghost-btn"
-            disabled={savingStatus === "CANCELLED"}
-            onClick={() => handleStatusUpdate(booking, "CANCELLED")}
-          >
-            {savingStatus === "CANCELLED" ? "Cancelling..." : "Cancel booking"}
-          </button>
-        ) : null}
-      </div>
-    );
-  };
-
-  const renderQuickActionButtons = (booking) => {
-    if (booking.status !== "PENDING") {
-      return null;
-    }
-
-    const isBusy = savingBookingId === booking.id && (savingStatus === "APPROVED" || savingStatus === "REJECTED");
-
-    return (
-      <div className="admin-booking-card-quick-actions">
-        <button
-          type="button"
-          className="admin-booking-card-quick-btn admin-booking-card-quick-btn-approve"
-          disabled={isBusy}
-          onClick={(event) => handleQuickAction(event, booking, "APPROVED")}
-        >
-          <span className="admin-booking-card-quick-icon">✓</span>
-          {savingBookingId === booking.id && savingStatus === "APPROVED" ? "Approving..." : "Approve"}
-        </button>
-        <button
-          type="button"
-          className="admin-booking-card-quick-btn admin-booking-card-quick-btn-reject"
-          disabled={isBusy}
-          onClick={(event) => handleQuickAction(event, booking, "REJECTED")}
-        >
-          <span className="admin-booking-card-quick-icon">✕</span>
-          {savingBookingId === booking.id && savingStatus === "REJECTED" ? "Rejecting..." : "Reject"}
-        </button>
-      </div>
-    );
+  const closeBookingDetails = () => {
+    setSelectedBookingId("");
+    setDecisionNote("");
+    setDecisionError("");
+    setSelectedBookingAudit([]);
   };
 
   return (
     <PortalLayout
       title="Booking Management"
-      subtitle="Approve, reject, and manage all campus facility and resource booking requests."
+      subtitle="Comprehensive administrative control over all campus facility and resource booking requests."
+      pageClassName="admin-bookings-page"
     >
-      <section className="admin-vision-layout admin-user-vision-layout">
-        <aside className="admin-vision-sidebar">
-          <div className="admin-vision-brand">
-            <img src="/nnic-logo-icon.png" alt="NNIC logo" className="admin-vision-brand-logo" />
+      <div className="admin-bookings-stack">
+        <section className="admin-booking-banner">
+          <div className="admin-booking-banner-top">
+            <div className="admin-booking-banner-copy">
+              <span className="admin-booking-kicker">Administrative Hub</span>
+              <h2>Central Booking Queue</h2>
+              <p>Review and manage booking requests from students across all campus resources and facilities.</p>
+            </div>
+            <div className="admin-booking-banner-actions">
+              <button type="button" className="solid-btn" onClick={loadBookings}>Refresh Queue</button>
+              <button type="button" className="ghost-btn" onClick={() => { setSearchTerm(""); setStatusFilter("ALL"); setDateRangeFilter("ALL"); }}>Clear Filters</button>
+            </div>
           </div>
-          <nav className="admin-vision-nav" aria-label="Admin quick menu">
-            <NavLink to="/admin/profile" className="admin-vision-link">Dashboard</NavLink>
-            <NavLink to="/admin/users" className="admin-vision-link">User Management</NavLink>
-            <NavLink to="/admin/facilities" className="admin-vision-link">Resource Management</NavLink>
-            <NavLink to="/admin/tickets" className="admin-vision-link">Ticket Management</NavLink>
-            <NavLink to="/admin/bookings" className="admin-vision-link">Booking Management</NavLink>
-            <NavLink to="/admin/notifications" className="admin-vision-link">Notifications</NavLink>
-          </nav>
-        </aside>
+          <div className="admin-booking-chip-row">
+            <span className="admin-booking-chip"><strong>{bookings.length}</strong> Total</span>
+            <span className="admin-booking-chip"><strong>{stats.PENDING}</strong> Pending</span>
+            <span className="admin-booking-chip"><strong>{stats.URGENT}</strong> Urgent</span>
+            <span className="admin-booking-chip"><strong>{stats.FACILITY}</strong> Facilities</span>
+            <span className="admin-booking-chip"><strong>{stats.RESOURCE}</strong> Resources</span>
+          </div>
+        </section>
 
-        <div className="admin-vision-main admin-user-vision-main">
-          <section className="admin-user-panel">
-            <div className="admin-section-head">
-              <div>
-                <p className="student-modern-section-label">All Bookings</p>
-                <h3 className="admin-section-title">Central Booking Hub</h3>
+        <section className="admin-booking-stats-grid">
+          <article className="admin-booking-stat-card admin-booking-stat-card-total">
+            <div className="admin-booking-stat-icon">ALL</div>
+            <div className="admin-booking-stat-copy"><p className="metric-number">{bookings.length}</p><h3>Requests</h3></div>
+          </article>
+          <article className="admin-booking-stat-card admin-booking-stat-card-pending">
+            <div className="admin-booking-stat-icon">QUE</div>
+            <div className="admin-booking-stat-copy"><p className="metric-number">{stats.PENDING}</p><h3>Review Needed</h3></div>
+          </article>
+          <article className="admin-booking-stat-card admin-booking-stat-card-urgent">
+            <div className="admin-booking-stat-icon">TOP</div>
+            <div className="admin-booking-stat-copy"><p className="metric-number">{stats.URGENT}</p><h3>High Priority</h3></div>
+          </article>
+          <article className="admin-booking-stat-card admin-booking-stat-card-facility">
+            <div className="admin-booking-stat-icon">FAC</div>
+            <div className="admin-booking-stat-copy"><p className="metric-number">{stats.FACILITY}</p><h3>Facility Use</h3></div>
+          </article>
+          <article className="admin-booking-stat-card admin-booking-stat-card-resource">
+            <div className="admin-booking-stat-icon">RES</div>
+            <div className="admin-booking-stat-copy"><p className="metric-number">{stats.RESOURCE}</p><h3>Resource Use</h3></div>
+          </article>
+        </section>
+
+        <section className="admin-booking-chart-board">
+          <article className="admin-booking-chart-card">
+            <div className="admin-booking-chart-head"><h4>Status Distribution</h4></div>
+            <div className="admin-booking-chart-body admin-booking-chart-body-split">
+              <div className="admin-booking-chart-canvas">
+                <ResponsiveContainer width="100%" height={170}>
+                  <PieChart>
+                    <Pie data={statusPieData} dataKey="value" cx="50%" cy="50%" innerRadius={45} outerRadius={65} paddingAngle={3}>
+                      {statusPieData.map((d) => <Cell key={d.name} fill={d.color} />)}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="admin-booking-chart-kpi-list">
+                {statusPieData.map(d => (
+                  <div key={d.name} className="admin-booking-chart-kpi-item" style={{ backgroundColor: d.color + '15' }}>
+                    <span>{d.name}</span><strong>{d.value}</strong>
+                  </div>
+                ))}
               </div>
             </div>
-            
-            {error && <p className="error-text">{error}</p>}
-            
-            {loading ? (
-              <p className="helper-text">Loading bookings...</p>
-            ) : (
-              <>
-                <div className="student-booking-stat-grid admin-booking-stat-grid">
-                  <article className="student-booking-stat-card student-booking-stat-card-total">
-                    <p>Total Requests</p>
-                    <strong>{bookings.length}</strong>
-                    <span>Facility + resource bookings</span>
-                  </article>
-                  <article className="student-booking-stat-card student-booking-stat-card-approved">
-                    <p>Urgent Requests</p>
-                    <strong>{bookings.filter((booking) => (booking.priority || "NORMAL") === "URGENT").length}</strong>
-                    <span>Top of queue</span>
-                  </article>
-                  <article className="student-booking-stat-card student-booking-stat-card-rejected">
-                    <p>Review Needed</p>
-                    <strong>{bookings.filter((booking) => booking.reviewRequired).length}</strong>
-                    <span>Decision support</span>
-                  </article>
+          </article>
+
+          <article className="admin-booking-chart-card admin-booking-chart-card-wide">
+            <div className="admin-booking-chart-head"><h4>Bookings by Building/Category</h4></div>
+            <div className="admin-booking-chart-body">
+              <ResponsiveContainer width="100%" height={210}>
+                <BarChart data={categoryBarData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f3fa" />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={11} />
+                  <YAxis tickLine={false} axisLine={false} />
+                  <Tooltip />
+                  <Bar dataKey="value" name="Bookings" fill="#5c8dea" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </article>
+        </section>
+
+        <section className="admin-booking-panel">
+          <div className="admin-booking-panel-head">
+            <div>
+              <h3>Management Queue</h3>
+              <p>Showing {filteredBookings.length} results from {bookings.length} total bookings.</p>
+            </div>
+            <div className="admin-booking-filter-bar">
+              <label className="admin-booking-filter-field">Search<input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="Requester or room..." /></label>
+              <label className="admin-booking-filter-field">Status
+                <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+                  <option value="ALL">All Status</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="APPROVED">Approved</option>
+                  <option value="REJECTED">Rejected</option>
+                  <option value="CANCELLED">Cancelled</option>
+                </select>
+              </label>
+              <label className="admin-booking-filter-field">Time Range
+                <select value={dateRangeFilter} onChange={e => setDateRangeFilter(e.target.value)}>
+                  {dateRangeOptions.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div className="admin-booking-table-wrap">
+            <table className="admin-booking-table">
+              <thead>
+                <tr>
+                  <th>Requester</th>
+                  <th>Resource/Facility</th>
+                  <th>Booking Date</th>
+                  <th>Time Slot</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredBookings.map(b => (
+                  <tr key={b.id} onClick={() => setSelectedBookingId(b.id)}>
+                    <td>
+                      <div className="admin-booking-table-main">
+                        <strong>{b.requestedByName}</strong>
+                        <span>{b.userId}</span>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="admin-booking-table-main">
+                        <strong>{b.roomNumber}</strong>
+                        <span>{b.buildingName} {b.floorNumber ? `· Floor ${b.floorNumber}` : ''}</span>
+                      </div>
+                    </td>
+                    <td><span className="admin-booking-table-meta">{b.bookingDate}</span></td>
+                    <td><span className="admin-booking-table-meta">{b.startTime} - {b.endTime}</span></td>
+                    <td>
+                      <span className={`admin-booking-status-badge admin-booking-status-${(b.status || '').toLowerCase()}`}>
+                        {b.status}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="admin-booking-table-actions" onClick={e => e.stopPropagation()}>
+                        {b.status === 'PENDING' && (
+                          <>
+                            <button className="admin-booking-mini-btn admin-booking-mini-btn-approve" onClick={() => handleStatusUpdate(b, 'APPROVED', 'Quick Approved')}>Approve</button>
+                            <button className="admin-booking-mini-btn admin-booking-mini-btn-reject" onClick={() => setSelectedBookingId(b.id)}>Reject</button>
+                          </>
+                        )}
+                        {b.status === 'APPROVED' && (
+                          <button className="admin-booking-mini-btn" onClick={() => handleStatusUpdate(b, 'CANCELLED', 'Admin Cancelled')}>Cancel</button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {selectedBooking && createPortal(
+          <div className="admin-booking-modal-overlay" onClick={e => e.target === e.currentTarget && closeBookingDetails()}>
+            <aside className="admin-booking-detail-modal">
+              <div className="admin-booking-modal-head">
+                <div>
+                  <p className="student-modern-section-label">{selectedBooking.isResource ? "Resource" : "Facility"} Request</p>
+                  <h3>{selectedBooking.buildingName} · {selectedBooking.roomNumber}</h3>
                 </div>
+                <button className="ghost-btn" onClick={closeBookingDetails}>Close</button>
+              </div>
+              
+              <div className="admin-booking-detail-grid">
+                <div className="admin-booking-detail-item"><label>Student</label><strong>{selectedBooking.requestedByName}</strong></div>
+                <div className="admin-booking-detail-item"><label>Purpose</label><strong>{selectedBooking.purpose || "General"}</strong></div>
+                <div className="admin-booking-detail-item"><label>Date</label><strong>{selectedBooking.bookingDate}</strong></div>
+                <div className="admin-booking-detail-item"><label>Time Slot</label><strong>{selectedBooking.startTime} - {selectedBooking.endTime}</strong></div>
+              </div>
 
-                <section className="admin-booking-chart-card" aria-label="Request status bar chart">
-                  <div className="admin-booking-chart-head">
-                    <div>
-                      <p className="student-modern-section-label">Status Analytics</p>
-                      <h4>Approved vs Rejected vs Pending</h4>
-                    </div>
-                    <div className="admin-booking-filter-strip" aria-label="Date range selector">
-                      {dateRangeOptions.map((option) => (
-                        <button
-                          key={option.key}
-                          type="button"
-                          className={`admin-booking-filter-chip${dateRangeFilter === option.key ? " admin-booking-filter-chip-active" : ""}`}
-                          onClick={() => setDateRangeFilter(option.key)}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
+              {selectedBooking.status === "PENDING" && (
+                <div className="admin-booking-decision-box">
+                  <label>Review Decision</label>
+                  <textarea 
+                    rows={3}
+                    value={decisionNote}
+                    onChange={e => setDecisionNote(e.target.value)}
+                    placeholder="Enter reason for approval or rejection (required for reject)..."
+                  />
+                  {decisionError && <p className="error-text" style={{ marginBottom: "12px" }}>{decisionError}</p>}
+                  <div style={{ display: "flex", gap: "10px" }}>
+                    <button className="solid-btn" onClick={() => handleStatusUpdate(selectedBooking, "APPROVED")}>Approve Request</button>
+                    <button className="ghost-btn" onClick={() => handleStatusUpdate(selectedBooking, "REJECTED")}>Reject Request</button>
                   </div>
-                  <div className="admin-booking-status-chart" role="img" aria-label="Bar chart of approved, rejected, and pending booking requests">
-                    {bookingStatusSummary.map((item) => {
-                      const barHeight = Math.max((item.count / maxBookingStatusCount) * 100, 10);
-                      const isStatusActive = statusFilter === item.key;
-                      return (
-                        <button
-                          key={item.key}
-                          type="button"
-                          className={`admin-booking-status-column${isStatusActive ? " admin-booking-status-column-active" : ""}`}
-                          onClick={() => setStatusFilter((current) => (current === item.key ? "ALL" : item.key))}
-                        >
-                          <strong className="admin-booking-status-value">{item.count}</strong>
-                          <div
-                            className={`admin-booking-status-bar admin-booking-status-bar-${item.tone}`}
-                            style={{ height: `${barHeight}%` }}
-                            aria-label={`${item.label}: ${item.count}`}
-                          />
-                          <span className="admin-booking-status-label">{item.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  <div className="admin-booking-chart-footer">
-                    <span className="helper-text">
-                      Active status filter: {statusFilter === "ALL" ? "None" : statusFilter}
-                    </span>
-                    {statusFilter !== "ALL" ? (
-                      <button type="button" className="admin-booking-filter-reset" onClick={() => setStatusFilter("ALL")}>
-                        Clear status filter
-                      </button>
-                    ) : null}
-                  </div>
-                </section>
-
-                <div className="admin-booking-master-detail admin-booking-master-detail-single">
-                  <section className="admin-booking-list-panel">
-                    <div className="admin-booking-list-header">
-                      <div>
-                        <p className="student-modern-section-label">Booking Queue</p>
-                        <h4>Latest requests first</h4>
-                        <p className="helper-text admin-booking-list-context">
-                          Showing {filteredBookings.length} of {timeFilteredBookings.length} requests for {dateRangeOptions.find((option) => option.key === dateRangeFilter)?.label}.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="admin-booking-cards">
-                      {paginatedBookings.length ? paginatedBookings.map((booking) => {
-                        const statusTone = getStatusTone(booking.status);
-                        const isSelected = booking.id === selectedBooking?.id;
-                        return (
-                          <div
-                            key={booking.id}
-                            role="button"
-                            tabIndex={0}
-                            className={`admin-booking-card${isSelected ? " admin-booking-card-active" : ""}`}
-                            onClick={() => {
-                              setSelectedBookingId(booking.id);
-                              setDecisionNote("");
-                              setDecisionError("");
-                            }}
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter" || event.key === " ") {
-                                event.preventDefault();
-                                setSelectedBookingId(booking.id);
-                                setDecisionNote("");
-                                setDecisionError("");
-                              }
-                            }}
-                          >
-                            <div className="admin-booking-card-top">
-                              <div>
-                                <span className={`student-booking-status-badge student-booking-status-${statusTone}`}>
-                                  {booking.status}
-                                </span>
-                                <h5>{getBookingKindLabel(booking)}</h5>
-                                <p>{booking.requestedByName}</p>
-                              </div>
-                              <div className="admin-booking-card-time">
-                                <strong>{booking.bookingDate}</strong>
-                                <span>{booking.startTime} - {booking.endTime}</span>
-                              </div>
-                            </div>
-                            <div className="admin-booking-card-body">
-                              <span className="admin-booking-card-room">{booking.isResource ? booking.roomNumber : `${booking.buildingName} · Floor ${booking.floorNumber} · ${booking.roomNumber}`}</span>
-                              <span className="admin-booking-card-meta">{booking.isResource ? booking.resourceCategory || "Resource" : `Purpose: ${booking.purpose || "Study"}`}</span>
-                              {!booking.isResource && booking.selectedSeats && booking.selectedSeats.length > 0 ? (
-                                <span className="admin-booking-card-meta">Seats: {booking.selectedSeats.join(", ")}</span>
-                              ) : null}
-                            </div>
-                            {renderQuickActionButtons(booking)}
-                          </div>
-                        );
-                      }) : (
-                        <div className="empty-state">
-                          <div className="empty-icon">📋</div>
-                          <p className="helper-text">No bookings match the current filters.</p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="admin-booking-list-footer">
-                      <p className="helper-text">
-                        Showing {pageStart} to {pageEnd} of {filteredBookings.length} requests
-                      </p>
-                      {filteredBookings.length ? (
-                        <div className="admin-booking-pagination" aria-label="Booking queue pagination">
-                          <button
-                            type="button"
-                            className="admin-booking-page-btn"
-                            disabled={currentPage === 1}
-                            onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
-                          >
-                            ‹
-                          </button>
-                          {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
-                            <button
-                              key={page}
-                              type="button"
-                              className={`admin-booking-page-btn${page === currentPage ? " admin-booking-page-btn-active" : ""}`}
-                              onClick={() => setCurrentPage(page)}
-                            >
-                              {page}
-                            </button>
-                          ))}
-                          <button
-                            type="button"
-                            className="admin-booking-page-btn"
-                            disabled={currentPage === totalPages}
-                            onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-                          >
-                            ›
-                          </button>
-                        </div>
-                      ) : null}
-                    </div>
-                  </section>
                 </div>
+              )}
 
-                {selectedBooking ? (
-                  <div
-                    className="admin-booking-modal-overlay"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="Booking request details"
-                    onClick={(event) => {
-                      if (event.target === event.currentTarget) {
-                        closeBookingDetails();
-                      }
-                    }}
-                  >
-                    <aside className="admin-booking-detail-card admin-booking-detail-view admin-booking-detail-modal">
-                      <div className="admin-booking-detail-head admin-booking-detail-head-modal">
-                        <div>
-                          <p className="student-modern-section-label">Request Details</p>
-                          <h4>{getBookingKindLabel(selectedBooking)}</h4>
+              <div className="admin-booking-audit-section">
+                <h5>Audit Timeline</h5>
+                {auditLoading ? <p className="helper-text">Loading history...</p> : (
+                  <div className="admin-booking-audit-timeline">
+                    {selectedBookingAudit.length ? selectedBookingAudit.map(a => (
+                      <div key={a.id} className="admin-booking-audit-event">
+                        <strong>{a.action}</strong>
+                        <div className="event-meta">
+                          {a.newStatus} · {a.actorName || "System"} · {new Date(a.timestamp).toLocaleString()}
                         </div>
-                        <div className="admin-booking-modal-head-actions">
-                          <span className={`student-booking-status-badge student-booking-status-${getStatusTone(selectedBooking.status)}`}>
-                            {selectedBooking.status}
-                          </span>
-                          <button type="button" className="admin-booking-modal-close" onClick={closeBookingDetails}>
-                            Close
-                          </button>
-                        </div>
+                        {a.reason && <div className="event-reason">"{a.reason}"</div>}
                       </div>
-
-                      <div className="admin-booking-detail-grid">
-                        <div className="admin-booking-detail-item">
-                          <span className="detail-label">Requester</span>
-                          <strong>{formatLabel(selectedBooking.requestedByName)}</strong>
-                          <small>User ID: {formatLabel(selectedBooking.userId)}</small>
-                        </div>
-                        <div className="admin-booking-detail-item">
-                          <span className="detail-label">Where</span>
-                          <strong>{selectedBooking.isResource ? selectedBooking.resourceCategory : selectedBooking.buildingName}</strong>
-                          <small>{selectedBooking.isResource ? selectedBooking.resourceName : `Floor ${selectedBooking.floorNumber} · ${selectedBooking.roomNumber}`}</small>
-                        </div>
-                        <div className="admin-booking-detail-item">
-                          <span className="detail-label">When</span>
-                          <strong>{selectedBooking.bookingDate}</strong>
-                          <small>{selectedBooking.startTime} - {selectedBooking.endTime}</small>
-                        </div>
-                        <div className="admin-booking-detail-item">
-                          <span className="detail-label">Review / Decision</span>
-                          <strong>{selectedBooking.reviewRequired ? "Review required" : "Auto-approved"}</strong>
-                          <small>{selectedBooking.decisionNote || "No note provided"}</small>
-                        </div>
-                      </div>
-
-                      {!selectedBooking.isResource ? (
-                        <div className="admin-booking-detail-section">
-                          <h5>Facility Details</h5>
-                          <div className="admin-booking-pill-row">
-                            <span className="admin-booking-pill">Purpose: {selectedBooking.purpose || "Study"}</span>
-                            <span className="admin-booking-pill">Priority: {selectedBooking.priority || "NORMAL"}</span>
-                            <span className="admin-booking-pill">Seats: {selectedBooking.selectedSeats?.length ? selectedBooking.selectedSeats.join(", ") : "Whole room"}</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="admin-booking-detail-section">
-                          <h5>Resource Details</h5>
-                          <div className="admin-booking-pill-row">
-                            <span className="admin-booking-pill">Category: {selectedBooking.resourceCategory}</span>
-                            <span className="admin-booking-pill">Resource: {selectedBooking.roomNumber}</span>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="admin-booking-detail-section">
-                        <h5>Audit Info</h5>
-                        <div className="admin-booking-pill-row">
-                          <span className="admin-booking-pill">Created: {selectedBooking.createdAt || "N/A"}</span>
-                          <span className="admin-booking-pill">Booking ID: {selectedBooking.id}</span>
-                        </div>
-                      </div>
-
-                      <div className="admin-booking-detail-section">
-                        <h5>Audit Timeline</h5>
-                        {auditError ? <p className="error-text">{auditError}</p> : null}
-                        {auditLoading ? <p className="helper-text">Loading audit timeline...</p> : null}
-                        {!auditLoading && !auditError && selectedBookingAudit.length ? (
-                          <div className="admin-booking-action-log">
-                            {selectedBookingAudit.map((event) => (
-                              <p key={event.id}>
-                                <strong>{event.action}</strong>
-                                {": "}
-                                {event.previousStatus || "NONE"} -&gt; {event.newStatus || "NONE"}
-                                {" | By: "}
-                                {event.actorName || "System"}
-                                {" | At: "}
-                                {formatDateTime(event.timestamp)}
-                                {" | Reason: "}
-                                {event.reason || "No reason provided"}
-                              </p>
-                            ))}
-                          </div>
-                        ) : null}
-                        {!auditLoading && !auditError && !selectedBookingAudit.length ? (
-                          <p className="helper-text">No audit events available for this booking yet.</p>
-                        ) : null}
-                      </div>
-
-                      {renderActionButtons(selectedBooking)}
-                    </aside>
+                    )) : <p className="helper-text">No history recorded yet.</p>}
                   </div>
-                ) : null}
-              </>
-            )}
-          </section>
-        </div>
-      </section>
+                )}
+              </div>
+            </aside>
+          </div>,
+          document.body
+        )}
+      </div>
     </PortalLayout>
   );
 }
