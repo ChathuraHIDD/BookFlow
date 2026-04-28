@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/useAuth";
 import AdminProfile from "./pages/AdminProfile";
+import AdminBookingVerification from "./pages/AdminBookingVerification";
 import AdminFacilities from "./pages/AdminFacilities";
 import AdminFacilityMaintenance from "./pages/AdminFacilityMaintenance";
 import AdminNotifications from "./pages/AdminNotifications";
@@ -26,6 +27,10 @@ import StudentSupport from "./pages/StudentSupport";
 import StudentSupportRaise from "./pages/StudentSupportRaise";
 import StudentSupportTicket from "./pages/StudentSupportTicket";
 import UserProfile from "./pages/UserProfile";
+import KuppiSessions from "./pages/KuppiSessions";
+import SoftwareHub from "./pages/SoftwareHub";
+import StudentGroupChat from "./pages/StudentGroupChat";
+import AINotes from "./pages/AINotes";
 import { homePathByRole } from "./utils/role";
 
 function RoleHomeRedirect() {
@@ -168,6 +173,42 @@ function App() {
       />
 
       <Route
+        path="/kuppi-sessions"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <KuppiSessions />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/software-hub"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <SoftwareHub />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/group-chat"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentGroupChat />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/ai-notes"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <AINotes />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/admin/profile"
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
@@ -226,6 +267,15 @@ function App() {
         element={
           <ProtectedRoute allowedRoles={["admin"]}>
             <AdminNotifications />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/verify/booking/:id"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminBookingVerification />
           </ProtectedRoute>
         }
       />

@@ -20,16 +20,32 @@ const CAMPUS_YEAR_OPTIONS = [
   { value: "4th", label: "4th Year" },
 ];
 
+const COUNTRY_CODE_OPTIONS = [
+  { value: "+94", label: "🇱🇰 Sri Lanka (+94)" },
+  { value: "+91", label: "🇮🇳 India (+91)" },
+  { value: "+1", label: "🇺🇸 United States (+1)" },
+  { value: "+44", label: "🇬🇧 United Kingdom (+44)" },
+  { value: "+61", label: "🇦🇺 Australia (+61)" },
+];
+
+const FULL_NAME_ALLOWED_PATTERN = /^[A-Za-z\s]*$/;
+const FULL_NAME_VALID_PATTERN = /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/;
+const TELEPHONE_ALLOWED_PATTERN = /^\d*$/;
+const TELEPHONE_LENGTH = 10;
+
 function Register() {
   const navigate = useNavigate();
   const { register, registerWithGoogle, ready, isAuthenticated, user } = useAuth();
-  const registerRoleOptions = ROLE_OPTIONS.filter((role) => role.value !== "technician");
+  const registerRoleOptions = ROLE_OPTIONS.filter(
+    (role) => role.value !== "technician" && role.value !== "admin",
+  );
 
   const [form, setForm] = useState({
     role: "student",
     fullName: "",
     email: "",
     password: "",
+    countryCode: "+94",
     telephone: "",
     campusYear: "1st",
     semester: 1,
@@ -38,6 +54,8 @@ function Register() {
   });
 
   const [error, setError] = useState("");
+  const [fullNameError, setFullNameError] = useState("");
+  const [telephoneError, setTelephoneError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const isStudent = form.role === "student";
@@ -53,7 +71,7 @@ function Register() {
     };
 
     if (needsStudentLikeFields) {
-      base.telephone = form.telephone;
+      base.telephone = `${form.countryCode}${form.telephone}`;
       base.center = form.center;
       base.degreeProgram = form.degreeProgram;
     }
@@ -72,7 +90,7 @@ function Register() {
     };
 
     if (needsStudentLikeFields) {
-      base.telephone = form.telephone;
+      base.telephone = `${form.countryCode}${form.telephone}`;
       base.center = form.center;
       base.degreeProgram = form.degreeProgram;
     }
@@ -89,9 +107,54 @@ function Register() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const isValidFullName = (name) => FULL_NAME_VALID_PATTERN.test(name.trim());
+  const isValidTelephone = (telephone) => telephone.length === TELEPHONE_LENGTH;
+
+  const onFullNameChange = (event) => {
+    const nextValue = event.target.value;
+    if (!FULL_NAME_ALLOWED_PATTERN.test(nextValue)) {
+      setFullNameError("Full name can contain letters and spaces only. Numbers and special characters are not allowed.");
+      return;
+    }
+
+    setFullNameError("");
+    updateField("fullName", nextValue);
+  };
+
+  const onTelephoneChange = (event) => {
+    const nextValue = event.target.value;
+
+    if (!TELEPHONE_ALLOWED_PATTERN.test(nextValue)) {
+      setTelephoneError("Telephone can contain digits only.");
+      return;
+    }
+
+    if (nextValue.length > TELEPHONE_LENGTH) {
+      setTelephoneError("Telephone number must be exactly 10 digits.");
+      return;
+    }
+
+    setTelephoneError("");
+    updateField("telephone", nextValue);
+  };
+
   const onSubmit = async (event) => {
     event.preventDefault();
     setError("");
+
+    if (!isValidFullName(form.fullName)) {
+      setFullNameError("Please enter a valid full name using letters and spaces only.");
+      return;
+    }
+
+    setFullNameError("");
+
+    if (needsStudentLikeFields && !isValidTelephone(form.telephone)) {
+      setTelephoneError("Telephone number must be exactly 10 digits.");
+      return;
+    }
+
+    setTelephoneError("");
     setSubmitting(true);
 
     try {
@@ -110,6 +173,20 @@ function Register() {
     }
 
     setError("");
+
+    if (!isValidFullName(form.fullName)) {
+      setFullNameError("Please enter a valid full name using letters and spaces only.");
+      return;
+    }
+
+    setFullNameError("");
+
+    if (needsStudentLikeFields && !isValidTelephone(form.telephone)) {
+      setTelephoneError("Telephone number must be exactly 10 digits.");
+      return;
+    }
+
+    setTelephoneError("");
     setSubmitting(true);
 
     try {
@@ -142,7 +219,7 @@ function Register() {
               activities from one place.
             </p>
             <ul className="register-hero-highlights">
-              <li>Student, staff, and admin role onboarding</li>
+              <li>Student and staff role onboarding</li>
               <li>Campus-center aligned profile setup</li>
               <li>Ready for bookings, updates, and support</li>
             </ul>
@@ -194,10 +271,11 @@ function Register() {
                 <input
                   type="text"
                   value={form.fullName}
-                  onChange={(event) => updateField("fullName", event.target.value)}
+                  onChange={onFullNameChange}
                   placeholder="Enter your full name"
                   required
                 />
+                {fullNameError ? <p className="register-inline-error" role="alert">{fullNameError}</p> : null}
               </label>
 
               <label className="register-field-wide">
@@ -225,14 +303,33 @@ function Register() {
 
               {needsStudentLikeFields ? (
                 <label>
+                  Country Code
+                  <select
+                    value={form.countryCode}
+                    onChange={(event) => updateField("countryCode", event.target.value)}
+                  >
+                    {COUNTRY_CODE_OPTIONS.map((item) => (
+                      <option key={item.value} value={item.value}>
+                        {item.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              {needsStudentLikeFields ? (
+                <label>
                   Telephone
                   <input
-                    type="tel"
+                    type="text"
                     value={form.telephone}
-                    onChange={(event) => updateField("telephone", event.target.value)}
-                    placeholder="Enter your phone number"
+                    onChange={onTelephoneChange}
+                    placeholder="Enter 10-digit phone number"
+                    inputMode="numeric"
+                    maxLength={TELEPHONE_LENGTH}
                     required
                   />
+                  {telephoneError ? <p className="register-inline-error" role="alert">{telephoneError}</p> : null}
                 </label>
               ) : null}
 

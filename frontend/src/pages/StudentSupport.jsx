@@ -1,11 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import PortalLayout from "../components/PortalLayout";
 import SupportDropdown from "../components/SupportDropdown";
 import { readApiError } from "../services/api";
 import { fetchMySupportTickets } from "../services/support";
-import "./SupportModule.css";
+import "./StudentSupport.css";
 
 function StudentSupport() {
   const navigate = useNavigate();
@@ -15,252 +28,184 @@ function StudentSupport() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [searchText, setSearchText] = useState("");
 
+  const loadTickets = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const data = await fetchMySupportTickets();
+      setTickets(data);
+    } catch (err) {
+      setError(readApiError(err));
+      setTickets([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      try {
-        setLoading(true);
-        setError("");
-        const data = await fetchMySupportTickets();
-        if (active) {
-          setTickets(data);
-        }
-      } catch (err) {
-        if (active) {
-          setError(readApiError(err));
-          setTickets([]);
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
-    };
-
-    load();
-
-    return () => {
-      active = false;
-    };
+    loadTickets();
   }, []);
 
   const counts = useMemo(() => {
-    const summary = {
-      total: tickets.length,
-      open: 0,
-      inProgress: 0,
-      resolved: 0,
-    };
-
-    tickets.forEach((ticket) => {
-      if (ticket.status === "Open") {
-        summary.open += 1;
-      }
-      if (ticket.status === "In Progress") {
-        summary.inProgress += 1;
-      }
-      if (ticket.status === "Resolved") {
-        summary.resolved += 1;
-      }
+    const summary = { total: tickets.length, open: 0, inProgress: 0, resolved: 0 };
+    tickets.forEach((t) => {
+      const s = (t.status || "").toLowerCase();
+      if (s === "open") summary.open++;
+      else if (s === "in progress") summary.inProgress++;
+      else if (s === "resolved") summary.resolved++;
     });
-
     return summary;
   }, [tickets]);
 
   const visibleTickets = useMemo(() => {
     const q = searchText.trim().toLowerCase();
-
-    return tickets.filter((ticket) => {
-      if (statusFilter !== "ALL" && ticket.status !== statusFilter) {
-        return false;
-      }
-
-      if (!q) {
-        return true;
-      }
-
-      const searchable = [
-        ticket.ticketNumber,
-        ticket.title,
-        ticket.category,
-        ticket.status,
-        ticket.locationResource,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
+    return tickets.filter((t) => {
+      if (statusFilter !== "ALL" && t.status !== statusFilter) return false;
+      if (!q) return true;
+      const searchable = `${t.ticketNumber} ${t.title} ${t.category} ${t.status} ${t.locationResource}`.toLowerCase();
       return searchable.includes(q);
     });
   }, [tickets, statusFilter, searchText]);
 
-  const statusOptions = [
-    { value: "ALL", label: "All statuses" },
-    { value: "Open", label: "Open" },
-    { value: "In Progress", label: "In Progress" },
-    { value: "Resolved", label: "Resolved" },
-  ];
+  const pieData = useMemo(() => [
+    { name: "Open", value: counts.open, color: "#F59E0B" },
+    { name: "In Progress", value: counts.inProgress, color: "#3B82F6" },
+    { name: "Resolved", value: counts.resolved, color: "#10B981" },
+  ].filter(d => d.value > 0), [counts]);
+
+  const categoryData = useMemo(() => {
+    const cats = {};
+    tickets.forEach(t => { cats[t.category] = (cats[t.category] || 0) + 1; });
+    return Object.entries(cats).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value);
+  }, [tickets]);
 
   return (
     <PortalLayout
-      title="Student Support"
-      subtitle="Track your support requests and create new incident tickets from one place."
-      pageClassName="support-module-page"
-      heroClassName="support-module-hero"
-      contentCardClassName="support-module-surface"
+      title="Support Center"
+      subtitle="Comprehensive tracking and management hub for all your campus support requests."
+      pageClassName="student-support-page"
     >
-      <div className="support-module-stack">
-        {error ? <p className="support-inline-alert error-text">{error}</p> : null}
-
-        <section className="support-overview-band">
-          <div className="support-overview-copy">
-            <span className="support-eyebrow">Support Center</span>
-            <h3>Keep every issue, screenshot, and follow-up in one place.</h3>
-            <p>
-              Start a new ticket, monitor status changes, and return to previous
-              requests without jumping between pages or email threads.
-            </p>
-          </div>
-          <div className="support-overview-meta">
-            <div className="support-overview-chip">
-              <strong>{loading ? "--" : counts.total}</strong>
-              <span>requests tracked</span>
+      <div className="student-support-stack">
+        <section className="student-support-banner">
+          <div className="student-support-banner-top">
+            <div className="student-support-banner-copy">
+              <span className="student-support-kicker">Student Services</span>
+              <h2>How can we help today?</h2>
+              <p>Track your active incident reports, review previous resolutions, or raise a new support request for campus facilities or IT issues.</p>
             </div>
-            <Link className="solid-btn support-raise-cta" to="/student/support/raise">
-              Raise New Ticket
-            </Link>
+            <div className="student-support-banner-actions">
+              <Link className="solid-btn" to="/student/support/raise">Raise New Ticket</Link>
+              <button className="ghost-btn" onClick={loadTickets}>Refresh Queue</button>
+            </div>
+          </div>
+          <div className="admin-booking-chip-row">
+            <span className="admin-booking-chip"><strong>{tickets.length}</strong> Total Tickets</span>
+            <span className="admin-booking-chip"><strong>{counts.inProgress}</strong> Currently Active</span>
+            <span className="admin-booking-chip"><strong>{counts.resolved}</strong> Completed</span>
           </div>
         </section>
 
-        <section className="stats-grid support-stats-grid">
-          <article className="metric-card support-metric-card support-metric-total">
-            <h3>Total</h3>
-            <p className="metric-number">{loading ? "--" : counts.total}</p>
-            <p className="helper-text">All support tickets</p>
-          </article>
+        <section className="student-support-stats-grid">
+          <article className="student-support-stat-card student-support-stat-card-total"><h3>Total</h3><p className="metric-number">{counts.total}</p></article>
+          <article className="student-support-stat-card student-support-stat-card-open"><h3>Open</h3><p className="metric-number">{counts.open}</p></article>
+          <article className="student-support-stat-card student-support-stat-card-progress"><h3>In Progress</h3><p className="metric-number">{counts.inProgress}</p></article>
+          <article className="student-support-stat-card student-support-stat-card-resolved"><h3>Resolved</h3><p className="metric-number">{counts.resolved}</p></article>
+        </section>
 
-          <article className="metric-card support-metric-card support-metric-open">
-            <h3>Open</h3>
-            <p className="metric-number">{loading ? "--" : counts.open}</p>
-            <p className="helper-text">Waiting for first update</p>
+        <section className="student-support-chart-board">
+          <article className="student-support-chart-card">
+            <div className="student-support-chart-head"><h4>Ticket Status</h4></div>
+            <div className="student-support-chart-body">
+              <ResponsiveContainer width="100%" height={230}>
+                <PieChart>
+                  <Pie data={pieData} dataKey="value" cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={5}>
+                    {pieData.map(d => <Cell key={d.name} fill={d.color} />)}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           </article>
-
-          <article className="metric-card support-metric-card support-metric-progress">
-            <h3>In Progress</h3>
-            <p className="metric-number">{loading ? "--" : counts.inProgress}</p>
-            <p className="helper-text">Currently being handled</p>
-          </article>
-
-          <article className="metric-card support-metric-card support-metric-resolved">
-            <h3>Resolved</h3>
-            <p className="metric-number">{loading ? "--" : counts.resolved}</p>
-            <p className="helper-text">Completed requests</p>
+          <article className="student-support-chart-card student-support-chart-card-wide">
+            <div className="student-support-chart-head"><h4>Requests by Type</h4></div>
+            <div className="student-support-chart-body">
+              <ResponsiveContainer width="100%" height={230}>
+                <BarChart data={categoryData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} />
+                  <YAxis axisLine={false} tickLine={false} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#4f46e5" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </article>
         </section>
 
-        <section className="card support-ticket-list-card">
-          <div className="support-section-heading">
+        <section className="student-support-panel">
+          <div className="admin-booking-panel-head">
             <div>
-              <span className="support-eyebrow">My Queue</span>
-              <h3>My Support Requests</h3>
+              <h3>My Support Queue</h3>
+              <p>Review the status of your {visibleTickets.length} visible support requests.</p>
             </div>
-            <span className="support-count-pill">
-              {loading ? "--" : visibleTickets.length} visible of {loading ? "--" : counts.total}
-            </span>
+            <div className="admin-booking-filter-bar">
+              <label className="admin-booking-filter-field">Search<input value={searchText} onChange={e => setSearchText(e.target.value)} placeholder="Search title, category..." /></label>
+              <label className="admin-booking-filter-field">Status
+                <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+                  <option value="ALL">All Status</option>
+                  <option value="Open">Open</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Resolved">Resolved</option>
+                </select>
+              </label>
+            </div>
           </div>
 
-          <div className="support-filter-bar">
-            <label className="support-filter-field" htmlFor="support-search">
-              Search tickets
-              <input
-                id="support-search"
-                type="text"
-                value={searchText}
-                onChange={(event) => setSearchText(event.target.value)}
-                placeholder="Search by title, category, status, or ticket id"
-              />
-            </label>
-
-            <SupportDropdown
-              id="support-status-filter"
-              label="Status"
-              value={statusFilter}
-              options={statusOptions}
-              onChange={setStatusFilter}
-              align="right"
-            />
-          </div>
-
-          {loading ? <p className="helper-text">Loading support tickets...</p> : null}
-          {!loading && !tickets.length ? (
-            <div className="support-empty-state">
-              <div className="support-empty-icon" aria-hidden="true">?</div>
-              <h4>No support tickets yet</h4>
-              <p className="helper-text">Raise your first ticket to start tracking updates here.</p>
-              <Link className="solid-btn" to="/student/support/raise">
-                Raise Ticket
-              </Link>
-            </div>
-          ) : null}
-
-          {!loading && tickets.length > 0 && !visibleTickets.length ? (
-            <div className="support-empty-state">
-              <div className="support-empty-icon" aria-hidden="true">0</div>
-              <h4>No tickets match this filter</h4>
-              <p className="helper-text">Try changing the status filter or clearing the search.</p>
-            </div>
-          ) : null}
-
-          {visibleTickets.length ? (
-            <div className="table-wrap support-ticket-table-wrap">
-              <table className="support-ticket-table">
-                <thead>
-                  <tr>
-                    <th>Ticket ID</th>
-                    <th>Subject</th>
-                    <th>Category</th>
-                    <th>Status</th>
-                    <th>Last Updated</th>
-                    <th>Action</th>
+          <div className="student-support-table-wrap">
+            <table className="student-support-table">
+              <thead>
+                <tr>
+                  <th>Ticket ID</th>
+                  <th>Subject & Location</th>
+                  <th>Category</th>
+                  <th>Status</th>
+                  <th>Last Update</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleTickets.map(t => (
+                  <tr key={t.id} onClick={() => navigate(`/student/support/${t.id}`)}>
+                    <td><strong>{t.ticketNumber || t.id.slice(-6).toUpperCase()}</strong></td>
+                    <td>
+                      <div className="admin-booking-table-main">
+                        <strong>{t.title}</strong>
+                        <span>{t.locationResource || "General Campus"}</span>
+                      </div>
+                    </td>
+                    <td><span className="admin-booking-table-meta">{t.category}</span></td>
+                    <td>
+                      <span className={`student-support-status-badge student-support-status-${(t.status || "").toLowerCase().replace(/\s+/g, '-')}`}>
+                        {t.status}
+                      </span>
+                    </td>
+                    <td><span className="admin-booking-table-meta">{t.updatedAt ? new Date(t.updatedAt).toLocaleDateString() : "-"}</span></td>
+                    <td>
+                      <button className="ghost-btn" style={{ padding: '6px 14px', fontSize: '0.85rem' }}>View Ticket</button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {visibleTickets.map((ticket) => {
-                    const statusKey = (ticket.status || "").toLowerCase().replace(/\s+/g, "-");
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-                    return (
-                      <tr key={ticket.id}>
-                        <td className="support-ticket-table-id">{ticket.ticketNumber || ticket.id}</td>
-                        <td>
-                          <div className="support-ticket-table-subject">
-                            <strong>{ticket.title}</strong>
-                            <span className="helper-text">{ticket.locationResource || "General request"}</span>
-                          </div>
-                        </td>
-                        <td>{ticket.category}</td>
-                        <td>
-                          <span className={`status-badge support-status-badge ${statusKey}`}>
-                            {ticket.status}
-                          </span>
-                        </td>
-                        <td>{ticket.updatedAt ? new Date(ticket.updatedAt).toLocaleDateString() : "-"}</td>
-                        <td>
-                          <button
-                            className="ghost-btn support-table-action"
-                            type="button"
-                            onClick={() => navigate(`/student/support/${ticket.id}`)}
-                          >
-                            Open Ticket
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+          {visibleTickets.length === 0 && !loading && (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <p className="helper-text">No support tickets found matching your search.</p>
+              <Link to="/student/support/raise" className="solid-btn" style={{ marginTop: '16px', display: 'inline-block' }}>Raise New Ticket</Link>
             </div>
-          ) : null}
+          )}
         </section>
       </div>
     </PortalLayout>
