@@ -59,18 +59,6 @@ function PortalLayout({
                 <NavLink className={topLinkClassName} to="/student/support">
                   Support
                 </NavLink>
-                <NavLink className={topLinkClassName} to="/kuppi-sessions">
-                  Kuppi
-                </NavLink>
-                <NavLink className={topLinkClassName} to="/software-hub">
-                  Software
-                </NavLink>
-                <NavLink className={topLinkClassName} to="/group-chat">
-                  Chat
-                </NavLink>
-                <NavLink className={topLinkClassName} to="/ai-notes">
-                  AI Notes
-                </NavLink>
               </>
             ) : null}
             {role === "admin" ? (
