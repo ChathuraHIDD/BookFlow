@@ -5772,6 +5772,78 @@ th {
   font-size: 0.85rem;
 }
 
+/* Step 1 carousel: horizontal swipe/scroll so each room card is fully visible */
+.facility-booking-room-grid.facility-booking-room-grid-smart {
+  grid-auto-flow: column;
+  grid-template-rows: repeat(2, minmax(260px, auto));
+  grid-auto-columns: minmax(190px, 220px);
+  grid-template-columns: none;
+  gap: 14px;
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 2px;
+  padding-bottom: 8px;
+}
+
+.facility-booking-room-grid.facility-booking-room-grid-smart::-webkit-scrollbar {
+  height: 8px;
+}
+
+.facility-booking-room-grid.facility-booking-room-grid-smart::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(166, 174, 255, 0.45);
+}
+
+.facility-booking-room-grid.facility-booking-room-grid-smart::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.facility-booking-room-card.facility-booking-room-card-smart {
+  min-height: 260px;
+  height: 100%;
+  align-content: start;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.facility-booking-room-card-smart .facility-booking-room-card-content {
+  display: grid;
+  gap: 8px;
+  min-height: 136px;
+}
+
+.facility-booking-room-card-smart .facility-booking-room-card-top {
+  gap: 4px;
+}
+
+.facility-booking-room-card-smart .facility-booking-room-card-top strong {
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 1400px) {
+  .facility-booking-room-grid.facility-booking-room-grid-smart {
+    grid-auto-columns: minmax(210px, 240px);
+  }
+}
+
+@media (max-width: 1100px) {
+  .facility-booking-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .facility-booking-detail-panel {
+    position: static;
+  }
+
+  .facility-booking-room-grid.facility-booking-room-grid-smart {
+    grid-template-rows: none;
+    grid-auto-columns: minmax(220px, 74vw);
+  }
+}
+
 .facility-booking-room-type {
   display: inline-flex;
   align-items: center;

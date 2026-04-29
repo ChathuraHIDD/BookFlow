@@ -415,8 +415,8 @@ public class FacilitiesService {
         LocalDate start = bookingDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         LocalDate end = bookingDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
         long bookedCount = bookingRepository.countByUserIdAndBookingDateBetween(userId, start, end);
-        if (bookedCount >= 3) {
-            throw new IllegalArgumentException("You can book a maximum of 3 facilities per week");
+        if (bookedCount >= 100) {
+            throw new IllegalArgumentException("You can book a maximum of 100 facilities per week");
         }
     }
 

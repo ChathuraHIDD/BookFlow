@@ -210,34 +210,77 @@ function AdminNotifications() {
 
     const activeLabel = CATEGORY_META[activeCategory]?.label || "Notifications";
 
-    const doc = new jsPDF({ orientation: "landscape" });
-    doc.setFontSize(16);
-    doc.text(`NNIC Smart Campus - ${activeLabel} Notifications`, 14, 16);
-    doc.setFontSize(10);
-    doc.text(`Exported at: ${new Date().toLocaleString()}`, 14, 22);
-    doc.text(`Search: ${searchTerm.trim() || "All"}`, 14, 28);
+    const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // 1. Header Branded Background
+    doc.setFillColor(31, 71, 140); // NNIC Deep Blue
+    doc.rect(0, 0, pageWidth, 80, 'F');
 
+    // 2. Official Logo Image
+    try {
+      doc.addImage("/nnic-logo-icon.png", "PNG", 40, 10, 60, 60);
+    } catch (e) {
+      // Fallback
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(40, 15, 50, 50, 10, 10, 'F');
+      doc.setTextColor(31, 71, 140);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.text("N", 54, 48);
+    }
+    
+    // 3. Title & Metadata
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.text("NNIC SMART CAMPUS", 115, 40);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(`${activeLabel.toUpperCase()} ACTIVITY LOG | EXPORTED: ${new Date().toLocaleString()}`, 115, 55);
+
+    // 4. Notifications Table
     autoTable(doc, {
-      startY: 34,
-      head: [["Title", "Message", "Created At", "Status"]],
-      body: searchedNotifications.map((note) => [
-        note.title,
-        note.message,
-        note.createdAt ? new Date(note.createdAt).toLocaleString() : "-",
-        note.read ? "Read" : "Unread",
+      startY: 100,
+      head: [["Title", "Message", "Timestamp", "Status"]],
+      body: searchedNotifications.map(n => [
+        n.title, 
+        n.message, 
+        n.createdAt ? new Date(n.createdAt).toLocaleString() : "-", 
+        n.read ? "Processed" : "New"
       ]),
-      styles: { fontSize: 9, cellWidth: "wrap" },
-      columnStyles: {
-        0: { cellWidth: 60 },
-        1: { cellWidth: 130 },
-        2: { cellWidth: 45 },
-        3: { cellWidth: 20 },
+      headStyles: { 
+        fillColor: [45, 55, 72], // Slate 700
+        textColor: [255, 255, 255],
+        fontSize: 10,
+        fontStyle: 'bold'
       },
-      headStyles: { fillColor: [31, 71, 140] },
+      bodyStyles: { 
+        fontSize: 9,
+        textColor: [30, 41, 59], // Slate 800
+        cellPadding: 8
+      },
+      columnStyles: {
+        0: { cellWidth: 150 },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 120 },
+        3: { cellWidth: 80 }
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252] // Slate 50
+      },
+      margin: { left: 40, right: 40 },
+      theme: 'grid'
     });
 
+    // 5. Footer
+    const footerY = doc.internal.pageSize.getHeight() - 30;
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184); // Slate 400
+    doc.text(`NNIC Smart Campus Administrative Record | Category: ${activeLabel} | Search Context: ${searchTerm || "None"}`, 40, footerY);
+    doc.text(`Total Notifications: ${searchedNotifications.length}`, pageWidth - 140, footerY);
+
     const fileCategory = activeLabel.toLowerCase().replace(/\s+/g, "-");
-    doc.save(`nnic-${fileCategory}-notifications.pdf`);
+    doc.save(`nnic-${fileCategory}-log-${new Date().getTime()}.pdf`);
   };
 
   const activeMeta = CATEGORY_META[activeCategory];
